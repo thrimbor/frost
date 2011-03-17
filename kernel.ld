@@ -1,5 +1,5 @@
 /* This is the linkerscript for the frost-kernel */
-/* It's only a rough draft, so it may contain errors
+/* It's only a rough draft, so it may contain errors */
 ENTRY(_start)
 
 SECTIONS
