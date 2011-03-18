@@ -6,7 +6,7 @@ namespace video
     
     '// todo:
     '//   - use memcopy instead. copying single bytes is inefficient.
-    sub scrollScreen ()
+    sub scroll_screen ()
         dim rowcounter as uinteger                                 '// a counter for the current row
         dim colcounter as uinteger                                 '// a counter for the current column
         
@@ -26,7 +26,7 @@ namespace video
             exit sub                                               '// exit the sub
         end if
         
-        if cursor_pos > 3999 then scrollScreen                     '// if we would write outside the screen we scroll it '// (80*25*2)-1
+        if cursor_pos > 3999 then scroll_screen                    '// if we would write outside the screen we scroll it '// (80*25*2)-1
         *(mempointer+cursor_pos) = char                            '// copy the char into the video-memory
         *(mempointer+cursor_pos+1) = textColor                     '// set the color of the char
         cursor_pos += 2                                            '// add 2 bytes to the position (one for the char and one for the color)
@@ -39,4 +39,14 @@ namespace video
             zstr += 1
         loop
     end sub
+    
+    sub clear_screen ()
+        dim clspos as uinteger                                     '// a variable to hold the position
+        cursor_pos = 0                                             '// set the screenposition to zero
+        
+        for clspos = 0 to 80*25                                    '// a loop for all rows & columns
+            *(mempointer + clspos*2) = 32                        '// set the char to a space
+            *(mempointer + clspos*2+1) = 0                       '// set the color to zero (black)
+        next
+        end sub
 end namespace
