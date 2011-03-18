@@ -25,5 +25,6 @@ end sub
 #include once "inc/video.bi"
 
 sub main ()
-    video.cout "BAMM! IT WORKS! FROST FTW!"
+    video.clear_screen()
+    video.cout("BAMM! IT WORKS! FROST FTW!")
 end sub
