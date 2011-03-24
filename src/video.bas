@@ -31,8 +31,8 @@ namespace video
             end if
             if cursor_pos > 3999 then scroll_screen
             
-            memory[cursor_pos+(counter*2)] = zstr[counter]
-            memory[cursor_pos+(counter*2)+1] = textColor
+            memory[cursor_pos] = zstr[counter]
+            memory[cursor_pos+1] = textColor
             
             counter += 1
             cursor_pos += 2
