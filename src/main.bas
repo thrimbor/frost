@@ -17,6 +17,8 @@ sub mb_header ()
         .global _start
         _start:
             cli
+            push eax
+            push ebx
             call MAIN
             hlt
     end asm
@@ -24,7 +26,7 @@ end sub
 
 #include once "inc/video.bi"
 
-sub main ()
+sub main (magicnumber as multiboot_uint32_t, header as multiboot_header ptr)
     video.clean()
     video.cout("BAMM! IT WORKS! FROST FTW!")
 end sub
