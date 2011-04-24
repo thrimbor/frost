@@ -26,7 +26,8 @@ end sub
 
 #include once "inc/video.bi"
 
-sub main (magicnumber as multiboot_uint32_t, header as multiboot_header ptr)
+sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
-    video.cout("BAMM! IT WORKS! FROST FTW!")
+    video.cout("FROST 2 alpha version")
+    video.cout(*cast(zstring ptr, mbinfo->cmdline))
 end sub
