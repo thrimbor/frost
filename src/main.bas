@@ -29,5 +29,4 @@ end sub
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
     video.cout("FROST 2 alpha version")
-    video.cout(*cast(zstring ptr, mbinfo->cmdline))
 end sub
