@@ -1,20 +1,19 @@
 SRCS = $(shell find src -name *.bas)
 OBJS = $(addsuffix .o,$(basename $(notdir $(SRCS))))
 
-CC = fbc
-LD = ld
+COMPILER = fbc
+LINKER = ld
 
 CFLAGS = -c
-LDFLAGS = -melf_i386 -Tkernel.ld
+LFLAGS = -melf_i386 -Tkernel.ld
 
 frost.krn: $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LINKER) $(LFLAGS) -o $@ $^
 
 %.o: src/%.bas
-	$(CC) $(CFLAGS) $^ -o $@
+	$(COMPILER) $(CFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJS)
-	rm frost.krn
+	rm $(OBJS) frost.krn
 
 .PHONY: clean
