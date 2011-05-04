@@ -1,7 +1,5 @@
 /* This is the linkerscript for the frost-kernel */
 /* It's only a rough draft, so it may contain errors */
-OUTPUT_FORMAT("elf32-i386")
-OUTPUT_ARCH("i386:i386")
 ENTRY(_start)
 
 SECTIONS
