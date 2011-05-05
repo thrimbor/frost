@@ -2,12 +2,13 @@
 '// Copyright (c) 2011 by darkinsanity
 
 #include once "inc/multiboot.bi"
+#include once "inc/video.bi"
 
 const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
 
 sub mb_header ()
     asm
-        .section multiboot
+        .section multiboot                      '// an own section for the multiboot-header
         .align 4
         .int MULTIBOOT_HEADER_MAGIC             '// first the magic-number
         .int mb_flags                           '// then the flags
@@ -17,16 +18,17 @@ sub mb_header ()
         .global _start
         _start:
             cli
-            push eax
             push ebx
+            push eax
             call MAIN
             hlt
     end asm
 end sub
 
-#include once "inc/video.bi"
 
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
-    video.cout("FROST 2 alpha version")
+    video.cout("FROST 2 alpha version    ")
+    video.cout("cmdline: ")
+    video.cout(*cast(zstring ptr, mbinfo->cmdline))
 end sub
