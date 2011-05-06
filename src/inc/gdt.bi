@@ -5,25 +5,23 @@ namespace gdt
     end type
     
     type segment_descriptor field=1
-        limit1 as ubyte
-        limit2 as ubyte
-        base1  as ubyte
-        base2  as ubyte
-        base3  as ubyte
+        limit_low as ushort
+        base_low  as ushort
+        base_middle  as ubyte
         accessbyte as ubyte
-        flags_limit3  as ubyte
-        base4  as ubyte
+        flags_limit2  as ubyte
+        base_high  as ubyte
     end type
     
     const table_size = 4
     
     '// flags for the access-byte
-    const FLAG_PRESENT_BIT      as ubyte = &h80  '// must be 1 for an active entry
+    const FLAG_PRESENT_BIT      as ubyte = &h80  '// must be set for an active entry
     const FLAG_PRIVILEGE_RING_3 as ubyte = &h60
     const FLAG_PRIVILEGE_RING_2 as ubyte = &h40
     const FLAG_PRIVILEGE_RING_1 as ubyte = &h20
     const FLAG_PRIVILEGE_RING_0 as ubyte = &h00
-    const FLAG_SEGMENT_BIT      as ubyte = &h10  '// 1 for Code-/Data-segments, 0 for gates and TSS
+    const FLAG_SEGMENT_BIT      as ubyte = &h10  '// set for Code-/Data-segments, unset for gates and TSS
     const FLAG_EXECUTABLE_BIT   as ubyte = &h08  '// unset = DS, set = CS
     const FLAG_DC_BIT           as ubyte = &h04
     const FLAG_RW_BIT           as ubyte = &h02  '// CS: read access, DS: write access

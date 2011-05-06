@@ -1,4 +1,5 @@
 #include once "inc/gdt.bi"
+#include once "inc/video.bi"
 
 namespace gdt
     dim shared gdtp as gdt.table_descriptor
@@ -30,20 +31,18 @@ namespace gdt
             mov fs, ax
             mov gs, ax
             mov ss, ax
-            ljmp &h08, gdt_jmp
+            ljmp &h08:gdt_jmp
             gdt_jmp:
         end asm
     end sub
     
     sub set_entry (i as ushort, base as uinteger, limit as uinteger, accessbyte as ubyte, flags as ubyte)
-        gdt.table(i).limit1 = lobyte(limit)
-        gdt.table(i).limit2 = hibyte(limit)
-        gdt.table(i).base1  = lobyte(base)
-        gdt.table(i).base2  = hibyte(base)
-        gdt.table(i).base3  = lobyte(hiword(base))
+        gdt.table(i).limit_low = loword(limit)
+        gdt.table(i).base_low  = loword(base)
+        gdt.table(i).base_middle  = lobyte(hiword(base))
         gdt.table(i).accessbyte = accessbyte
-        gdt.table(i).flags_limit3 = (lobyte(hiword(limit)) and &hF0)
-        gdt.table(i).flags_limit3 or= (flags and &h0F)
-        gdt.table(i).base4  = hibyte(hiword(base))
+        gdt.table(i).flags_limit2 = (lobyte(hiword(limit)) and &h0F)
+        gdt.table(i).flags_limit2 or= ((flags shl 4) and &hF0)
+        gdt.table(i).base_high  = hibyte(hiword(base))
     end sub
 end namespace
