@@ -2,6 +2,7 @@
 '// Copyright (c) 2011 by darkinsanity
 
 #include once "inc/multiboot.bi"
+#include once "inc/gdt.bi"
 #include once "inc/video.bi"
 
 const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
@@ -29,6 +30,8 @@ end sub
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
     video.cout("FROST 2 alpha version    ")
-    video.cout("cmdline: ")
-    video.cout(*cast(zstring ptr, mbinfo->cmdline))
+    'video.cout("cmdline: ")
+    'video.cout(*cast(zstring ptr, mbinfo->cmdline))
+    gdt.init()
+    video.cout("gdt loaded")
 end sub
