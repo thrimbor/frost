@@ -4,6 +4,7 @@
 #include once "inc/multiboot.bi"
 #include once "inc/gdt.bi"
 #include once "inc/idt.bi"
+#include once "inc/pic.bi"
 #include once "inc/video.bi"
 
 const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
@@ -34,8 +35,8 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     'video.cout("cmdline: ")
     'video.cout(*cast(zstring ptr, mbinfo->cmdline))
     gdt.init()
+    pic.init()
     idt.init()
-    do
-        asm int &h30
-    loop
+    asm int &h30
+    do : loop
 end sub
