@@ -1,16 +1,12 @@
 #include once "inc/idt.bi"
-
-#include once "inc/video.bi"
-sub testsub naked ()
-    video.cout("A")
-end sub
+#include once "inc/int_stubs.bi"
 
 namespace idt
     dim shared idtp as idt.table_descriptor
     dim shared table (0 to idt.table_size-1) as idt.gate_descriptor
     
     sub init ()
-        idt.set_entry (&h30, cuint(@testsub), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
+        idt.set_entry (&h30, cuint(@int_stub_48), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         
         '// now we load the idt
         idt.idtp.limit = idt.table_size*8-1
