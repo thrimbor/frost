@@ -1,5 +1,6 @@
+#include once "inc/video.bi"
+
 namespace video
-    
     dim shared memory as byte ptr = cast(byte ptr, &hB8000)      '// pointer to video-memory
     dim shared cursor_pos as uinteger = 0                        '// the position of the cursor
     dim shared textColor as ubyte = 7                            '// the color of the text
@@ -20,16 +21,19 @@ namespace video
         cursor_pos -= 160    
     end sub
     
-    sub cout (outstr as zstring)
+    sub cout (outstr as zstring, flag as ubyte = 0)
         dim zstr as byte ptr = cast(byte ptr, @outstr)
         dim counter as uinteger
         
         while not (zstr[counter] = 0)
             if zstr[counter] = 10 then
-                cursor_pos += 160
+                cursor_pos = (cursor_pos\160+1)*160
                 continue while
             end if
-            if cursor_pos > 3999 then scroll_screen
+            
+            while (cursor_pos>3999)
+                scroll_screen()
+            wend
             
             memory[cursor_pos] = zstr[counter]
             memory[cursor_pos+1] = textColor
@@ -37,6 +41,8 @@ namespace video
             counter += 1
             cursor_pos += 2
         wend
+        
+        if (flag and video.endl) then cursor_pos = (cursor_pos\160+1)*160
     end sub
     
     sub clean ()
