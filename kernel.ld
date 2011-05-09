@@ -9,6 +9,7 @@ SECTIONS
 	 *
 	 */
 	. = 0x100000;
+	kernel_start = .;
 	
 	/*
 	 * The multiboot-header has to be in the first 8 KB,
@@ -27,4 +28,7 @@ SECTIONS
 	.bss ALIGN(4096) : {
 		*(.bss)
 	}
+	
+	.= ALIGN(4096);
+	kernel_end = .;
 }

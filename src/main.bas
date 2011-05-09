@@ -5,6 +5,7 @@
 #include once "inc/gdt.bi"
 #include once "inc/idt.bi"
 #include once "inc/pic.bi"
+#include once "inc/pmm.bi"
 #include once "inc/video.bi"
 
 const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
@@ -36,9 +37,15 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout(*cast(zstring ptr, mbinfo->boot_loader_name), video.endl)
     video.cout("cmdline: ")
     video.cout(*cast(zstring ptr, mbinfo->cmdline), video.endl)
+    video.cout("", video.endl)
     gdt.init()
+    video.cout("gdt loaded", video.endl)
     pic.init()
+    video.cout("pic initialized", video.endl)
     idt.init()
+    video.cout("idt loaded", video.endl)
+    pmm.init(mbinfo)
+    video.cout("physical memory manager initialized", video.endl)
     asm int &h30
     do : loop
 end sub
