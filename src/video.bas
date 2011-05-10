@@ -53,5 +53,9 @@ namespace video
             *(memory + clspos*2) = 32                        '// set the char to a space
             *(memory + clspos*2+1) = 0                       '// set the color to zero (black)
         next
-        end sub
+    end sub
+    
+    sub set_color (fc as ubyte, bc as ubyte)
+        textColor = (bc shl 4) or fc
+    end sub
 end namespace

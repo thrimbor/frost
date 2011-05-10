@@ -32,7 +32,9 @@ end sub
 
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
+    video.set_color(9,0)
     video.cout("FROST V2 alpha", video.endl)
+    video.set_color(7,0)
     video.cout("name of the bootloader: ")
     video.cout(*cast(zstring ptr, mbinfo->boot_loader_name), video.endl)
     video.cout("cmdline: ")
