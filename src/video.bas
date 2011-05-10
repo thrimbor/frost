@@ -21,25 +21,29 @@ namespace video
         cursor_pos -= 160    
     end sub
     
+    sub putc (char as ubyte)
+        if (char=10) then
+            cursor_pos = (cursor_pos\160+1)*160
+            return
+        end if
+        
+        while (cursor_pos>3999)
+            scroll_screen()
+        wend
+        
+        memory[cursor_pos]   = char
+        memory[cursor_pos+1] = textColor
+        
+        cursor_pos += 2
+    end sub
+    
     sub cout (outstr as zstring, flag as ubyte = 0)
         dim zstr as byte ptr = cast(byte ptr, @outstr)
         dim counter as uinteger
         
         while not (zstr[counter] = 0)
-            if zstr[counter] = 10 then
-                cursor_pos = (cursor_pos\160+1)*160
-                continue while
-            end if
-            
-            while (cursor_pos>3999)
-                scroll_screen()
-            wend
-            
-            memory[cursor_pos] = zstr[counter]
-            memory[cursor_pos+1] = textColor
-            
+            putc(zstr[counter])
             counter += 1
-            cursor_pos += 2
         wend
         
         if (flag and video.endl) then cursor_pos = (cursor_pos\160+1)*160
