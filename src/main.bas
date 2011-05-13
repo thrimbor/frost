@@ -31,6 +31,8 @@ end sub
 
 
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
+    dim taddr as any ptr
+    
     video.clean()
     video.remove_cursor()
     video.set_color(9,0)
@@ -49,6 +51,12 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout("idt loaded", video.endl)
     pmm.init(mbinfo)
     video.cout("physical memory manager initialized", video.endl)
-    asm int &h30
+    'asm int &h30
+    video.cout(cuint(pmm.alloc()),video.endl)
+    taddr = pmm.alloc()
+    video.cout(cuint(taddr),video.endl)
+    video.cout(cuint(pmm.alloc()),video.endl)
+    pmm.free(taddr)
+    video.cout(cuint(pmm.alloc()),video.endl)
     do : loop
 end sub
