@@ -46,7 +46,160 @@ namespace video
             counter += 1
         wend
         
-        if (flag and video.endl) then cursor_pos = (cursor_pos\160+1)*160
+        if (flag and video.endl) then putc(10)
+    end sub
+    
+    sub cout (number as uinteger, flag as ubyte = 0)
+        dim chars(1 to 10) as ubyte
+        dim num as ubyte
+        dim counter as uinteger = 10
+        
+        do
+            chars(counter) = (number mod 10) + 48
+            counter -= 1
+            number \= 10
+        loop until (number <= 0)
+        
+        for counter = 1 to 10
+            if ((chars(counter)=0) and (num = 0)) then continue for
+            putc(chars(counter))
+            num = 1
+        next
+        
+        if (flag and video.endl) then putc(10)
+    end sub
+    
+    sub cout (number as integer, flag as ubyte = 0)
+        dim chars(1 to 10) as ubyte
+        dim num as ubyte
+        dim counter as uinteger = 10
+        dim negative as ubyte = 0
+        
+        if (number < 0) then
+            negative = 1
+        end if
+        
+        do
+            if (negative=1) then
+                chars(counter) = 48-(number mod 10)
+            else
+                chars(counter) = 48+(number mod 10)
+            end if
+            counter -= 1
+            number \= 10
+        loop until (number=0)
+        
+        if (negative=1) then putc(45)
+        
+        for counter = 1 to 10
+            if ((chars(counter)=0) and (num=0)) then continue for
+            putc(chars(counter))
+            num = 1
+        next
+        
+        if (flag and video.endl) then putc(10)
+    end sub
+    
+    sub cout (number as ushort, flag as ubyte = 0)
+        dim chars(1 to 5) as ubyte
+        dim num as ubyte
+        dim counter as uinteger = 5
+        
+        do
+            chars(counter) = (number mod 10) + 48
+            counter -= 1
+            number \= 10
+        loop until (number <= 0)
+        
+        for counter = 1 to 5
+            if ((chars(counter)=0) and (num = 0)) then continue for
+            putc(chars(counter))
+            num = 1
+        next
+        
+        if (flag and video.endl) then putc(10)
+    end sub
+    
+    sub cout (number as short, flag as ubyte = 0)
+        dim chars(1 to 5) as ubyte
+        dim num as ubyte
+        dim counter as uinteger = 5
+        dim negative as ubyte = 0
+        
+        if (number < 0) then
+            negative = 1
+        end if
+        
+        do
+            if (negative=1) then
+                chars(counter) = 48-(number mod 10)
+            else
+                chars(counter) = 48+(number mod 10)
+            end if
+            counter -= 1
+            number \= 10
+        loop until (number=0)
+        
+        if (negative=1) then putc(45)
+        
+        for counter = 1 to 5
+            if ((chars(counter)=0) and (num=0)) then continue for
+            putc(chars(counter))
+            num = 1
+        next
+        
+        if (flag and video.endl) then putc(10)
+    end sub
+    
+    sub cout (number as ubyte, flag as ubyte = 0)
+        dim chars(1 to 3) as ubyte
+        dim num as ubyte
+        dim counter as uinteger = 3
+        
+        do
+            chars(counter) = (number mod 10) + 48
+            counter -= 1
+            number \= 10
+        loop until (number <= 0)
+        
+        for counter = 1 to 3
+            if ((chars(counter)=0) and (num = 0)) then continue for
+            putc(chars(counter))
+            num = 1
+        next
+        
+        if (flag and video.endl) then putc(10)
+    end sub
+    
+    sub cout (number as byte, flag as ubyte = 0)
+        dim chars(1 to 3) as ubyte
+        dim num as ubyte
+        dim counter as uinteger = 3
+        dim negative as ubyte = 0
+        
+        if (number < 0) then
+            negative = 1
+        end if
+        
+        do
+            if (negative=1) then
+                chars(counter) = 48-(number mod 10)
+            else
+                chars(counter) = 48+(number mod 10)
+            end if
+            counter -= 1
+            number \= 10
+        loop until (number=0)
+        
+        if (negative=1) then putc(45)
+        
+        for counter = 1 to 3
+            if ((chars(counter)=0) and (num=0)) then continue for
+            putc(chars(counter))
+            num = 1
+        next
+        
+        if (flag and video.endl) then putc(10)
     end sub
     
     sub clean ()
@@ -61,5 +214,12 @@ namespace video
     
     sub set_color (fc as ubyte, bc as ubyte)
         textColor = (bc shl 4) or fc
+    end sub
+    
+    sub remove_cursor ()
+        out(&h3D4,14)
+        out(&h3D5,&h07)
+        out(&h3D4,15)
+        out(&h3D5,&hD0)
     end sub
 end namespace

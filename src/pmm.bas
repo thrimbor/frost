@@ -15,16 +15,16 @@ namespace pmm
         '// 2. free the memory marked as free in the memory-map
         '// 3. mark the whole memory used by the kernel as used
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
-        dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr + mbinfo->mmap_length)
+        dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
         
         '// free the memory listed in the memory-map
         while (mmap < mmap_end)
             if (mmap->type = MULTIBOOT_MEMORY_AVAILABLE) then
-                dim addr as any ptr
-                dim end_addr as any ptr
+                dim addr as uinteger = mmap->addr
+                dim end_addr as uinteger = (mmap->addr+mmap->len)
                 
                 while (addr < end_addr)
-                    pmm.free(addr)
+                    pmm.free(cast(any ptr, addr))
                     addr += 4096
                 wend
             end if
