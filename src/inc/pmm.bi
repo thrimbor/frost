@@ -8,4 +8,5 @@ namespace pmm
     declare function alloc () as any ptr
     declare sub free (page as any ptr)
     declare sub mark_used (page as any ptr)
+    declare function get_free () as uinteger
 end namespace

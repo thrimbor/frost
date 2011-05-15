@@ -52,11 +52,15 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     pmm.init(mbinfo)
     video.cout("physical memory manager initialized", video.endl)
     'asm int &h30
+    video.cout("free RAM: ")
+    video.cout(pmm.get_free(),video.endl)
     video.cout(cuint(pmm.alloc()),video.endl)
     taddr = pmm.alloc()
     video.cout(cuint(taddr),video.endl)
     video.cout(cuint(pmm.alloc()),video.endl)
     pmm.free(taddr)
     video.cout(cuint(pmm.alloc()),video.endl)
+    video.cout("free RAM: ")
+    video.cout(pmm.get_free(),video.endl)
     do : loop
 end sub

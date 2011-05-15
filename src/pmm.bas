@@ -8,6 +8,8 @@ extern kernel_end   alias "kernel_end"   as byte
 namespace pmm
     '// our memory bitmap. bit=0 : page used; bit=1 : page free
     dim shared bitmap (0 to pmm.bitmap_size-1) as uinteger
+    '// the amount of free memory
+    dim shared free_mem as uinteger = 0
     
     sub init (mbinfo as multiboot_info ptr)
         '// this sub will take 3 steps:
@@ -26,6 +28,7 @@ namespace pmm
                 while (addr < end_addr)
                     pmm.free(cast(any ptr, addr))
                     addr += 4096
+                    free_mem += 4096
                 wend
             end if
             '// go to the next entry of the map
@@ -37,6 +40,7 @@ namespace pmm
         while (addr < cast(any ptr, @kernel_end))
             pmm.mark_used(addr)
             addr += 4096
+            free_mem -= 4096
         wend
         
         '// what's still missing:
@@ -57,6 +61,7 @@ namespace pmm
                     if (pmm.bitmap(counter) and (1 shl bitcounter)) then
                         '// found it, unset the bit and return the address
                         pmm.bitmap(counter) and= not(1 shl bitcounter)
+                        free_mem -= 4096
                         return cast(any ptr, ((counter*32+bitcounter)*4096))
                     end if
                 next
@@ -70,10 +75,16 @@ namespace pmm
     sub free (page as any ptr)
         dim index as uinteger = cast(uinteger, page) / 4096
         pmm.bitmap(index/32) or= (1 shl (index mod 32))
+        free_mem += 4096
     end sub
     
     sub mark_used (page as any ptr)
         dim index as uinteger = cast(uinteger, page) / 4096
         pmm.bitmap(index/32) and= not(1 shl (index mod 32))
+        free_mem -= 4096
     end sub
+    
+    function get_free () as uinteger
+        return free_mem
+    end function
 end namespace
