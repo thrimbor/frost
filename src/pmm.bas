@@ -10,6 +10,7 @@ namespace pmm
     dim shared bitmap (0 to pmm.bitmap_size-1) as uinteger
     '// the amount of free memory
     dim shared free_mem as uinteger = 0
+    dim shared total_mem as uinteger = 0
     
     sub init (mbinfo as multiboot_info ptr)
         '// this sub will take 3 steps:
@@ -21,6 +22,7 @@ namespace pmm
         
         '// free the memory listed in the memory-map
         while (mmap < mmap_end)
+            total_mem += mmap->len
             if (mmap->type = MULTIBOOT_MEMORY_AVAILABLE) then
                 dim addr as uinteger = mmap->addr
                 dim end_addr as uinteger = (mmap->addr+mmap->len)
@@ -83,6 +85,10 @@ namespace pmm
         pmm.bitmap(index/32) and= not(1 shl (index mod 32))
         free_mem -= 4096
     end sub
+    
+    function get_total () as uinteger
+        return total_mem
+    end function
     
     function get_free () as uinteger
         return free_mem
