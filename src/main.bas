@@ -5,6 +5,7 @@
 #include once "inc/gdt.bi"
 #include once "inc/idt.bi"
 #include once "inc/pic.bi"
+#include once "inc/pit.bi"
 #include once "inc/pmm.bi"
 #include once "inc/video.bi"
 
@@ -31,8 +32,6 @@ end sub
 
 
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
-    dim taddr as any ptr
-    
     video.clean()
     video.remove_cursor()
     video.set_color(9,0)
@@ -49,21 +48,16 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout("pic initialized", video.endl)
     idt.init()
     video.cout("idt loaded", video.endl)
+    pit.set_frequency(100)
+    video.cout("pit initialized", video.endl)
     pmm.init(mbinfo)
     video.cout("physical memory manager initialized", video.endl)
-    'asm int &h30
     video.cout("total RAM: ")
     video.cout(pmm.get_total()/1024/1024)
     video.cout("MB",video.endl)
     video.cout("free RAM: ")
-    video.cout(pmm.get_free(),video.endl)
-    video.cout(cuint(pmm.alloc()),video.endl)
-    taddr = pmm.alloc()
-    video.cout(cuint(taddr),video.endl)
-    video.cout(cuint(pmm.alloc()),video.endl)
-    pmm.free(taddr)
-    video.cout(cuint(pmm.alloc()),video.endl)
-    video.cout("free RAM: ")
-    video.cout(pmm.get_free(),video.endl)
+    video.cout(pmm.get_free()/1024/1024)
+    video.cout("MB",video.endl)
+    asm sti
     do : loop
 end sub

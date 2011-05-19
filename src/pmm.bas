@@ -30,7 +30,6 @@ namespace pmm
                 while (addr < end_addr)
                     pmm.free(cast(any ptr, addr))
                     addr += 4096
-                    free_mem += 4096
                 wend
             end if
             '// go to the next entry of the map
@@ -38,11 +37,11 @@ namespace pmm
         wend
         
         '// mark the memory used by the kernel as used
-        dim addr as any ptr = @kernel_start
-        while (addr < cast(any ptr, @kernel_end))
-            pmm.mark_used(addr)
+        dim addr as uinteger = cuint(@kernel_start)
+        dim kernel_end_addr as uinteger = cuint(@kernel_end)
+        while (addr < kernel_end_addr)
+            pmm.mark_used(cast(any ptr, addr))
             addr += 4096
-            free_mem -= 4096
         wend
         
         '// what's still missing:
