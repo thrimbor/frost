@@ -1,4 +1,3 @@
-- finish the physical memory-manager to mark the multiboot-modules and the multiboot-info structure as used
 - implement multitasking
 - add the tss for user-space to the gdt
 - and implement the rest of the user-space support

@@ -37,16 +37,34 @@ namespace pmm
         wend
         
         '// mark the memory used by the kernel as used
-        dim addr as uinteger = cuint(@kernel_start)
+        dim kernel_addr as uinteger = cuint(@kernel_start)
         dim kernel_end_addr as uinteger = cuint(@kernel_end)
-        while (addr < kernel_end_addr)
-            pmm.mark_used(cast(any ptr, addr))
-            addr += 4096
+        while (kernel_addr < kernel_end_addr)
+            pmm.mark_used(cast(any ptr, kernel_addr))
+            kernel_addr += 4096
         wend
         
-        '// what's still missing:
-        '// - the multiboot-info structure
-        '// - the multiboot-modules
+        '// mark the memory used by the mbinfo-structure as used
+        dim mbinfo_addr as uinteger = cuint(mbinfo)
+        dim mbinfo_end_addr as uinteger = cuint(mbinfo)+sizeof(multiboot_info)
+        while (mbinfo_addr < mbinfo_end_addr)
+            pmm.mark_used(cast(any ptr, mbinfo_addr))
+            mbinfo_addr += 4096
+        wend
+        
+        if (mbinfo->mods_count = 0) then return
+        dim module_addr as uinteger
+        dim module_end_addr as uinteger
+        dim module_ptr as multiboot_mod_list ptr = cast(any ptr, mbinfo->mods_addr)
+        for counter as uinteger = 1 to mbinfo->mods_count
+            module_addr = module_ptr->mod_start
+            module_end_addr = module_ptr->mod_end
+            while (module_addr < module_end_addr)
+                pmm.mark_used(cast(any ptr, module_addr))
+                module_addr += 4096
+            wend
+            module_ptr += 1
+        next
     end sub
     
     
