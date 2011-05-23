@@ -1,0 +1,51 @@
+**************************************************************************
+This file is part of FROST.
+
+FROST is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+FROST is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with FROST.  If not, see <http://www.gnu.org/licenses/>.
+
+**************************************************************************
+
+WHAT IS FROST:
+
+FROST is a 32-bit operating system based on a microkernel. It is written
+entirely in FreeBASIC and Assembly.
+
+
+DEPENDENCIES:
+
+- fbc, 0.22.0 recommended (the FreeBASIC compiler, available on freebasic.net)
+- nasm, 2.09.04 recommended (the Netwide Assembler, available on nasm.us)
+- GNU make, GNU assembler and the GNU linker
+
+
+BUILDING:
+
+To build FROST, you can type "make" in the main directory. You will then
+get a file called "frost.krn" which is the kernel.
+If you want to get a full iso with grub2 and a menu, type "./build_iso.sh" in
+the "build"-directory. You will then get a file called "frost.iso" which is
+the iso-image.
+
+BUILDING ON WINDOWS:
+
+It _should_ be posssible to compile FROST on Windows although we do not
+officially support it. You will definitively need a cross-compiling version
+of make, gas and ld.
+
+
+DIRECTORY:
+
+./src              The source of the kernel
+./source/include   The headers
+./build            Contains the build-scripts and the grub.cfg
