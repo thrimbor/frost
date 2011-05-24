@@ -1,4 +1,5 @@
 #include once "inc/int_stubs.bi"
+#include once "inc/cpu.bi"
 #include once "inc/pic.bi"
 #include once "inc/video.bi"
 
