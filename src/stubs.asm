@@ -85,7 +85,7 @@ int_common:
     ; now call the handler
     push esp            ; we push the address to the registers
     call HANDLE_INTERRUPT
-    add esp, 4          ; now we skip the 4 bytes we pushed before the call
+    mov esp, eax        ; set the new stack address
     
     ; restore the old state
     pop eax

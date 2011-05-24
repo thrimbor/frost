@@ -18,7 +18,7 @@ type cpu_state
     ss as uinteger
 end type
 
-declare sub handle_interrupt cdecl (cpu as cpu_state ptr)
+declare function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
 
 '// here are all stubs:
 declare sub int_stub_0 ()
