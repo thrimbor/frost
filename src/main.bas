@@ -7,6 +7,7 @@
 #include once "inc/pic.bi"
 #include once "inc/pit.bi"
 #include once "inc/pmm.bi"
+#include once "inc/tasks.bi"
 #include once "inc/video.bi"
 
 const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
@@ -58,6 +59,7 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout("free RAM: ")
     video.cout(pmm.get_free()/1024/1024)
     video.cout("MB",video.endl)
+    tasks.init_multitasking()
     asm sti
     do : loop
 end sub

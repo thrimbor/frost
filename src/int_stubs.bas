@@ -1,6 +1,7 @@
 #include once "inc/int_stubs.bi"
 #include once "inc/cpu.bi"
 #include once "inc/pic.bi"
+#include once "inc/tasks.bi"
 #include once "inc/video.bi"
 
 function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
@@ -14,6 +15,8 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
             video.cout("system halted.")
             asm cli
             asm hlt
+        case &h20
+            new_cpu = tasks.schedule(cpu)
         case &h30
             video.cout("The syscall-interrupt has been called.",video.endl)
         case else
