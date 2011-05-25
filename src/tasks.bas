@@ -1,10 +1,11 @@
 #include once "inc/tasks.bi"
+#include once "inc/pmm.bi"
 #include once "inc/cpu.bi"
 #include once "inc/video.bi"
 
 namespace tasks
-    dim shared stack_a (0 to 4095) as ubyte
-    dim shared stack_b (0 to 4095) as ubyte
+    dim shared stack_a as any ptr
+    dim shared stack_b as any ptr
     dim shared task_states (0 to 1) as cpu_state ptr
     dim shared current_task as integer = -1
     dim shared num_tasks as integer = 2
@@ -39,8 +40,10 @@ namespace tasks
     end function
     
     sub init_multitasking()
-        task_states(0) = init_task(@stack_a(0), @task_a)
-        task_states(1) = init_task(@stack_b(0), @task_b)
+        stack_a = pmm.alloc()
+        stack_b = pmm.alloc()
+        task_states(0) = init_task(stack_a, @task_a)
+        task_states(1) = init_task(stack_b, @task_b)
     end sub
     
     function schedule (cpu as cpu_state ptr) as cpu_state ptr
