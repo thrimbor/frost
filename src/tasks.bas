@@ -4,12 +4,6 @@
 #include once "inc/video.bi"
 
 namespace tasks
-    dim shared stack_a as any ptr
-    dim shared stack_b as any ptr
-    dim shared task_states (0 to 1) as cpu_state ptr
-    dim shared current_task as integer = -1
-    dim shared num_tasks as integer = 2
-    
     sub task_a ()
         do
             video.cout("A")
@@ -22,36 +16,46 @@ namespace tasks
         loop
     end sub
     
-    function init_task (stack as any ptr, entry as any ptr) as cpu_state ptr
-        dim cpustate as cpu_state ptr = stack
-        
-        cpustate->eax = 0
-        cpustate->ebx = 0
-        cpustate->ecx = 0
-        cpustate->edx = 0
-        cpustate->esi = 0
-        cpustate->edi = 0
-        cpustate->ebp = 0
-        cpustate->eip = cuint(entry)
-        cpustate->cs = &h08
-        cpustate->eflags = &h202
-        
-        return cpustate
-    end function
+    dim shared first_task as task_type ptr = 0
+    dim shared current_task as task_type ptr = 0
     
-    sub init_multitasking()
-        stack_a = pmm.alloc()
-        stack_b = pmm.alloc()
-        task_states(0) = init_task(stack_a, @task_a)
-        task_states(1) = init_task(stack_b, @task_b)
+    sub init_task (entry as any ptr)
+        dim stack as any ptr = pmm.alloc()
+        dim task as task_type ptr = pmm.alloc()
+        dim cpu as cpu_state ptr = stack
+        
+        cpu->eax = 0
+        cpu->ebx = 0
+        cpu->ecx = 0
+        cpu->edx = 0
+        cpu->esi = 0
+        cpu->edi = 0
+        cpu->ebp = 0
+        cpu->eip = cuint(entry)
+        cpu->cs = &h08
+        cpu->eflags = &h202
+        
+        task->cpu = cpu
+        
+        task->next_entry = first_task
+        first_task = task
+    end sub
+    
+    sub init_multitasking ()
+        init_task(@task_b)
+        init_task(@task_a)
     end sub
     
     function schedule (cpu as cpu_state ptr) as cpu_state ptr
-        if (current_task >= 0) then task_states(current_task) = cpu
+        if (not(current_task = 0)) then current_task->cpu = cpu
         
-        current_task += 1
-        current_task mod= num_tasks
+        if (current_task = 0) then
+            current_task = first_task
+        else
+            current_task = current_task->next_entry
+            if (current_task = 0) then current_task = first_task
+        end if
         
-        return task_states(current_task)
+        return current_task->cpu
     end function
 end namespace
