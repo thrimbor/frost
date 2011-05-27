@@ -4,6 +4,8 @@
 #include once "inc/tasks.bi"
 #include once "inc/video.bi"
 
+common shared tss_ptr as uinteger ptr
+
 function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     dim new_cpu as cpu_state ptr = cpu
     select case cpu->int_nr
@@ -17,6 +19,7 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
             asm hlt
         case &h20
             new_cpu = tasks.schedule(cpu)
+            tss_ptr[1] = cuint(new_cpu)+sizeof(cpu_state)
         case &h62
             video.cout("The syscall-interrupt has been called.",video.endl)
         case else

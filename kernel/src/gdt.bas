@@ -1,11 +1,17 @@
 #include once "inc/gdt.bi"
 #include once "inc/video.bi"
 
+common shared tss_ptr as uinteger ptr
+
 namespace gdt
     dim shared gdtp as gdt.table_descriptor
     dim shared table (0 to gdt.table_size) as gdt.segment_descriptor
+    dim tss (0 to 31) as uinteger
     
     sub init ()
+        '// initialize the tss-pointer and the ss0-entry of the tss
+        tss_ptr = @tss(0)
+        tss(2) = &h10
         '// first the RING-0 Code-Segment    
         gdt.set_entry(1, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_SEGMENT or FLAG_EXECUTABLE or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         '// now the RING-0 Data-Segment
@@ -13,7 +19,9 @@ namespace gdt
         '// the RING-3 Code-Segment
         gdt.set_entry(3, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_SEGMENT or FLAG_EXECUTABLE or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         '// the RING-3 Data-Segment
-        gdt.set_entry(4, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_SEGMENT or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
+        gdt.set_entry(4, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_SEGMENT or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
+        '// the tss
+        gdt.set_entry(5, cuint(tss_ptr), 32*4, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_TSS), 0)
         
         '// ok, fine so far, now we have to load the gdt
         '// calculate the size of the actual gdt (gdt + null-entry)        
@@ -31,6 +39,12 @@ namespace gdt
             mov ss, ax
             ljmp &h08:gdt_jmp
             gdt_jmp:
+        end asm
+        
+        '// now we load the task-register
+        asm
+            mov ax, &h28
+            ltr ax
         end asm
     end sub
     

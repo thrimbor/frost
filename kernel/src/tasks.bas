@@ -20,9 +20,10 @@ namespace tasks
     dim shared current_task as task_type ptr = 0
     
     sub init_task (entry as any ptr)
-        dim stack as any ptr = pmm.alloc()
+        dim kernelstack as any ptr = pmm.alloc()
+        dim userstack as any ptr = pmm.alloc()
         dim task as task_type ptr = pmm.alloc()
-        dim cpu as cpu_state ptr = stack
+        dim cpu as cpu_state ptr = (kernelstack+4096-sizeof(cpu_state))
         
         cpu->eax = 0
         cpu->ebx = 0
@@ -32,8 +33,10 @@ namespace tasks
         cpu->edi = 0
         cpu->ebp = 0
         cpu->eip = cuint(entry)
-        cpu->cs = &h08
-        cpu->eflags = &h202
+        cpu->esp = cuint(userstack)+4096
+        cpu->cs = &h18 or &h03
+        cpu->ss = &h20 or &h03
+        cpu->eflags = &h200
         
         task->cpu = cpu
         

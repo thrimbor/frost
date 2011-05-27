@@ -72,20 +72,21 @@ int_common:
     push ecx
     push ebx
     push eax
-    ;push ds
-    ;push es
-    ;push fs
-    ;push gs
     
     ; load the ring-0 segment-registers
-    ;mov ax, 0x10
-    ;mov dx, ax
-    ;mov es, ax
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
     
     ; now call the handler
     push esp            ; we push the address to the registers
     call HANDLE_INTERRUPT
     mov esp, eax        ; set the new stack address
+    
+    ; load the ring-3 segment-registers
+    mov ax, 0x23
+    mov ds, ax
+    mov es, ax
     
     ; restore the old state
     pop eax

@@ -13,7 +13,7 @@ namespace gdt
         base_high    as ubyte
     end type
     
-    const table_size = 4
+    const table_size = 5
     
     '// flags for the access-byte
     const FLAG_PRESENT          as ubyte = &h80  '// must be set for an active entry
@@ -26,6 +26,7 @@ namespace gdt
     const FLAG_DC               as ubyte = &h04
     const FLAG_RW               as ubyte = &h02  '// CS: read access, DS: write access
     const FLAG_ACCESSED         as ubyte = &h01  '// set by CPU. DO NOT USE!
+    const FLAG_TSS              as ubyte = &h09  '// tss is a bit special
     
     '// flags for the flags-byte
     const FLAG_GRANULARITY as ubyte = &h08 '// if set, size is in 4KB units
