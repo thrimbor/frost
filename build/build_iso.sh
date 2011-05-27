@@ -10,12 +10,14 @@ mkdir iso_tmp/system
 
 # now build the kernel
 cd ..
+cd kernel
 make clean
 make
+cd ..
 cd build
 
 # now copy the kernel
-cp ../frost.krn iso_tmp/system/
+cp ../kernel/frost.krn iso_tmp/system/
 
 # now prepare grub 2
 cd iso_tmp
