@@ -61,7 +61,7 @@ int_stub 46
 int_stub 47
 
 ; and the syscall-interrupt
-int_stub 48
+int_stub 98
 
 int_common:
     ; save the registers

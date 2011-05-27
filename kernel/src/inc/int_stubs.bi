@@ -42,4 +42,4 @@ declare sub int_stub_46 ()
 declare sub int_stub_47 ()
 
 '// and the syscall-interrupt
-declare sub int_stub_48 ()
+declare sub int_stub_98 ()

@@ -17,7 +17,7 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
             asm hlt
         case &h20
             new_cpu = tasks.schedule(cpu)
-        case &h30
+        case &h62
             video.cout("The syscall-interrupt has been called.",video.endl)
         case else
     end select
