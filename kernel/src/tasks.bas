@@ -19,6 +19,12 @@ namespace tasks
     dim shared first_task as task_type ptr = 0
     dim shared current_task as task_type ptr = 0
     
+    function generate_pid () as uinteger
+        static next_pid as uinteger = 0
+        next_pid += 1
+        return next_pid-1
+    end function
+    
     sub init_task (entry as any ptr)
         dim kernelstack as any ptr = pmm.alloc()
         dim userstack as any ptr = pmm.alloc()
@@ -39,6 +45,9 @@ namespace tasks
         cpu->eflags = &h200
         
         task->cpu = cpu
+        
+        '// give the task a pid
+        task->pid = generate_pid()
         
         task->next_entry = first_task
         first_task = task

@@ -7,6 +7,7 @@ namespace tasks
         next_entry as task_type ptr
     end type
     
+    declare function generate_pid () as uinteger
     declare sub init_task (entry as any ptr)
     declare sub init_multitasking()
     declare function schedule (cpu as cpu_state ptr) as cpu_state ptr
