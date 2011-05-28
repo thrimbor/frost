@@ -46,7 +46,7 @@ namespace idt
         idt.set_entry (&h2E, cuint(@int_stub_46), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h2F, cuint(@int_stub_47), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         
-        idt.set_entry (&h62, cuint(@int_stub_98), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
+        idt.set_entry (&h62, cuint(@int_stub_98), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_INTERRUPT_GATE_32))
         
         '// now we load the idt
         idt.idtp.limit = idt.table_size*8-1
