@@ -2,6 +2,7 @@
 #include once "inc/cpu.bi"
 #include once "inc/pic.bi"
 #include once "inc/tasks.bi"
+#include once "inc/syscall.bi"
 #include once "inc/video.bi"
 
 common shared tss_ptr as uinteger ptr
@@ -21,7 +22,13 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
             new_cpu = tasks.schedule(cpu)
             tss_ptr[1] = cuint(new_cpu)+sizeof(cpu_state)
         case &h62
-            video.cout("The syscall-interrupt has been called.",video.endl)
+            dim task as tasks.task_type ptr = tasks.get_current_task()
+            select case cpu->eax
+                case syscall.get_pid
+                    cpu->ebx = task->pid
+                case 666
+                    video.cout("The syscall-interrupt has been called.",video.endl)
+            end select
         case else
     end select
     

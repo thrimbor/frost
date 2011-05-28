@@ -5,14 +5,28 @@
 
 namespace tasks
     sub task_a ()
+        dim my_pid as uinteger
         do
-            video.cout("A")
+            asm
+                mov eax, 1
+                int &h62
+                mov [my_pid], ebx
+            end asm
+            video.cout(my_pid)
+            'video.cout("A")
         loop
     end sub
     
     sub task_b ()
+        dim my_pid as uinteger
         do
-            video.cout("B")
+            asm
+                mov eax, 1
+                int &h62
+                mov [my_pid], ebx
+            end asm
+            video.cout(my_pid)
+            'video.cout("B")
         loop
     end sub
     
@@ -69,5 +83,9 @@ namespace tasks
         end if
         
         return current_task->cpu
+    end function
+    
+    function get_current_task () as task_type ptr
+        return current_task
     end function
 end namespace
