@@ -12,4 +12,6 @@ namespace video
     declare sub clean ()
     declare sub set_color (fc as ubyte, bc as ubyte)
     declare sub remove_cursor ()
+    declare sub block_output ()
+    declare sub unblock_output ()
 end namespace

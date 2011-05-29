@@ -4,6 +4,7 @@ namespace video
     dim shared memory as byte ptr = cast(byte ptr, &hB8000)      '// pointer to video-memory
     dim shared cursor_pos as uinteger = 0                        '// the position of the cursor
     dim shared textColor as ubyte = 7                            '// the color of the text
+    dim shared be_silent as ubyte = 0
     
     '// todo:
     '//   - use memcopy instead. copying single bytes is inefficient.
@@ -38,6 +39,7 @@ namespace video
     end sub
     
     sub cout (outstr as zstring, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim zstr as byte ptr = cast(byte ptr, @outstr)
         dim counter as uinteger
         
@@ -50,6 +52,7 @@ namespace video
     end sub
     
     sub cout (number as uinteger, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim chars(1 to 10) as ubyte
         dim num as ubyte
         dim counter as uinteger = 10
@@ -70,6 +73,7 @@ namespace video
     end sub
     
     sub cout (number as integer, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim chars(1 to 10) as ubyte
         dim num as ubyte
         dim counter as uinteger = 10
@@ -101,6 +105,7 @@ namespace video
     end sub
     
     sub cout (number as ushort, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim chars(1 to 5) as ubyte
         dim num as ubyte
         dim counter as uinteger = 5
@@ -121,6 +126,7 @@ namespace video
     end sub
     
     sub cout (number as short, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim chars(1 to 5) as ubyte
         dim num as ubyte
         dim counter as uinteger = 5
@@ -152,6 +158,7 @@ namespace video
     end sub
     
     sub cout (number as ubyte, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim chars(1 to 3) as ubyte
         dim num as ubyte
         dim counter as uinteger = 3
@@ -172,6 +179,7 @@ namespace video
     end sub
     
     sub cout (number as byte, flag as ubyte = 0)
+        if (be_silent = 1) then return
         dim chars(1 to 3) as ubyte
         dim num as ubyte
         dim counter as uinteger = 3
@@ -203,6 +211,7 @@ namespace video
     end sub
     
     sub clean ()
+        if (be_silent = 1) then return
         dim clspos as uinteger                                     '// a variable to hold the position
         cursor_pos = 0                                             '// set the screenposition to zero
         
@@ -221,5 +230,13 @@ namespace video
         out(&h3D5,&h07)
         out(&h3D4,15)
         out(&h3D5,&hD0)
+    end sub
+    
+    sub block_output ()
+        be_silent = 1
+    end sub
+    
+    sub unblock_output ()
+        be_silent = 0
     end sub
 end namespace

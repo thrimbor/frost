@@ -9,6 +9,7 @@
 #include once "inc/pmm.bi"
 #include once "inc/tasks.bi"
 #include once "inc/video.bi"
+#include once "inc/zstring.bi"
 
 const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
 
@@ -34,6 +35,7 @@ end sub
 
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
+    if (z_instr(*cast(zstring ptr, mbinfo->cmdline), "-verbose") = 0) then video.block_output()
     video.remove_cursor()
     video.set_color(9,0)
     video.cout("FROST V2 alpha", video.endl)
@@ -60,6 +62,7 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout(pmm.get_free()/1024/1024)
     video.cout("MB",video.endl)
     tasks.init_multitasking()
+    video.unblock_output()
     asm sti
     do : loop
 end sub
