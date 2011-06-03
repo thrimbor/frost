@@ -12,7 +12,7 @@ namespace tasks
                 int &h62
                 mov [my_pid], ebx
             end asm
-            video.cout(my_pid)
+            'video.cout(my_pid)
             'video.cout("A")
         loop
     end sub
@@ -25,7 +25,7 @@ namespace tasks
                 int &h62
                 mov [my_pid], ebx
             end asm
-            video.cout(my_pid)
+            'video.cout(my_pid)
             'video.cout("B")
         loop
     end sub
@@ -62,6 +62,10 @@ namespace tasks
         
         '// give the task a pid
         task->pid = generate_pid()
+        
+        '// now the task needs a page-directory
+        task->page_directory = pmm.alloc()
+        pmm.clean(task->page_directory)
         
         task->next_entry = first_task
         first_task = task

@@ -8,6 +8,7 @@
 #include once "inc/pit.bi"
 #include once "inc/pmm.bi"
 #include once "inc/tasks.bi"
+#include once "inc/paging.bi"
 #include once "inc/video.bi"
 #include once "inc/zstring.bi"
 
@@ -62,7 +63,10 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout(pmm.get_free()/1024/1024)
     video.cout("MB",video.endl)
     tasks.init_multitasking()
+    video.cout("Initializing paging... ")
+    paging.init()
+    video.cout("done.",video.endl)
     video.unblock_output()
-    asm sti
+    'asm sti
     do : loop
 end sub

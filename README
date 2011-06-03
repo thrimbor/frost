@@ -41,7 +41,8 @@ BUILDING ON WINDOWS:
 
 It _should_ be posssible to compile FROST on Windows although we do not
 officially support it. You will definitively need a cross-compiling version
-of make, gas and ld.
+of gas and ld and you will need to adjust the makefile and maybe pass additional
+parameters to fbc.
 
 
 DIRECTORY:

@@ -4,6 +4,7 @@ namespace tasks
     type task_type
         pid as uinteger
         cpu as any ptr
+        page_directory as uinteger ptr
         rpc_handler as any ptr
         next_entry as task_type ptr
     end type

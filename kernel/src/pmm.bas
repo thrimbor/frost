@@ -103,6 +103,12 @@ namespace pmm
         free_mem -= 4096
     end sub
     
+    sub clean (page as uinteger ptr)
+        for counter as ushort = 0 to 1023
+            page[counter] = 0
+        next
+    end sub
+    
     function get_total () as uinteger
         return total_mem
     end function
