@@ -92,4 +92,4 @@ namespace elf32
         p_flags as Elf32_Word                      '// flags (combination of constants above)
         p_align as Elf32_Word                      '// alignment. if zero or one, then no alignment is needed, otherwise the alignment has to be a power of two
     end type
-end namespacce
+end namespace

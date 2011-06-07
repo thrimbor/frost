@@ -62,11 +62,13 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.cout("free RAM: ")
     video.cout(pmm.get_free()/1024/1024)
     video.cout("MB",video.endl)
-    tasks.init_multitasking()
+    video.cout("loading modules... ")
+    tasks.create_tasks_from_mb(mbinfo)
+    video.cout("done.",video.endl)
     video.cout("Initializing paging... ")
     paging.init()
     video.cout("done.",video.endl)
     video.unblock_output()
-    'asm sti
+    asm sti
     do : loop
 end sub

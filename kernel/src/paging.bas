@@ -8,8 +8,8 @@ namespace paging
         kernel_context = pmm.alloc()
         pmm.clean(kernel_context)
         
-        for counter as uinteger = 0 to 20*1024*1024 step 4096
-            map_page(kernel_context, counter, counter, (FLAG_PRESENT or FLAG_WRITE))
+        for counter as uinteger = 0 to 63*1024*1024 step 4096
+            map_page(kernel_context, counter, counter, (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE))
         next
         
         activate_directory(kernel_context)
@@ -29,7 +29,7 @@ namespace paging
         if (page_directory[pd_index] = 0) then
             page_directory[pd_index] = cuint(pmm.alloc())
             pmm.clean(cast(any ptr, page_directory[pd_index]))
-            page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE)
+            page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
         end if
         
         page_table = cast(uinteger ptr, (page_directory[pd_index] and &hFFFFF000))
@@ -42,6 +42,53 @@ namespace paging
         
         return -1
     end function
+    
+    function get_p_addr (page_directory as uinteger ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
+        dim pd_index as uinteger = (v_addr shr 22)
+        dim pt_index as uinteger = (v_addr shr 12) and &h3FF
+        dim page_table as uinteger ptr
+        
+        if (page_directory[pd_index] = 0) then
+            if (reserve_if_na = 1) then
+                page_directory[pd_index] = cuint(pmm.alloc())
+                pmm.clean(cast(any ptr, page_directory[pd_index]))
+                page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
+            else
+                return 0
+            end if
+        end if
+        
+        page_table = cast(uinteger ptr, (page_directory[pd_index] and &hFFFFF000))
+        
+        if (page_table[pt_index] = 0) then
+            if (reserve_if_na = 1) then
+                page_table[pt_index] = cuint(pmm.alloc())
+                pmm.clean(cast(any ptr, page_table[pt_index]))
+                page_table[pt_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
+            else
+                return 0
+            end if
+        end if
+        
+        return ((page_table[pt_index] and &hFFFFF000) or (v_addr and &hFFF))
+    end function
+    
+    sub copy_to_context (page_directory as uinteger ptr, p_start as uinteger, v_dest as uinteger, size as uinteger)
+        dim bytes_left as uinteger = size
+        dim size_for_this_page as uinteger
+        dim p_addr as uinteger = p_start
+        dim p_v_addr as uinteger
+        dim v_addr as uinteger = v_dest
+        
+        while (bytes_left > 0)
+            p_v_addr = get_p_addr(page_directory, v_addr, 1)
+            size_for_this_page = ((v_addr+4096) and &hFFF) - v_addr
+            pmm.memcpy(p_v_addr, p_addr, size_for_this_page)
+            bytes_left -= size_for_this_page
+            p_addr += size_for_this_page
+            v_addr += size_for_this_page
+        wend
+    end sub
     
     sub activate_directory (page_directory as uinteger ptr)
         asm

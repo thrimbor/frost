@@ -19,6 +19,8 @@ cd build
 # now copy the kernel
 cp ../kernel/frost.krn iso_tmp/system/
 
+cp ../test1.elf iso_tmp/system
+
 # now prepare grub 2
 cd iso_tmp
 cd grub

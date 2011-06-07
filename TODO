@@ -1,5 +1,5 @@
-- a string search algorithm (naive string search) to parse the kernel's cmdline
-- elf-parsing
+- a flexible function to copy data into an address space which is not active (done, needs testing
+- copy the ph-entries from the elf-file to the address-space of the process
+- finish elf loading
 - some more syscalls
 - rpc
-- paging

@@ -109,6 +109,26 @@ namespace pmm
         next
     end sub
     
+    sub memcpy (destination as uinteger, source as uinteger, size as uinteger)
+        asm
+            mov ecx, [size]
+            mov edi, [destination]
+            mov esi, [source]
+            
+            rep movsb
+        end asm
+    end sub
+    
+    sub memset (destination as uinteger, value as ubyte, size as uinteger)
+        asm
+            mov ecx, [size]
+            mov edi, [destination]
+            mov al, [value]
+            
+            rep stosb
+        end asm
+    end sub
+    
     function get_total () as uinteger
         return total_mem
     end function
