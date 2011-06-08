@@ -4,7 +4,7 @@
 namespace paging
     dim shared kernel_context as uinteger ptr
     
-    sub init
+    sub init ()
         kernel_context = pmm.alloc()
         pmm.clean(kernel_context)
         
