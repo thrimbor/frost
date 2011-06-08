@@ -14,12 +14,21 @@ cd kernel
 make clean
 make
 cd ..
+
+# build the init-process
+cd init
+make clean
+make
+cd ..
+
+
 cd build
 
 # now copy the kernel
 cp ../kernel/frost.krn iso_tmp/system/
 
-cp ../test1.elf iso_tmp/system
+# copy the init-process
+cp ../init/init.elf iso_tmp/system/
 
 # now prepare grub 2
 cd iso_tmp
