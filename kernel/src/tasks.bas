@@ -45,7 +45,7 @@ namespace tasks
         
         '// now the task needs a page-directory
         task->page_directory = pmm.alloc()
-        pmm.clean(task->page_directory)
+        pmm.memset(cuint(task->page_directory), 0, 4096)
         
         '// map the kernel to every process
         dim kernel_addr as uinteger = cuint(@kernel_start)

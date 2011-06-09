@@ -6,7 +6,7 @@ namespace paging
     
     sub init ()
         kernel_context = pmm.alloc()
-        pmm.clean(kernel_context)
+        pmm.memset(cuint(kernel_context), 0, 4096)
         
         for counter as uinteger = 0 to 63*1024*1024 step 4096
             map_page(kernel_context, counter, counter, (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE))
@@ -28,7 +28,7 @@ namespace paging
         
         if (page_directory[pd_index] = 0) then
             page_directory[pd_index] = cuint(pmm.alloc())
-            pmm.clean(cast(any ptr, page_directory[pd_index]))
+            pmm.memset(page_directory[pd_index], 0, 4096)
             page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
         end if
         
@@ -51,7 +51,7 @@ namespace paging
         if (page_directory[pd_index] = 0) then
             if (reserve_if_na = 1) then
                 page_directory[pd_index] = cuint(pmm.alloc())
-                pmm.clean(cast(any ptr, page_directory[pd_index]))
+                pmm.memset(page_directory[pd_index], 0, 4096)
                 page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
             else
                 return 0
@@ -63,7 +63,7 @@ namespace paging
         if (page_table[pt_index] = 0) then
             if (reserve_if_na = 1) then
                 page_table[pt_index] = cuint(pmm.alloc())
-                pmm.clean(cast(any ptr, page_table[pt_index]))
+                pmm.memset(page_table[pt_index], 0, 4096)
                 page_table[pt_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
             else
                 return 0

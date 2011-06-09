@@ -31,8 +31,9 @@ DEPENDENCIES:
 
 BUILDING:
 
-To build FROST, you can type "make" in the main directory. You will then
+To build the kernel, you can type "make" in the main directory. You will then
 get a file called "frost.krn" which is the kernel.
+Building the init-process is very similar.
 If you want to get a full iso with grub2 and a menu, type "./build_iso.sh" in
 the "build"-directory. You will then get a file called "frost.iso" which is
 the iso-image.
@@ -47,6 +48,6 @@ parameters to fbc.
 
 DIRECTORY:
 
-./src              The source of the kernel
-./source/include   The headers
-./build            Contains the build-scripts and the grub.cfg
+./kernel/src              The source of the kernel
+./kernel/source/include   The headers
+./build                   Contains the build-scripts and the grub.cfg

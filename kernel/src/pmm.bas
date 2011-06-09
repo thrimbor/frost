@@ -103,12 +103,6 @@ namespace pmm
         free_mem -= 4096
     end sub
     
-    sub clean (page as uinteger ptr)
-        for counter as ushort = 0 to 1023
-            page[counter] = 0
-        next
-    end sub
-    
     sub memcpy (destination as uinteger, source as uinteger, size as uinteger)
         asm
             mov ecx, [size]
