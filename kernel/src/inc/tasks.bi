@@ -3,11 +3,14 @@
 #include once "multiboot.bi"
 
 namespace tasks
+    const MAX_TICKS as uinteger = 50
     type task_type
         pid as uinteger
         cpu as any ptr
         page_directory as uinteger ptr
         rpc_handler as any ptr
+        ticks_left as uinteger
+        ticks_max as uinteger
         next_entry as task_type ptr
     end type
     

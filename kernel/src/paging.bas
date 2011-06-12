@@ -12,12 +12,18 @@ namespace paging
             map_page(kernel_context, counter, counter, (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE))
         next
         
+        /'
+        ' map the kernel
+        map_page_range(kernel_context, cuint(@kernel_start), cuint(@kernel_start), ((cuint(@kernel_end)-cuint(@kernel_start))/4096), FLAG_PRESENT or FLAG_WRITE)
+        ' map the video memory
+        map_page_range(kernel_context, &hB8000, &hB8000, 1, (FLAG_PRESENT or FLAG_WRITE)
+        '/
         activate_directory(kernel_context)
         
         activate()
     end sub
     
-    function map_page (page_directory as uinteger ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as byte
+    function map_page (page_directory as uinteger ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
         dim pd_index as uinteger = (virtual shr 22)
         dim pt_index as uinteger = (virtual shr 12) and &h3FF
         dim page_table as uinteger ptr
@@ -39,6 +45,19 @@ namespace paging
         asm
             invlpg [virtual]
         end asm
+        
+        return -1
+    end function
+    
+    function map_page_range (page_directory as uinteger ptr, v_addr as uinteger, p_addr as uinteger, num_pages as uinteger, flags as uinteger) as integer
+        dim counter as uinteger
+        dim v_dest as uinteger = v_addr
+        dim p_src as uinteger = p_addr
+        while (counter < num_pages)
+            if (not(map_page(page_directory, v_dest, p_src, flags))) then
+                return 0
+            end if
+        wend
         
         return -1
     end function

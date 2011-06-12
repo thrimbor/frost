@@ -55,6 +55,10 @@ namespace tasks
             kernel_addr += 4096
         wend
         
+        '// give the process some ticks
+        task->ticks_max = MAX_TICKS
+        task->ticks_left = MAX_TICKS
+        
         task->next_entry = first_task
         first_task = task
         
@@ -67,8 +71,12 @@ namespace tasks
         if (current_task = 0) then
             current_task = first_task
         else
-            current_task = current_task->next_entry
-            if (current_task = 0) then current_task = first_task
+            current_task->ticks_left -= 1
+            if (current_task->ticks_left = 0) then
+                current_task->ticks_left = current_task->ticks_max
+                current_task = current_task->next_entry
+                if (current_task = 0) then current_task = first_task
+            end if
         end if
         
         return current_task->cpu
