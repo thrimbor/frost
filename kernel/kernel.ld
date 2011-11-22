@@ -9,7 +9,7 @@ SECTIONS
 	 *
 	 */
 	. = 0x100000;
-	kernel_start = .;
+	kernel_start_label = .;
 	
 	/*
 	 * The multiboot-header has to be in the first 8 KB,
@@ -30,5 +30,5 @@ SECTIONS
 	}
 	
 	.= ALIGN(4096);
-	kernel_end = .;
+	kernel_end_label = .;
 }

@@ -1,4 +1,4 @@
-'// this code is a bit strange, but it's the only comfortable way to use in/out in FreeBASIC without the rtlib (which can't be used in a kernel)
+'' this code is a bit strange, but it's the only comfortable way to use in/out in FreeBASIC without the rtlib (which can't be used in a kernel)
 
 sub _fb_Out cdecl alias "fb_Out" (port as ushort, value as ubyte)
     asm

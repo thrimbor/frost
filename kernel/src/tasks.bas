@@ -1,13 +1,10 @@
-#include once "inc/tasks.bi"
-#include once "inc/pmm.bi"
-#include once "inc/cpu.bi"
-#include once "inc/paging.bi"
-#include once "inc/elf32.bi"
-#include once "inc/video.bi"
-
-'// these two symbols are provided by our linkerscript. do not access them directly, they don't have variables behind them!
-extern kernel_start alias "kernel_start" as byte
-extern kernel_end   alias "kernel_end"   as byte
+#include once "tasks.bi"
+#include once "pmm.bi"
+#include once "cpu.bi"
+#include once "vmm.bi"
+#include once "elf32.bi"
+#include once "video.bi"
+#include once "kernel.bi"
 
 namespace tasks
     dim shared first_task as task_type ptr = 0
@@ -40,22 +37,21 @@ namespace tasks
         
         task->cpu = cpu
         
-        '// give the task a pid
+        '' give the task a pid
         task->pid = generate_pid()
         
-        '// now the task needs a page-directory
-        task->page_directory = pmm.alloc()
-        pmm.memset(cuint(task->page_directory), 0, 4096)
+        '' now the task needs a page-directory
+        task->page_directory = vmm.create_context()
         
-        '// map the kernel to every process
-        dim kernel_addr as uinteger = cuint(@kernel_start)
-        dim kernel_end_addr as uinteger = cuint(@kernel_end)
+        '' map the kernel to every process
+        dim kernel_addr as uinteger = cuint(kernel_start)
+        dim kernel_end_addr as uinteger = cuint(kernel_end)
         while (kernel_addr < kernel_end_addr)
-            paging.map_page(task->page_directory, kernel_addr, kernel_addr, (paging.FLAG_PRESENT or paging.FLAG_USERSPACE))
+            vmm.map_page(task->page_directory, kernel_addr, kernel_addr, (vmm.FLAG_PRESENT or vmm.FLAG_USERSPACE))
             kernel_addr += 4096
         wend
         
-        '// give the process some ticks
+        '' give the process some ticks
         task->ticks_max = MAX_TICKS
         task->ticks_left = MAX_TICKS
         
@@ -97,12 +93,19 @@ namespace tasks
     end function
     
     sub init_elf (image as any ptr)
+#if 0
         dim task as task_type ptr
+        dim task_pd as uinteger ptr
+        dim bytes_on_first_page as uinteger
+        dim offset_on_first_page as uinteger
+        dim cur_page as byte ptr
+        dim pages as uiteger
         dim elf_header as elf32.Elf32_Ehdr ptr = image
         if (check_elf_header(elf_header) > 0) then
-            video.cout("error in the elf-header",video.endl)
+            video.cout(!"error in the elf-header\n")
             return
         end if
+        
         
         dim ph_entry as elf32.Elf32_Phdr ptr = cast(any ptr, cuint(image) + elf_header->e_phoff)
         for counter as uinteger = 1 to elf_header->e_phnum
@@ -110,10 +113,38 @@ namespace tasks
                 ph_entry = cast(any ptr, cuint(ph_entry) + elf_header->e_phentsize)
                 continue for
             end if
-            pmm.memcpy(ph_entry->p_vaddr, (cuint(image)+ph_entry->p_offset), ph_entry->p_filesz)
+            
+            offset_on_first_page = (ph_entry->p_vaddr mod 4096)
+            if (ph_entry->p_filesz > (4096 - offset_on_first_page)) then
+                bytes_on_first_page = 4096 - offset_on_first_page
+            else
+                bytes_on_first_page = ph_entry->p_filesz
+            end if
+            
+            pages = 1 + ((ph_entry->p_offset + ph_entry->p_memsz) / 4096) - (ph_entry->p_offset / 4096)
+            
+            video.cout("We have to map ")
+            video.cout(pages)
+            video.cout(!"pages\n")
+            
+            base = (ph_entry->p_vaddr / 4096) * 4096
+            
+            '' map the pages into the adress-space of the process
+            for counter as uinteger = 1 to pages
+                cur_page = pmm.alloc()
+                vmm.map_page(task_pd, (base + counter * 4096), cur_page, (vmm.FLAG_PRESENT or vmm.FLAG_WRITE or vmm.FLAG_USERSPACE))
+            next
+            
+            '' copy the stuff
+            '' map the first page into the kernel address space and copy the bytes
+            '' tyndur code: modules.c:299
+            
+            
+            'pmm.memcpy(ph_entry->p_vaddr, (cuint(image)+ph_entry->p_offset), ph_entry->p_filesz)
         next
         
         task = init_task(cast(any ptr, elf_header->e_entry))
+#endif
     end sub
     
     sub create_tasks_from_mb (mbinfo as multiboot_info ptr)

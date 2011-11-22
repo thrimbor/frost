@@ -1,4 +1,4 @@
-'// multiboot.bi - translated by darkinsanity for The FROST Project
+'' multiboot.bi - translated by darkinsanity for The FROST Project
     /'  multiboot.h - Multiboot header file.  '/
     /'  Copyright (C) 1999,2003,2007,2008,2009,2010  Free Software Foundation, Inc.
      '

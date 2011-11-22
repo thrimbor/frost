@@ -1,33 +1,27 @@
-#include once "inc/int_stubs.bi"
-#include once "inc/cpu.bi"
-#include once "inc/pic.bi"
-#include once "inc/tasks.bi"
-#include once "inc/syscall.bi"
-#include once "inc/panic.bi"
-#include once "inc/video.bi"
+#include once "kernel.bi"
+#include once "int_stubs.bi"
+#include once "cpu.bi"
+#include once "pic.bi"
+#include once "tasks.bi"
+#include once "syscall.bi"
+#include once "panic.bi"
+#include once "video.bi"
 
-common shared tss_ptr as uinteger ptr
-
+'' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     dim new_cpu as cpu_state ptr = cpu
     select case cpu->int_nr
-        case 0 to &h13
+        case 0 to &h13                                     '' check for an exception
             panic.show(1, cpu)
-        case &h20
+        case &h20                                          '' timer IRQ, so we switch tasks
             new_cpu = tasks.schedule(cpu)
             tss_ptr[1] = cuint(new_cpu)+sizeof(cpu_state)
-        case &h62
-            dim task as tasks.task_type ptr = tasks.get_current_task()
-            select case cpu->eax
-                case syscall.get_pid
-                    cpu->ebx = task->pid
-                case 666
-                    video.cout("The syscall-interrupt has been called.",video.endl)
-            end select
+        case &h62                                          '' syscall, so we call the syscall-handler
+            syscall.handler(cpu)
         case else
     end select
     
-    '// important: if the int is an irq, send the EOI
+    '' important: if the int is an IRQ, send the EOI
     if ((cpu->int_nr > &h1F) and (cpu->int_nr < &h30)) then
         pic.send_eoi(cpu->int_nr - &h20)
     end if

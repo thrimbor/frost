@@ -1,32 +1,33 @@
-#include once "inc/paging.bi"
-#include once "inc/pmm.bi"
+#include once "vmm.bi"
+#include once "pmm.bi"
+#include once "kernel.bi"
 
-namespace paging
-    dim shared kernel_context as uinteger ptr
+namespace vmm
+    dim shared kernel_context as context
     
     sub init ()
-        kernel_context = pmm.alloc()
-        pmm.memset(cuint(kernel_context), 0, 4096)
+        kernel_context = create_context()
         
-        for counter as uinteger = 0 to 63*1024*1024 step 4096
-            map_page(kernel_context, counter, counter, (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE))
-        next
+        '' map the kernel
+        map_range(kernel_context, cuint(kernel_start), cuint(kernel_start), cuint(kernel_end), (FLAG_PRESENT or FLAG_WRITE))
         
-        /'
-        ' map the kernel
-        map_page_range(kernel_context, cuint(@kernel_start), cuint(@kernel_start), ((cuint(@kernel_end)-cuint(@kernel_start))/4096), FLAG_PRESENT or FLAG_WRITE)
-        ' map the video memory
-        map_page_range(kernel_context, &hB8000, &hB8000, 1, (FLAG_PRESENT or FLAG_WRITE)
-        '/
-        activate_directory(kernel_context)
+        '' map the video memory
+        map_page(kernel_context, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))
         
+        activate_context(kernel_context)
         activate()
     end sub
     
-    function map_page (page_directory as uinteger ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
+    function create_context () as context
+        dim tcontext as context = pmm.alloc()
+        pmm.memset(cuint(tcontext),0,4096)
+        return tcontext
+    end function
+    
+    function map_page (page_directory as context, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
         dim pd_index as uinteger = (virtual shr 22)
         dim pt_index as uinteger = (virtual shr 12) and &h3FF
-        dim page_table as uinteger ptr
+        dim page_table as context
         
         if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
             return 0
@@ -49,23 +50,24 @@ namespace paging
         return -1
     end function
     
-    function map_page_range (page_directory as uinteger ptr, v_addr as uinteger, p_addr as uinteger, num_pages as uinteger, flags as uinteger) as integer
-        dim counter as uinteger
-        dim v_dest as uinteger = v_addr
-        dim p_src as uinteger = p_addr
-        while (counter < num_pages)
-            if (not(map_page(page_directory, v_dest, p_src, flags))) then
+    function map_range (page_directory as context, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
+        dim v_dest as uinteger = v_addr-(v_addr mod 4096)
+        dim p_src as uinteger = p_start-(p_start mod 4096)
+        while (p_src < p_end)
+            if ((map_page(page_directory, v_dest, p_src, flags)=0)) then
                 return 0
             end if
+            p_src += 4096
+            v_dest += 4096
         wend
         
         return -1
     end function
     
-    function get_p_addr (page_directory as uinteger ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
+    function get_p_addr (page_directory as context, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
         dim pd_index as uinteger = (v_addr shr 22)
         dim pt_index as uinteger = (v_addr shr 12) and &h3FF
-        dim page_table as uinteger ptr
+        dim page_table as context
         
         if (page_directory[pd_index] = 0) then
             if (reserve_if_na = 1) then
@@ -92,7 +94,7 @@ namespace paging
         return ((page_table[pt_index] and &hFFFFF000) or (v_addr and &hFFF))
     end function
     
-    sub copy_to_context (page_directory as uinteger ptr, p_start as uinteger, v_dest as uinteger, size as uinteger)
+    sub copy_to_context (page_directory as context, p_start as uinteger, v_dest as uinteger, size as uinteger)
         dim bytes_left as uinteger = size
         dim size_for_this_page as uinteger
         dim p_addr as uinteger = p_start
@@ -109,7 +111,7 @@ namespace paging
         wend
     end sub
     
-    sub activate_directory (page_directory as uinteger ptr)
+    sub activate_context (page_directory as context)
         asm
             mov eax, [page_directory]
             mov cr3, eax

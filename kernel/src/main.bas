@@ -1,74 +1,80 @@
-'// FROST 2 alpha version
-'// Copyright (c) 2011 by darkinsanity
+'' FROST 2 alpha version
+'' Copyright (c) 2011 by darkinsanity
 
-#include once "inc/multiboot.bi"
-#include once "inc/gdt.bi"
-#include once "inc/idt.bi"
-#include once "inc/pic.bi"
-#include once "inc/pit.bi"
-#include once "inc/pmm.bi"
-#include once "inc/tasks.bi"
-#include once "inc/paging.bi"
-#include once "inc/video.bi"
-#include once "inc/zstring.bi"
+#include once "multiboot.bi"
+#include once "gdt.bi"
+#include once "idt.bi"
+#include once "pic.bi"
+#include once "pit.bi"
+#include once "pmm.bi"
+#include once "tasks.bi"
+#include once "vmm.bi"
+#include once "debug.bi"
+#include once "panic.bi"
+#include once "video.bi"
+#include once "zstring.bi"
 
-const mb_flags = MULTIBOOT_PAGE_ALIGN or MULTIBOOT_MEMORY_INFO
-
-sub mb_header ()
-    asm
-        .section multiboot                      '// an own section for the multiboot-header
-        .align 4
-        .int MULTIBOOT_HEADER_MAGIC             '// first the magic-number
-        .int mb_flags                           '// then the flags
-        .int -MULTIBOOT_HEADER_MAGIC-mb_flags   '// and last the checksum
-        .section .text
-        
-        .global _start
-        _start:
-            cli
-            push ebx
-            push eax
-            call MAIN
-            hlt
-    end asm
-end sub
-
-
+'' this sub really is the main function of the kernel.
+'' it is called by start.asm after setting up the stack.
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
-    if (z_instr(*cast(zstring ptr, mbinfo->cmdline), "-verbose") = 0) then video.block_output()
     video.remove_cursor()
+    
+    if (mbinfo->flags and MULTIBOOT_INFO_CMDLINE) then                  '' we just check for the cmdline here
+        dim k_cmd as zstring ptr = cast(zstring ptr, mbinfo->cmdline)
+        
+        if (z_instr(*k_cmd, "-verbose") > 0) then                       '' and now we parse it
+            debug.set_loglevel(0)
+        else
+            debug.set_loglevel(2)
+        end if
+        
+        if (z_instr(*k_cmd, "-no-clear-on-panic") > 0) then
+            panic.set_clear_on_panic(0)
+        end if
+    end if
+    
     video.set_color(9,0)
-    video.cout("FROST V2 alpha", video.endl)
+    debug.wlog(debug.INFO, !"FROST V2 alpha\n")
     video.set_color(7,0)
-    video.cout("name of the bootloader: ")
-    video.cout(*cast(zstring ptr, mbinfo->boot_loader_name), video.endl)
-    video.cout("cmdline: ")
-    video.cout(*cast(zstring ptr, mbinfo->cmdline), video.endl)
-    video.cout("", video.endl)
+    debug.wlog(debug.INFO, "name of the bootloader: ")
+    debug.wlog(debug.INFO, *cast(zstring ptr, mbinfo->boot_loader_name))
+    debug.wlog(debug.INFO, !"\ncmdline: ")
+    debug.wlog(debug.INFO, *cast(zstring ptr, mbinfo->cmdline))
+    debug.wlog(debug.INFO, !"\n")
+    
     gdt.init()
-    video.cout("gdt loaded", video.endl)
+    debug.wlog(debug.INFO, !"gdt loaded\n")
+    
     pic.init()
-    video.cout("pic initialized", video.endl)
+    debug.wlog(debug.INFO, !"pic initialized\n")
+    
     idt.init()
-    video.cout("idt loaded", video.endl)
+    debug.wlog(debug.INFO, !"idt loaded\n")
+    
     pit.set_frequency(100)
-    video.cout("pit initialized", video.endl)
+    debug.wlog(debug.INFO, !"pit initialized\n")
+    
     pmm.init(mbinfo)
-    video.cout("physical memory manager initialized", video.endl)
-    video.cout("total RAM: ")
-    video.cout(pmm.get_total()/1024/1024)
-    video.cout("MB",video.endl)
-    video.cout("free RAM: ")
-    video.cout(pmm.get_free()/1024/1024)
-    video.cout("MB",video.endl)
-    video.cout("loading modules... ")
+    debug.wlog(debug.INFO, !"physical memory manager initialized\n")
+    debug.wlog(debug.INFO, "total RAM: ")
+    debug.wlog(debug.INFO, cuint(pmm.get_total()/1024/1024))
+    debug.wlog(debug.INFO, !"MB\n")
+    debug.wlog(debug.INFO, "free RAM: ")
+    debug.wlog(debug.INFO, cuint(pmm.get_free()/1024/1024))
+    debug.wlog(debug.INFO, !"MB\n")
+    
+    debug.wlog(debug.INFO, "loading modules... ")
     tasks.create_tasks_from_mb(mbinfo)
-    video.cout("done.",video.endl)
-    video.cout("Initializing paging... ")
-    paging.init()
-    video.cout("done.",video.endl)
-    video.unblock_output()
+    debug.wlog(debug.INFO, !"done.\n")
+    
+    debug.wlog(debug.INFO, "Initializing paging... ")
+    vmm.init()
+    debug.wlog(debug.INFO, !"it worked. babamm.\n")
+    asm mov eax, 42
+    asm int &h62
+    asm hlt
+    debug.wlog(debug.INFO, !"done.\n")
     asm sti
     do : loop
 end sub

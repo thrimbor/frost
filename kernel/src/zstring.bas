@@ -16,7 +16,7 @@ function z_instr (text as zstring, pattern as zstring) as uinteger
     
     if (len_text < len_pattern) then return 0
     
-    for i as uinteger = 0 to len_text-len_pattern-1
+    for i as uinteger = 0 to len_text-len_pattern
         is_instr = 1
         for x as uinteger = 0 to len_pattern-1
             if (not(text_ptr[i+x] = pattern_ptr[x])) then is_instr = 0

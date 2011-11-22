@@ -1,12 +1,13 @@
-#include once "inc/idt.bi"
-#include once "inc/int_stubs.bi"
+#include once "idt.bi"
+#include once "int_stubs.bi"
 
 namespace idt
     dim shared idtp as idt.table_descriptor
     dim shared table (0 to idt.table_size-1) as idt.gate_descriptor
     
+    '' this sub sets up and loads an IDT for exceptions, IRQs and the syscall-interrupt.
     sub init ()
-'// register the handlers for the exceptions
+        '' register the handlers for the exceptions
         idt.set_entry (&h00, cuint(@int_stub_0), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h01, cuint(@int_stub_1), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h02, cuint(@int_stub_2), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
@@ -26,9 +27,9 @@ namespace idt
         idt.set_entry (&h10, cuint(@int_stub_16), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h11, cuint(@int_stub_17), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h12, cuint(@int_stub_18), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
-        '// 19-31 are reserved
+        '' 19-31 are reserved
         
-        '// now the IRQ's
+        '' now the IRQ's
         idt.set_entry (&h20, cuint(@int_stub_32), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h21, cuint(@int_stub_33), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h22, cuint(@int_stub_34), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
@@ -46,14 +47,17 @@ namespace idt
         idt.set_entry (&h2E, cuint(@int_stub_46), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h2F, cuint(@int_stub_47), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         
+        '' and our syscall-interrupt
         idt.set_entry (&h62, cuint(@int_stub_98), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_INTERRUPT_GATE_32))
         
-        '// now we load the idt
+        '' now we load the idt
         idt.idtp.limit = idt.table_size*8-1
         idt.idtp.base  = cuint(@idt.table(0))
         asm lidt [idt.idtp]
     end sub
     
+    
+    '' this sub is just a helper function to put the passed arguments in the right place of an IDT-entry
     sub set_entry (i as ushort, offset as uinteger, selector as ushort, accessbyte as ubyte)
         idt.table(i).offset_low  = loword(offset)
         idt.table(i).offset_high = hiword(offset)

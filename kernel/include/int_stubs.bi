@@ -2,7 +2,7 @@
 
 declare function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
 
-'// here are all stubs:
+'' here are all stubs:
 declare sub int_stub_0 ()
 declare sub int_stub_1 ()
 declare sub int_stub_2 ()
@@ -23,7 +23,7 @@ declare sub int_stub_16 ()
 declare sub int_stub_17 ()
 declare sub int_stub_18 ()
 
-'// now the irq's
+'' now the irq's
 declare sub int_stub_32 ()
 declare sub int_stub_33 ()
 declare sub int_stub_34 ()
@@ -41,5 +41,5 @@ declare sub int_stub_45 ()
 declare sub int_stub_46 ()
 declare sub int_stub_47 ()
 
-'// and the syscall-interrupt
+'' and the syscall-interrupt
 declare sub int_stub_98 ()

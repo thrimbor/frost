@@ -1,26 +1,23 @@
-#include once "inc/pmm.bi"
-#include once "inc/multiboot.bi"
-
-'// these two symbols are provided by our linkerscript. do not access them directly, they don't have variables behind them!
-extern kernel_start alias "kernel_start" as byte
-extern kernel_end   alias "kernel_end"   as byte
+#include once "pmm.bi"
+#include once "multiboot.bi"
+#include once "kernel.bi"
 
 namespace pmm
-    '// our memory bitmap. bit=0 : page used; bit=1 : page free
+    '' our memory bitmap. bit=0 : page used; bit=1 : page free
     dim shared bitmap (0 to pmm.bitmap_size-1) as uinteger
-    '// the amount of free memory
+    '' the amount of free memory
     dim shared free_mem as uinteger = 0
     dim shared total_mem as uinteger = 0
     
     sub init (mbinfo as multiboot_info ptr)
-        '// this sub will take 3 steps:
-        '// 1. mark the whole memory as used
-        '// 2. free the memory marked as free in the memory-map
-        '// 3. mark the whole memory used by the kernel as used
+        '' this sub will take 3 steps:
+        '' 1. mark the whole memory as used
+        '' 2. free the memory marked as free in the memory-map
+        '' 3. mark the whole memory used by the kernel as used
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
         dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
         
-        '// free the memory listed in the memory-map
+        '' free the memory listed in the memory-map
         while (mmap < mmap_end)
             total_mem += mmap->len
             if (mmap->type = MULTIBOOT_MEMORY_AVAILABLE) then
@@ -32,19 +29,19 @@ namespace pmm
                     addr += 4096
                 wend
             end if
-            '// go to the next entry of the map
+            '' go to the next entry of the map
             mmap += 1
         wend
         
-        '// mark the memory used by the kernel as used
-        dim kernel_addr as uinteger = cuint(@kernel_start)
-        dim kernel_end_addr as uinteger = cuint(@kernel_end)
+        '' mark the memory used by the kernel as used
+        dim kernel_addr as uinteger = cuint(kernel_start)
+        dim kernel_end_addr as uinteger = cuint(kernel_end)
         while (kernel_addr < kernel_end_addr)
             pmm.mark_used(cast(any ptr, kernel_addr))
             kernel_addr += 4096
         wend
         
-        '// mark the memory used by the mbinfo-structure as used
+        '' mark the memory used by the mbinfo-structure as used
         dim mbinfo_addr as uinteger = cuint(mbinfo)
         dim mbinfo_end_addr as uinteger = cuint(mbinfo)+sizeof(multiboot_info)
         while (mbinfo_addr < mbinfo_end_addr)
@@ -69,16 +66,16 @@ namespace pmm
     
     
     function alloc () as any ptr
-        '// first search for a free place
+        '' first search for a free place
         dim counter as uinteger
         dim bitcounter as uinteger
         
         for counter=0 to pmm.bitmap_size-1 step 1
             if (not(pmm.bitmap(counter)=0)) then
-                '// we found a free place and need to search for the set bit
+                '' we found a free place and need to search for the set bit
                 for bitcounter=0 to 31 step 1
                     if (pmm.bitmap(counter) and (1 shl bitcounter)) then
-                        '// found it, unset the bit and return the address
+                        '' found it, unset the bit and return the address
                         pmm.bitmap(counter) and= not(1 shl bitcounter)
                         free_mem -= 4096
                         return cast(any ptr, ((counter*32+bitcounter)*4096))
@@ -87,7 +84,7 @@ namespace pmm
             end if
         next
         
-        '// if we get here, there's nothing free
+        '' if we get here, there's nothing free
         return 0
     end function
     

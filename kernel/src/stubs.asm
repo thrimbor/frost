@@ -1,4 +1,5 @@
-; this file is to provide stubs for the exceptions and irqs
+; This file is to provide stubs for the exceptions and irqs
+; which then call the interrupt handler of the kernel
 section .text
 
 extern HANDLE_INTERRUPT

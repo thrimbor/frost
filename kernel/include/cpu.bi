@@ -10,7 +10,7 @@ type cpu_state
     int_nr as uinteger
     errorcode as uinteger
     
-    '// saved by the CPU:
+    '' saved by the CPU:
     eip as uinteger
     cs as uinteger
     eflags as uinteger

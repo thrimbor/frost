@@ -1,5 +1,5 @@
 SRCS = $(shell find src -name *.bas)
-OBJS = $(addsuffix .o,$(basename $(notdir $(SRCS))))
+OBJS = $(addprefix obj/, $(addsuffix .o,$(basename $(notdir $(SRCS)))))
 
 COMPILER = fbc
 LINKER = ld
@@ -10,7 +10,7 @@ LFLAGS = -melf_i386 -Ttext=0xA00000
 init.elf: $(OBJS)
 	$(LINKER) $(LFLAGS) -o $@ $^
 
-%.o: src/%.bas
+obj/%.o: src/%.bas
 	$(COMPILER) $(CFLAGS) $^ -o $@
 
 clean:

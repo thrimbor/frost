@@ -14,7 +14,7 @@ namespace idt
     
     const table_size = &h63
     
-    '// flags for the access-byte
+    '' flags for the access-byte
     const FLAG_PRESENT           as ubyte = &h80
     const FLAG_PRIVILEGE_RING_3  as ubyte = &h60
     const FLAG_PRIVILEGE_RING_2  as ubyte = &h40

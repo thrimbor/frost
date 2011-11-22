@@ -4,7 +4,7 @@ namespace pic
     const SLAVE_COMMAND  as ubyte = &hA0
     const SLAVE_DATA     as ubyte = &hA1
     
-    '// the end-of-interrupt command:
+    '' the end-of-interrupt command:
     const COMMAND_EOI as ubyte = &h20
     
     declare sub init ()
