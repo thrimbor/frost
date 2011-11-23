@@ -6,7 +6,7 @@ COMPILER = fbc
 ASSEMBLER = nasm
 LINKER = ld
 
-CFLAGS = -c -nodeflibs -arch 486 -i ./include/
+CFLAGS = -c -nodeflibs -lang fb -arch 486 -i ./include/
 AFLAGS = -f elf32
 LFLAGS = -melf_i386 -Tkernel.ld
 

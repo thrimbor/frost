@@ -25,6 +25,8 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     if ((cpu->int_nr > &h1F) and (cpu->int_nr < &h30)) then
         pic.send_eoi(cpu->int_nr - &h20)
     end if
+    
+    '' enable this if paging is ready to swicht page-directories
     /'
     if (not(cpu = new_cpu)) then
         dim pagedir as uinteger ptr = (tasks.get_current_task())->page_directory

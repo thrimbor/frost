@@ -4,7 +4,7 @@ OBJS = $(addprefix obj/, $(addsuffix .o,$(basename $(notdir $(SRCS)))))
 COMPILER = fbc
 LINKER = ld
 
-CFLAGS = -c -nodeflibs -arch 486
+CFLAGS = -c -nodeflibs -lang fb -arch 486
 LFLAGS = -melf_i386 -Ttext=0xA00000
 
 init.elf: $(OBJS)
