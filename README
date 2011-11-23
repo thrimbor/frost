@@ -24,7 +24,7 @@ entirely in FreeBASIC and Assembly.
 
 DEPENDENCIES:
 
-- fbc, 0.22.0 recommended (the FreeBASIC compiler, available on freebasic.net)
+- fbc, 0.23.0 recommended (the FreeBASIC compiler, available on freebasic.net)
 - nasm, 2.09.04 recommended (the Netwide Assembler, available on nasm.us)
 - GNU make, GNU assembler and the GNU linker
 
