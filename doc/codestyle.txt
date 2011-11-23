@@ -10,10 +10,10 @@ be followed by everyone to guarantee a readable code.
 
 2. Just one statement per line.
 
-3. The bedingung in controll-structures (if, select case...) has to be put into
+3. The condition in controll-structures (if, select case...) has to be put into
    brackets.
 
-4. There has to be a space before a bedingung in a controll-structure. On function- or
+4. There has to be a space before a condition in a controll-structure. On function- or
    sub-calls, there is no space between the name and the brackets.
 
 5. Every function- or sub-call has to have brackets, even if it takes no parameters.
@@ -24,7 +24,7 @@ be followed by everyone to guarantee a readable code.
 7. Every function or sub declaration or definition has to have brackets, even if it
    takes no parameters.
 
-8. It is recommended to place a space between the parts of bedingung and the
+8. It is recommended to place a space between the parts of condition and the
    comparison operator.
 
 9. Names of variables are to be written completely lowercase.
