@@ -41,8 +41,8 @@ namespace vmm
         dim page_table as context
         
         '' is one of the addresses not 4k-aligned?
-        if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
-        'if ((virtual and &hFFF) or (physical and &hFFF)) then
+        'if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
+        if ((virtual and &hFFF) or (physical and &hFFF)) then
             return 0
         end if
         
