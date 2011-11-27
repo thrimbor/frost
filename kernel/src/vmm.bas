@@ -1,7 +1,6 @@
 #include once "vmm.bi"
 #include once "pmm.bi"
 #include once "kernel.bi"
-#include once "video.bi"
 
 namespace vmm
     dim shared kernel_context as context
@@ -42,8 +41,8 @@ namespace vmm
         dim page_table as context
         
         '' is one of the addresses not 4k-aligned?
-        'if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
-        if ((virtual and &hFFF) or (physical and &hFFF)) then
+        if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
+        'if ((virtual and &hFFF) or (physical and &hFFF)) then
             return 0
         end if
         
@@ -81,11 +80,6 @@ namespace vmm
             p_src += 4096
             v_dest += 4096
         wend
-        
-        video.cout("successfully mapped from ")
-        video.cout(p_start)
-        video.cout(" to ")
-        video.cout(p_end)
         
         return -1
     end function

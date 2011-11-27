@@ -1,6 +1,7 @@
 #include once "pmm.bi"
 #include once "multiboot.bi"
 #include once "kernel.bi"
+#include once "video.bi"
 
 namespace pmm
     '' our memory bitmap. bit=0 : page used; bit=1 : page free
@@ -16,6 +17,8 @@ namespace pmm
         '' 3. mark the whole memory used by the kernel as used
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
         dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
+        
+        pmm.memset(cuint(@bitmap(0)), 0, pmm.bitmap_size)
         
         '' free the memory listed in the memory-map
         while (mmap < mmap_end)
@@ -40,6 +43,9 @@ namespace pmm
             pmm.mark_used(cast(any ptr, kernel_addr))
             kernel_addr += 4096
         wend
+        
+        '' mark the video-memory as used
+        pmm.mark_used(&hB8000)
         
         '' mark the memory used by the mbinfo-structure as used
         dim mbinfo_addr as uinteger = cuint(mbinfo)
@@ -89,14 +95,14 @@ namespace pmm
     end function
     
     sub free (page as any ptr)
-        dim index as uinteger = cast(uinteger, page) / 4096
-        pmm.bitmap(index/32) or= (1 shl (index mod 32))
+        dim index as uinteger = cuint(fix(cast(uinteger, page) / 4096))
+        pmm.bitmap(cuint(fix(index/32))) or= (1 shl (cuint(fix(index mod 32))))
         free_mem += 4096
     end sub
     
     sub mark_used (page as any ptr)
-        dim index as uinteger = cast(uinteger, page) / 4096
-        pmm.bitmap(index/32) and= not(1 shl (index mod 32))
+        dim index as uinteger = cuint(fix(cast(uinteger, page) / 4096))
+        pmm.bitmap(cuint(fix(index/32))) and= (not(1 shl (cuint(fix(index mod 32)))))
         free_mem -= 4096
     end sub
     

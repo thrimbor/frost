@@ -56,6 +56,7 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     debug.wlog(debug.INFO, !"pit initialized\n")
     
     pmm.init(mbinfo)
+
     debug.wlog(debug.INFO, !"physical memory manager initialized\n")
     debug.wlog(debug.INFO, "total RAM: ")
     debug.wlog(debug.INFO, cuint(pmm.get_total()/1048576))
@@ -65,15 +66,15 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     debug.wlog(debug.INFO, !"MB\n")
     
     debug.wlog(debug.INFO, "loading modules... ")
-    tasks.create_tasks_from_mb(mbinfo)
+    'tasks.create_tasks_from_mb(mbinfo)
     debug.wlog(debug.INFO, !"done.\n")
     
-    debug.wlog(debug.INFO, "Initializing paging... ")
+    debug.wlog(debug.INFO, !"Initializing paging... \n")
     vmm.init()
+    debug.wlog(debug.INFO, !"\n")
     debug.wlog(debug.INFO, !"it worked. babamm.\n")
     'asm mov eax, 42
     'asm int &h62
-    asm sti
     asm hlt
     'debug.wlog(debug.INFO, !"done.\n")
     'asm sti
