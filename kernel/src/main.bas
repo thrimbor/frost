@@ -71,10 +71,11 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     debug.wlog(debug.INFO, "Initializing paging... ")
     vmm.init()
     debug.wlog(debug.INFO, !"it worked. babamm.\n")
-    asm mov eax, 42
-    asm int &h62
-    asm hlt
-    debug.wlog(debug.INFO, !"done.\n")
+    'asm mov eax, 42
+    'asm int &h62
     asm sti
-    do : loop
+    asm hlt
+    'debug.wlog(debug.INFO, !"done.\n")
+    'asm sti
+    'do : loop
 end sub

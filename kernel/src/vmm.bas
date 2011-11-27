@@ -1,48 +1,69 @@
 #include once "vmm.bi"
 #include once "pmm.bi"
 #include once "kernel.bi"
+#include once "video.bi"
 
 namespace vmm
     dim shared kernel_context as context
     
+    '' init () sets up the required structures and activates paging
     sub init ()
+        '' create a kernel context (only used before the first task is started)
         kernel_context = create_context()
         
+        #if 0
         '' map the kernel
         map_range(kernel_context, cuint(kernel_start), cuint(kernel_start), cuint(kernel_end), (FLAG_PRESENT or FLAG_WRITE))
         
         '' map the video memory
         map_page(kernel_context, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))
+        #endif
         
+        '' map the whole first GB
+        map_range(kernel_context, 0, 0, &h40000000, (FLAG_PRESENT or FLAG_WRITE))
+        
+        '' activate the context
         activate_context(kernel_context)
+        '' activate paging
         activate()
     end sub
     
+    '' create_context () creates and clears space for a page-directory
     function create_context () as context
         dim tcontext as context = pmm.alloc()
         pmm.memset(cuint(tcontext),0,4096)
         return tcontext
     end function
     
+    '' map_page maps a single page into a given context
     function map_page (page_directory as context, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
         dim pd_index as uinteger = (virtual shr 22)
         dim pt_index as uinteger = (virtual shr 12) and &h3FF
         dim page_table as context
         
-        if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
+        '' is one of the addresses not 4k-aligned?
+        'if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
+        if ((virtual and &hFFF) or (physical and &hFFF)) then
             return 0
         end if
         
+        '' does the page table not exist?
         if (page_directory[pd_index] = 0) then
+            '' reserve memory
             page_directory[pd_index] = cuint(pmm.alloc())
+            '' clear it
             pmm.memset(page_directory[pd_index], 0, 4096)
+            '' set the flags
             page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
         end if
         
+        '' fetch page-table address from page directory
         page_table = cast(uinteger ptr, (page_directory[pd_index] and &hFFFFF000))
         
+        '' set address and flags
         page_table[pt_index] = (physical or flags)
         
+        '' invalidate virtual address
         asm
             invlpg [virtual]
         end asm
@@ -60,6 +81,11 @@ namespace vmm
             p_src += 4096
             v_dest += 4096
         wend
+        
+        video.cout("successfully mapped from ")
+        video.cout(p_start)
+        video.cout(" to ")
+        video.cout(p_end)
         
         return -1
     end function
@@ -118,6 +144,7 @@ namespace vmm
         end asm
     end sub
     
+    '' activate () sets the paging-bit (31) in cr0
     sub activate ()
         asm
             mov eax, cr0
