@@ -45,7 +45,7 @@ namespace pmm
         wend
         
         '' mark the video-memory as used
-        pmm.mark_used(&hB8000)
+        pmm.mark_used(cast(any ptr, &hB8000))
         
         '' mark the memory used by the mbinfo-structure as used
         dim mbinfo_addr as uinteger = cuint(mbinfo)
@@ -95,14 +95,14 @@ namespace pmm
     end function
     
     sub free (page as any ptr)
-        dim index as uinteger = cuint(fix(cast(uinteger, page) / 4096))
-        pmm.bitmap(cuint(fix(index/32))) or= (1 shl (cuint(fix(index mod 32))))
+        dim index as uinteger = cast(uinteger, page) \ 4096
+        pmm.bitmap(index\32) or= (1 shl (index mod 32))
         free_mem += 4096
     end sub
     
     sub mark_used (page as any ptr)
-        dim index as uinteger = cuint(fix(cast(uinteger, page) / 4096))
-        pmm.bitmap(cuint(fix(index/32))) and= (not(1 shl (cuint(fix(index mod 32)))))
+        dim index as uinteger = cast(uinteger, page) \ 4096
+        pmm.bitmap(index\32) and= (not(1 shl (index mod 32)))
         free_mem -= 4096
     end sub
     
