@@ -43,6 +43,30 @@ namespace video
         wend
     end sub
     
+    sub fout (fstr as zstring, ...)
+		dim zstr as byte ptr = cast(byte ptr, @fstr)
+		dim counter as uinteger
+		dim arg as any ptr = va_first()
+		
+		while not (zstr[counter] = 0)
+			if (cubyte(zstr[counter]) = 37) then
+				counter += 1
+				select case (cubyte(zstr[counter]))
+					case 73:
+						video.cout(va_arg(arg, uinteger))
+						arg = va_next(arg, uinteger)
+						counter += 1
+						continue while
+				end select
+			end if
+			
+			putc(zstr[counter])
+			counter += 1
+		wend
+	end sub
+		
+		
+    
     '' print an uinteger with a given base and at least so many chars as given in minchars
     sub cout (number as uinteger, base as ubyte = 10, minchars as ubyte = 0)
         if ((base > 36) or (base < 2)) then return
