@@ -44,19 +44,126 @@ namespace video
     end sub
     
     sub fout (fstr as zstring, ...)
-		dim zstr as byte ptr = cast(byte ptr, @fstr)
+		dim zstr as ubyte ptr = cast(ubyte ptr, @fstr)
 		dim counter as uinteger
+        dim hcounter as uinteger
+        dim nbase as uinteger
 		dim arg as any ptr = va_first()
 		
-		while not (zstr[counter] = 0)
-			if (cubyte(zstr[counter]) = 37) then
+		'while not (zstr[counter] = 0)
+        while zstr[counter]
+			'' check whether it's a backslash
+            if (zstr[counter] = 92) then
+                counter += 1
+                select case (zstr[counter])
+                    '' another backslash? just print one and we're done
+                    case 92:
+                        putc(zstr[counter])
+                        counter += 1
+                        continue while
+                    '' \n - call putc with the newline-char
+                    case 110:
+                        putc(10)
+                        counter += 1
+                        continue while
+                    '' a percent sign? just print it
+                    case 37:
+                        putc(zstr[counter])
+                        counter += 1
+                        continue while
+                    case else:
+                        counter += 1
+                        continue while
+                end select
+            end if
+            
+            '' check whether it's a percent-sign
+            if (zstr[counter] = 37) then
 				counter += 1
-				select case (cubyte(zstr[counter]))
-					case 73:
-						video.cout(va_arg(arg, uinteger))
+                
+                nbase = 10
+                select case (zstr[counter])
+                    '' "h"
+                    case 104:
+                        nbase = 16
+                        counter += 1
+                    '' "n"
+                    case 110:
+                        nbase = 2
+                        counter += 1
+                end select
+                
+                hcounter = 0
+                while (zstr[counter] = 35)
+                    hcounter += 1
+                    counter += 1
+                wend
+                
+				select case (zstr[counter])
+					'' "I"
+                    case 73:
+						if (hcounter > 0) then
+                            video.cout(va_arg(arg, uinteger),nbase,hcounter)
+                        else
+                            video.cout(va_arg(arg, uinteger),nbase)
+                        end if
+                        
 						arg = va_next(arg, uinteger)
 						counter += 1
 						continue while
+                    '' "i"
+                    case 105:
+                        if (hcounter > 0) then
+                            video.cout(va_arg(arg, integer),nbase,hcounter)
+                        else
+                            video.cout(va_arg(arg, integer),nbase)
+                        end if
+                        arg = va_next(arg, integer)
+                        counter += 1
+                        continue while
+                    '' "S"
+                    case 83:
+                        if (hcounter > 0) then
+                            video.cout(va_arg(arg, ushort),nbase,hcounter)
+                        else
+                            video.cout(va_arg(arg, ushort),nbase)
+                        end if
+                        arg = va_next(arg, ushort)
+                        counter += 1
+                        continue while
+                    '' "s"
+                    case 115:
+                        if (hcounter > 0) then
+                            video.cout(va_arg(arg, short),nbase,hcounter)
+                        else
+                            video.cout(va_arg(arg, short),nbase)
+                        end if
+                        arg = va_next(arg, short)
+                        counter += 1
+                        continue while
+                    '' "B"
+                    case 66:
+                        if (hcounter > 0) then
+                            video.cout(va_arg(arg, ubyte),nbase,hcounter)
+                        else
+                            video.cout(va_arg(arg, ubyte),nbase)
+                        end if
+                        arg = va_next(arg, ubyte)
+                        counter += 1
+                        continue while
+                    '' "b"
+                    case 98:
+                        if (hcounter > 0) then
+                            video.cout(va_arg(arg, byte),nbase,hcounter)
+                        else
+                            video.cout(va_arg(arg, byte),nbase)
+                        end if
+                        arg = va_next(arg, byte)
+                        counter += 1
+                        continue while
+                    case else:
+                        counter += 1
+                        continue while
 				end select
 			end if
 			
