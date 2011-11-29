@@ -124,9 +124,9 @@ namespace video
                     '' "S"
                     case 83:
                         if (hcounter > 0) then
-                            video.cout(va_arg(arg, ushort),nbase,hcounter)
+                            video.cout(cuint(va_arg(arg, ushort)),nbase,hcounter)
                         else
-                            video.cout(va_arg(arg, ushort),nbase)
+                            video.cout(cuint(va_arg(arg, ushort)),nbase)
                         end if
                         arg = va_next(arg, ushort)
                         counter += 1
@@ -134,9 +134,9 @@ namespace video
                     '' "s"
                     case 115:
                         if (hcounter > 0) then
-                            video.cout(va_arg(arg, short),nbase,hcounter)
+                            video.cout(cint(va_arg(arg, short)),nbase,hcounter)
                         else
-                            video.cout(va_arg(arg, short),nbase)
+                            video.cout(cint(va_arg(arg, short)),nbase)
                         end if
                         arg = va_next(arg, short)
                         counter += 1
@@ -144,9 +144,9 @@ namespace video
                     '' "B"
                     case 66:
                         if (hcounter > 0) then
-                            video.cout(va_arg(arg, ubyte),nbase,hcounter)
+                            video.cout(cuint(va_arg(arg, ubyte)),nbase,hcounter)
                         else
-                            video.cout(va_arg(arg, ubyte),nbase)
+                            video.cout(cuint(va_arg(arg, ubyte)),nbase)
                         end if
                         arg = va_next(arg, ubyte)
                         counter += 1
@@ -154,9 +154,9 @@ namespace video
                     '' "b"
                     case 98:
                         if (hcounter > 0) then
-                            video.cout(va_arg(arg, byte),nbase,hcounter)
+                            video.cout(cint(va_arg(arg, byte)),nbase,hcounter)
                         else
-                            video.cout(va_arg(arg, byte),nbase)
+                            video.cout(cint(va_arg(arg, byte)),nbase)
                         end if
                         arg = va_next(arg, byte)
                         counter += 1
