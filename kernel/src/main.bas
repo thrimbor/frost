@@ -35,44 +35,44 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     end if
     
     video.set_color(9,0)
-    debug.wlog(debug.INFO, !"FROST V2 alpha\n")
+    debug_wlog(debug.INFO, "FROST V2 alpha\n")
     video.set_color(7,0)
-    debug.wlog(debug.INFO, "name of the bootloader: ")
-    debug.wlog(debug.INFO, *cast(zstring ptr, mbinfo->boot_loader_name))
-    debug.wlog(debug.INFO, !"\ncmdline: ")
-    debug.wlog(debug.INFO, *cast(zstring ptr, mbinfo->cmdline))
-    debug.wlog(debug.INFO, !"\n")
+    debug_wlog(debug.INFO, "name of the bootloader: ")
+    debug_wlog(debug.INFO, *cast(zstring ptr, mbinfo->boot_loader_name))
+    debug_wlog(debug.INFO, "\ncmdline: ")
+    debug_wlog(debug.INFO, *cast(zstring ptr, mbinfo->cmdline))
+    debug_wlog(debug.INFO, "\n")
     
     gdt.init()
-    debug.wlog(debug.INFO, !"gdt loaded\n")
+    debug_wlog(debug.INFO, "gdt loaded\n")
     
     pic.init()
-    debug.wlog(debug.INFO, !"pic initialized\n")
+    debug_wlog(debug.INFO, "pic initialized\n")
     
     idt.init()
-    debug.wlog(debug.INFO, !"idt loaded\n")
+    debug_wlog(debug.INFO, "idt loaded\n")
     
     pit.set_frequency(100)
-    debug.wlog(debug.INFO, !"pit initialized\n")
+    debug_wlog(debug.INFO, "pit initialized\n")
     
     pmm.init(mbinfo)
 
-    debug.wlog(debug.INFO, !"physical memory manager initialized\n")
-    video.fout("total RAM: %IMB\n", cuint(pmm.get_total()/1048576))
-    video.fout("free RAM: %IMB\n", cuint(pmm.get_free()/1048576))
+    debug_wlog(debug.INFO, "physical memory manager initialized\n")
+    debug_wlog(debug.INFO, "total RAM: %IMB\n", cuint(pmm.get_total()/1048576))
+    debug_wlog(debug.INFO, "free RAM: %IMB\n", cuint(pmm.get_free()/1048576))
     
-    debug.wlog(debug.INFO, "loading modules... ")
+    debug_wlog(debug.INFO, "loading modules... ")
     'tasks.create_tasks_from_mb(mbinfo)
-    debug.wlog(debug.INFO, !"done.\n")
+    debug_wlog(debug.INFO, "done.\n")
     
-    debug.wlog(debug.INFO, !"Initializing paging... \n")
+    debug_wlog(debug.INFO, "Initializing paging... \n")
     vmm.init()
-    debug.wlog(debug.INFO, !"\n")
-    debug.wlog(debug.INFO, !"it worked. babamm.\n")
+    debug_wlog(debug.INFO, "\n")
+    debug_wlog(debug.INFO, "it worked. babamm.\n")
     'asm mov eax, 42
     'asm int &h62
     asm hlt
-    'debug.wlog(debug.INFO, !"done.\n")
+    'debug_wlog(debug.INFO, !"done.\n")
     'asm sti
     'do : loop
 end sub
