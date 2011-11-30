@@ -3,14 +3,14 @@
 
 namespace video
     dim shared memory as byte ptr = cast(byte ptr, &hB8000)      '' pointer to video-memory
-    dim shared cursor_pos as uinteger = 0                        '' the position of the cursor
+    dim shared cursor_pos as addr_t = 0                        '' the position of the cursor
     dim shared textColor as ubyte = 7                            '' the color of the text
     
     
     '' scroll the screen down one row
     sub scroll_screen ()
-        pmm.memcpy(cuint(memory), cuint(memory+160), 3840)
-        pmm.memset(cuint(memory+3840), 0, 160)
+        pmm.memcpy(caddr(memory), caddr(memory+160), 3840)
+        pmm.memset(caddr(memory+3840), 0, 160)
         
         cursor_pos -= 160    
     end sub
@@ -35,7 +35,7 @@ namespace video
     '' print a zstring to the screen
     sub cout (outstr as zstring)
         dim zstr as byte ptr = cast(byte ptr, @outstr)
-        dim counter as uinteger
+        dim counter as addr_t
         
         while not (zstr[counter] = 0)
             putc(zstr[counter])
@@ -164,8 +164,8 @@ namespace video
                     '' "z"
                     case 122:
                         dim t as zstring ptr
-                        t = cast(zstring ptr, va_arg(arg, uinteger))
-                        arg = va_next(arg, uinteger)
+                        t = cast(zstring ptr, va_arg(arg, addr_t))
+                        arg = va_next(arg, addr_t)
                         video.cout(*t)
                         counter += 1
                         continue while

@@ -12,3 +12,5 @@ const false = 0
 
 type paddr_t as uinteger
 type vaddr_t as uinteger
+type addr_t as uinteger
+#define caddr(dt,v) cuint(dt,v)
