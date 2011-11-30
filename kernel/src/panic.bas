@@ -18,104 +18,75 @@ namespace panic
         
         select case (panic_type)
             case 1
-                video.cout(!"\n\n")
+                video.fout("\n\n")
                 'video.set_color(4,0)
                 select case (cpu->int_nr)
                     case &h00
-                        video.cout(!"EXCEPTION 0x00 - Divide by Zero (#DE)\n")
+                        video.fout("EXCEPTION 0x00 - Divide by Zero (#DE)\n")
                     case &h01
-                        video.cout(!"EXCEPTION 0x01 - Debug (#DB)\n")
+                        video.fout("EXCEPTION 0x01 - Debug (#DB)\n")
                     case &h02
-                        video.cout(!"EXCEPTION 0x02 - Non-maskable Interrupt (#NMI)\n")
+                        video.fout("EXCEPTION 0x02 - Non-maskable Interrupt (#NMI)\n")
                     case &h03
-                        video.cout(!"EXCEPTION 0x03 - Breakpoint (#BP)\n")
+                        video.fout("EXCEPTION 0x03 - Breakpoint (#BP)\n")
                     case &h04
-                        video.cout(!"EXCEPTION 0x04 - Overflow (#OF)\n")
+                        video.fout("EXCEPTION 0x04 - Overflow (#OF)\n")
                     case &h05
-                        video.cout(!"EXCEPTION 0x05 - Bound Range Exceeded (#BR)\n")
+                        video.fout("EXCEPTION 0x05 - Bound Range Exceeded (#BR)\n")
                     case &h06
-                        video.cout(!"EXCEPTION 0x06 - Invalid Opcode (#UD)\n")
+                        video.fout("EXCEPTION 0x06 - Invalid Opcode (#UD)\n")
                     case &h07
-                        video.cout(!"EXCEPTION 0x07 - Device Not Available (#NM)\n")
+                        video.fout("EXCEPTION 0x07 - Device Not Available (#NM)\n")
                     case &h08
-                        video.cout(!"EXCEPTION 0x08 - Double Fault (#DF)\n")
+                        video.fout("EXCEPTION 0x08 - Double Fault (#DF)\n")
                     case &h09
-                        video.cout(!"EXCEPTION 0x09 - Coprocessor Segment Overrun\n")
+                        video.fout("EXCEPTION 0x09 - Coprocessor Segment Overrun\n")
                     case &h0A
-                        video.cout(!"EXCEPTION 0x0A - Invalid TSS (#TS)\n")
+                        video.fout("EXCEPTION 0x0A - Invalid TSS (#TS)\n")
                     case &h0B
-                        video.cout(!"EXCEPTION 0x0B - Segment Not Present (#NP)\n")
+                        video.fout("EXCEPTION 0x0B - Segment Not Present (#NP)\n")
                     case &h0C
-                        video.cout(!"EXCEPTION 0x0C - Stack-Segment Fault (#SS)\n")
+                        video.fout("EXCEPTION 0x0C - Stack-Segment Fault (#SS)\n")
                     case &h0D
-                        video.cout(!"EXCEPTION 0x0D - General Protection Fault (#GP)\n")
+                        video.fout("EXCEPTION 0x0D - General Protection Fault (#GP)\n")
                     case &h0E
-                        video.cout(!"EXCEPTION 0x0E - Page Fault (#PF)\n")
+                        video.fout("EXCEPTION 0x0E - Page Fault (#PF)\n")
                     case &h0F
-                        video.cout(!"EXCEPTION 0x0F - RESERVED\n")
+                        video.fout("EXCEPTION 0x0F - RESERVED\n")
                     case &h10
-                        video.cout(!"EXCEPTION 0x10 - x87 Floating Point (#MF)\n")
+                        video.fout("EXCEPTION 0x10 - x87 Floating Point (#MF)\n")
                     case &h11
-                        video.cout(!"EXCEPTION 0x11 - Alignment Check (#AC)\n")
+                        video.fout("EXCEPTION 0x11 - Alignment Check (#AC)\n")
                     case &h12
-                        video.cout(!"EXCEPTION 0x12 - Machine Check (#MC)\n")
+                        video.fout("EXCEPTION 0x12 - Machine Check (#MC)\n")
                     case &h13
-                        video.cout(!"EXCEPTION 0x13 - SIMD Floating Point (#XM/#XF)\n")
+                        video.fout("EXCEPTION 0x13 - SIMD Floating Point (#XM/#XF)\n")
                     case &h14 to &h1F
-                        video.cout(!"EXCEPTION - RESERVED EXCEPTION\n")
+                        video.fout("EXCEPTION - RESERVED EXCEPTION\n")
                 end select
                 
-                dim tmp_register as uinteger
+                video.fout("\n")
+                video.fout("error: 0x%h########I\n", cpu->errorcode)
                 
-                video.cout(!"\nerror: ")
-                video.cout(cpu->errorcode,16)
-                video.cout(!"\n")
+                dim as uinteger t_cr0, t_cr2, t_cr3
                 
-                asm mov eax, cr0
-                asm mov [tmp_register], eax
-                video.cout("cr0: 0x")
-                video.cout(tmp_register,16,8)
-                
-                asm mov eax, cr2
-                asm mov [tmp_register], eax
-                video.cout(", cr2: 0x")
-                video.cout(tmp_register,16,8)
-                
-                asm mov eax, cr3
-                asm mov [tmp_register], eax
-                video.cout(", cr3: 0x")
-                video.cout(tmp_register,16,8)
-                video.cout(!"\n")
-                
-                
-                video.cout("eax: 0x")
-                video.cout(cpu->eax,16,8)
-                video.cout(", ebx: 0x")
-                video.cout(cpu->ebx,16,8)
-                video.cout(", ecx: 0x")
-                video.cout(cpu->ecx,16,8)
-                video.cout(", edx: 0x")
-                video.cout(cpu->edx,16,8)
-                video.cout(!"\n")
-                
-                video.cout("ebp: 0x")
-                video.cout(cpu->ebp,16,8)
-                video.cout(", esp: 0x")
-                video.cout(cpu->esp,16,8)
-                video.cout(", esi: 0x")
-                video.cout(cpu->esi,16,8)
-                video.cout(", edi: 0x")
-                video.cout(cpu->edi,16,8)
-                video.cout(!"\n")
-                
-                video.cout("eflags: 0x")
-                video.cout(cpu->eflags,16,8)
-                video.cout(!"\n")
+                asm
+                    mov eax, cr0
+                    mov [t_cr0], eax
+                    mov eax, cr2
+                    mov [t_cr2], eax
+                    mov eax, cr3
+                    mov [t_cr3], eax
+                end asm
+                video.fout("cr0: 0x%h########I, cr2: 0x%h########I, cr3: 0x%h########I\n", t_cr0, t_cr2, t_cr3)
+                video.fout("eax: 0x%h########I, ebx: 0x%h########I, ecx: 0x%h########I, edx: 0x%h########I\n", cpu->eax, cpu->ebx, cpu->ecx, cpu->edx)
+                video.fout("ebp: 0x%h########I, esp: 0x%h########I, esi: 0x%h########I, edi: 0x%h########I\n", cpu->ebp, cpu->esp, cpu->esi, cpu->edi)
+                video.fout("eflags: 0x%h########I\n", cpu->eflags)
                 
                 ' print some other registers here
         end select
         
-        video.cout(!"\nSYSTEM HALTED")
+        video.fout("\nSYSTEM HALTED")
         asm cli
         asm hlt
     end sub
