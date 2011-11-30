@@ -161,6 +161,14 @@ namespace video
                         arg = va_next(arg, byte)
                         counter += 1
                         continue while
+                    '' "z"
+                    case 122:
+                        dim t as zstring ptr
+                        t = cast(zstring ptr, va_arg(arg, uinteger))
+                        arg = va_next(arg, uinteger)
+                        video.cout(*t)
+                        counter += 1
+                        continue while
                     case else:
                         counter += 1
                         continue while
