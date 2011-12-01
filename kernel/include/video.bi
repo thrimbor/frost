@@ -1,7 +1,6 @@
 namespace video
     declare sub scroll_screen ()
     declare sub fout (fstr as zstring, ...)
-    declare sub cout overload (outstr as zstring)
     declare sub cout overload (number as uinteger, base as ubyte = 10, minchars as ubyte = 0)
     declare sub cout overload (number as integer, base as ubyte = 10, minchars as ubyte = 0)
     declare sub clean overload ()

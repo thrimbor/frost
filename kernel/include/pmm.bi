@@ -1,3 +1,4 @@
+#include once "kernel.bi"
 #include once "multiboot.bi"
 
 namespace pmm
@@ -8,8 +9,8 @@ namespace pmm
     declare function alloc () as any ptr
     declare sub free (page as any ptr)
     declare sub mark_used (page as any ptr)
-    declare sub memcpy (destination as uinteger, source as uinteger, size as uinteger)
-    declare sub memset (destination as uinteger, value as ubyte, size as uinteger)
+    declare sub memcpy (destination as addr_t, source as addr_t, size as uinteger)
+    declare sub memset (destination as addr_t, value as ubyte, size as uinteger)
     declare function get_total () as uinteger
     declare function get_free () as uinteger
 end namespace

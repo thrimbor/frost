@@ -1,6 +1,6 @@
 #include once "pmm.bi"
-#include once "multiboot.bi"
 #include once "kernel.bi"
+#include once "multiboot.bi"
 #include once "video.bi"
 
 namespace pmm
@@ -18,14 +18,14 @@ namespace pmm
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
         dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
         
-        pmm.memset(cuint(@bitmap(0)), 0, pmm.bitmap_size)
+        pmm.memset(caddr(@bitmap(0)), 0, pmm.bitmap_size)
         
         '' free the memory listed in the memory-map
         while (mmap < mmap_end)
             total_mem += mmap->len
             if (mmap->type = MULTIBOOT_MEMORY_AVAILABLE) then
-                dim addr as uinteger = mmap->addr
-                dim end_addr as uinteger = (mmap->addr+mmap->len)
+                dim addr as addr_t = mmap->addr
+                dim end_addr as addr_t = (mmap->addr+mmap->len)
                 
                 while (addr < end_addr)
                     pmm.free(cast(any ptr, addr))
@@ -37,8 +37,8 @@ namespace pmm
         wend
         
         '' mark the memory used by the kernel as used
-        dim kernel_addr as uinteger = cuint(kernel_start)
-        dim kernel_end_addr as uinteger = cuint(kernel_end)
+        dim kernel_addr as addr_t = caddr(kernel_start)
+        dim kernel_end_addr as addr_t = caddr(kernel_end)
         while (kernel_addr < kernel_end_addr)
             pmm.mark_used(cast(any ptr, kernel_addr))
             kernel_addr += 4096
@@ -48,16 +48,16 @@ namespace pmm
         pmm.mark_used(cast(any ptr, &hB8000))
         
         '' mark the memory used by the mbinfo-structure as used
-        dim mbinfo_addr as uinteger = cuint(mbinfo)
-        dim mbinfo_end_addr as uinteger = cuint(mbinfo)+sizeof(multiboot_info)
+        dim mbinfo_addr as addr_t = caddr(mbinfo)
+        dim mbinfo_end_addr as addr_t = caddr(mbinfo)+sizeof(multiboot_info)
         while (mbinfo_addr < mbinfo_end_addr)
             pmm.mark_used(cast(any ptr, mbinfo_addr))
             mbinfo_addr += 4096
         wend
         
         if (mbinfo->mods_count = 0) then return
-        dim module_addr as uinteger
-        dim module_end_addr as uinteger
+        dim module_addr as addr_t
+        dim module_end_addr as addr_t
         dim module_ptr as multiboot_mod_list ptr = cast(any ptr, mbinfo->mods_addr)
         for counter as uinteger = 1 to mbinfo->mods_count
             module_addr = module_ptr->mod_start
@@ -76,7 +76,7 @@ namespace pmm
         dim counter as uinteger
         dim bitcounter as uinteger
         
-        for counter=0 to pmm.bitmap_size-1 step 1
+        for counter=0 to pmm.bitmap_size-1
             if (not(pmm.bitmap(counter)=0)) then
                 '' we found a free place and need to search for the set bit
                 for bitcounter=0 to 31 step 1
@@ -106,7 +106,7 @@ namespace pmm
         free_mem -= 4096
     end sub
     
-    sub memcpy (destination as uinteger, source as uinteger, size as uinteger)
+    sub memcpy (destination as addr_t, source as addr_t, size as uinteger)
         asm
             mov ecx, [size]
             mov edi, [destination]
@@ -116,7 +116,7 @@ namespace pmm
         end asm
     end sub
     
-    sub memset (destination as uinteger, value as ubyte, size as uinteger)
+    sub memset (destination as addr_t, value as ubyte, size as uinteger)
         asm
             mov ecx, [size]
             mov edi, [destination]

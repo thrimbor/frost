@@ -32,25 +32,13 @@ namespace video
         cursor_pos += 2
     end sub
     
-    '' print a zstring to the screen
-    sub cout (outstr as zstring)
-        dim zstr as byte ptr = cast(byte ptr, @outstr)
-        dim counter as addr_t
-        
-        while not (zstr[counter] = 0)
-            putc(zstr[counter])
-            counter += 1
-        wend
-    end sub
-    
     sub fout (fstr as zstring, ...)
 		dim zstr as ubyte ptr = cast(ubyte ptr, @fstr)
-		dim counter as uinteger
-        dim hcounter as uinteger
-        dim nbase as uinteger
+		dim counter as uinteger = 0
+        dim hcounter as uinteger = 0
+        dim nbase as uinteger = 0
 		dim arg as any ptr = va_first()
 		
-		'while not (zstr[counter] = 0)
         while zstr[counter]
 			'' check whether it's a backslash
             if (zstr[counter] = 92) then
@@ -163,10 +151,17 @@ namespace video
                         continue while
                     '' "z"
                     case 122:
-                        dim t as zstring ptr
-                        t = cast(zstring ptr, va_arg(arg, addr_t))
+                        dim t_zstr as byte ptr
+                        dim t_zcounter as addr_t = 0
+                        
+                        t_zstr = cast(byte ptr, va_arg(arg, addr_t))
                         arg = va_next(arg, addr_t)
-                        video.cout(*t)
+                        
+                        while not (t_zstr[t_zcounter] = 0)
+                            putc(t_zstr[t_zcounter])
+                            t_zcounter += 1
+                        wend
+                        
                         counter += 1
                         continue while
                     case else:
@@ -217,7 +212,7 @@ namespace video
     
     '' clear the whole screen
     sub clean ()
-        pmm.memset(cuint(memory), 0, 4000)                         '' set the complete screen to zero (and black)
+        pmm.memset(caddr(memory), 0, 4000)                         '' set the complete screen to zero (and black)
         cursor_pos = 0                                             '' reset cursor position
     end sub
     
