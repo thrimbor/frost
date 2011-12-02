@@ -1,3 +1,4 @@
+#include once "kernel.bi"
 #include once "syscall.bi"
 #include once "tasks.bi"
 #include once "video.bi"
@@ -11,7 +12,7 @@ namespace syscall
             case syscall.PROCESS_GET_PID
                 cpu->ebx = task->pid
             case syscall.PROCESS_GET_PARENT_PID
-                if (not(cuint(task->parent) = 0)) then
+                if (not(caddr(task->parent) = 0)) then
                     cpu->ebx = task->parent->pid
                 else
                     cpu->ebx = 0

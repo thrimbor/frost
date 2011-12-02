@@ -1,5 +1,5 @@
 #include once "kernel.bi"
-#include once "int_stubs.bi"
+#include once "interrupt_handler.bi"
 #include once "cpu.bi"
 #include once "pic.bi"
 #include once "tasks.bi"
@@ -26,7 +26,7 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
         pic.send_eoi(cpu->int_nr - &h20)
     end if
     
-    '' enable this if paging is ready to swicht page-directories
+    '' enable this if paging is ready to switch page-directories
     /'
     if (not(cpu = new_cpu)) then
         dim pagedir as uinteger ptr = (tasks.get_current_task())->page_directory

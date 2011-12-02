@@ -1,5 +1,5 @@
 asm
-    mov eax, 666
+    mov eax, 42
     int &h62
     jmp $
 end asm
