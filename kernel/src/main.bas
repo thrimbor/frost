@@ -53,19 +53,16 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     debug_wlog(debug.INFO, "pit initialized\n")
     
     pmm.init(mbinfo)
-
-    debug_wlog(debug.INFO, "physical memory manager initialized\n")
-    debug_wlog(debug.INFO, "total RAM: %IMB\n", cuint(pmm.get_total()/1048576))
-    debug_wlog(debug.INFO, "free RAM: %IMB\n", cuint(pmm.get_free()/1048576))
+    debug_wlog(debug.INFO, "physical memory manager initialized (free RAM: %IMB; total RAM: %IMB)\n", cuint(pmm.get_free()/1048576), cuint(pmm.get_total()/1048576))
     
-    debug_wlog(debug.INFO, "loading modules... ")
-    'tasks.create_tasks_from_mb(mbinfo)
-    debug_wlog(debug.INFO, "done.\n")
-    
-    debug_wlog(debug.INFO, "Initializing paging... \n")
     vmm.init()
-    debug_wlog(debug.INFO, "\n")
-    debug_wlog(debug.INFO, "it worked. babamm.\n")
+    debug_wlog(debug.INFO, "paging initialized\n")
+
+    
+    'debug_wlog(debug.INFO, "loading modules... ")
+    'tasks.create_tasks_from_mb(mbinfo)
+    'debug_wlog(debug.INFO, "done.\n")
+    
     'asm mov eax, 42
     'asm int &h62
     asm hlt
