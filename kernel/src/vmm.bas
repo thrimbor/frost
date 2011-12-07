@@ -1,5 +1,6 @@
 #include once "vmm.bi"
 #include once "pmm.bi"
+#include once "kmm.bi"
 #include once "kernel.bi"
 
 namespace vmm
@@ -30,7 +31,7 @@ namespace vmm
     '' create_context () creates and clears space for a page-directory
     function create_context () as context
         dim tcontext as context = pmm.alloc()
-        pmm.memset(cuint(tcontext),0,4096)
+        memset(tcontext,0,pmm.PAGE_SIZE)
         return tcontext
     end function
     
@@ -41,7 +42,7 @@ namespace vmm
         dim page_table as context
         
         '' is one of the addresses not 4k-aligned?
-        'if (((virtual mod 4096)>0) or ((physical mod 4096)>0)) then
+        'if (((virtual mod pmm.PAGE_SIZE)>0) or ((physical mod pmm.PAGE_SIZE)>0)) then
         if ((virtual and &hFFF) or (physical and &hFFF)) then
             return 0
         end if
@@ -51,7 +52,7 @@ namespace vmm
             '' reserve memory
             page_directory[pd_index] = cuint(pmm.alloc())
             '' clear it
-            pmm.memset(page_directory[pd_index], 0, 4096)
+            memset(cast(any ptr, page_directory[pd_index]), 0, pmm.PAGE_SIZE)
             '' set the flags
             page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
         end if
@@ -71,14 +72,14 @@ namespace vmm
     end function
     
     function map_range (page_directory as context, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
-        dim v_dest as uinteger = v_addr-(v_addr mod 4096)
-        dim p_src as uinteger = p_start-(p_start mod 4096)
+        dim v_dest as uinteger = v_addr-(v_addr mod pmm.PAGE_SIZE)
+        dim p_src as uinteger = p_start-(p_start mod pmm.PAGE_SIZE)
         while (p_src < p_end)
             if ((map_page(page_directory, v_dest, p_src, flags)=0)) then
                 return 0
             end if
-            p_src += 4096
-            v_dest += 4096
+            p_src += pmm.PAGE_SIZE
+            v_dest += pmm.PAGE_SIZE
         wend
         
         return -1
@@ -92,7 +93,7 @@ namespace vmm
         if (page_directory[pd_index] = 0) then
             if (reserve_if_na = 1) then
                 page_directory[pd_index] = cuint(pmm.alloc())
-                pmm.memset(page_directory[pd_index], 0, 4096)
+                memset(cast(any ptr, page_directory[pd_index]), 0, pmm.PAGE_SIZE)
                 page_directory[pd_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
             else
                 return 0
@@ -104,7 +105,7 @@ namespace vmm
         if (page_table[pt_index] = 0) then
             if (reserve_if_na = 1) then
                 page_table[pt_index] = cuint(pmm.alloc())
-                pmm.memset(page_table[pt_index], 0, 4096)
+                memset(cast(any ptr, page_table[pt_index]), 0, pmm.PAGE_SIZE)
                 page_table[pt_index] or= (FLAG_PRESENT or FLAG_WRITE or FLAG_USERSPACE)
             else
                 return 0
@@ -123,8 +124,8 @@ namespace vmm
         
         while (bytes_left > 0)
             p_v_addr = get_p_addr(page_directory, v_addr, 1)
-            size_for_this_page = ((v_addr+4096) and &hFFF) - v_addr
-            pmm.memcpy(p_v_addr, p_addr, size_for_this_page)
+            size_for_this_page = ((v_addr+pmm.PAGE_SIZE) and &hFFF) - v_addr
+            memcpy(cast(any ptr, p_v_addr), p_addr, size_for_this_page)
             bytes_left -= size_for_this_page
             p_addr += size_for_this_page
             v_addr += size_for_this_page

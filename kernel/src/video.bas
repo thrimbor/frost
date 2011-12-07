@@ -1,16 +1,16 @@
 #include once "video.bi"
-#include once "pmm.bi"
+#include once "kmm.bi"
 
 namespace video
-    dim shared memory as byte ptr = cast(byte ptr, &hB8000)      '' pointer to video-memory
+    dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)      '' pointer to video-memory
     dim shared cursor_pos as addr_t = 0                        '' the position of the cursor
     dim shared textColor as ubyte = 7                            '' the color of the text
     
     
     '' scroll the screen down one row
     sub scroll_screen ()
-        pmm.memcpy(caddr(memory), caddr(memory+160), 3840)
-        pmm.memset(caddr(memory+3840), 0, 160)
+        memcpy(memory, memory+160, 3840)
+        memset(memory+3840, 0, 160)
         
         cursor_pos -= 160    
     end sub
@@ -212,7 +212,7 @@ namespace video
     
     '' clear the whole screen
     sub clean ()
-        pmm.memset(caddr(memory), 0, 4000)                         '' set the complete screen to zero (and black)
+        memset(memory, 0, 4000)                         '' set the complete screen to zero (and black)
         cursor_pos = 0                                             '' reset cursor position
     end sub
     

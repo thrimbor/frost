@@ -21,7 +21,7 @@ namespace tasks
         dim cpu as cpu_state ptr
         
         '' prepare the memory
-        pmm.memset(caddr(thread), 0, sizeof(thread_type))
+        memset(thread, 0, sizeof(thread_type))
         
         '' allocate stacks
         thread->stack_kernel_bottom = pmm.alloc()
@@ -43,7 +43,7 @@ namespace tasks
         thread->ticks_lef = MAX_TICKS
         
         '' initialize the cpu-state
-        cpu = (thread->stack_kernel_bottom+4096-sizeof(cpu_state))
+        cpu = (thread->stack_kernel_bottom+pmm.PAGE_SIZE-sizeof(cpu_state))
         
         cpu->eax = 0
         cpu->ebx = 0
@@ -53,7 +53,7 @@ namespace tasks
         cpu->edi = 0
         cpu->ebp = 0
         cpu->eip = cuint(entry)
-        cpu->esp = cuint(thread->stack_user_bottom)+4096
+        cpu->esp = cuint(thread->stack_user_bottom)+pmm.PAGE_SIZE
         cpu->cs = &h18 or &h03
         cpu->ss = &h20 or &h03
         cpu->eflags = &h200
@@ -89,7 +89,7 @@ namespace tasks
         dim kernelstack as any ptr = pmm.alloc()
         dim userstack as any ptr = pmm.alloc()
         dim task as task_type ptr = pmm.alloc()
-        dim cpu as cpu_state ptr = (kernelstack+4096-sizeof(cpu_state))
+        dim cpu as cpu_state ptr = (kernelstack+pmm.PAGE_SIZE-sizeof(cpu_state))
         
         cpu->eax = 0
         cpu->ebx = 0
@@ -99,7 +99,7 @@ namespace tasks
         cpu->edi = 0
         cpu->ebp = 0
         cpu->eip = cuint(entry)
-        cpu->esp = cuint(userstack)+4096
+        cpu->esp = cuint(userstack)+pmm.PAGE_SIZE
         cpu->cs = &h18 or &h03
         cpu->ss = &h20 or &h03
         cpu->eflags = &h200
@@ -117,7 +117,7 @@ namespace tasks
         dim kernel_end_addr as uinteger = cuint(kernel_end)
         while (kernel_addr < kernel_end_addr)
             vmm.map_page(task->page_directory, kernel_addr, kernel_addr, (vmm.FLAG_PRESENT or vmm.FLAG_USERSPACE))
-            kernel_addr += 4096
+            kernel_addr += pmm.PAGE_SIZE
         wend
         
         '' give the process some ticks
@@ -175,25 +175,25 @@ namespace tasks
                 continue for
             end if
             
-            offset_on_first_page = (ph_entry->p_vaddr mod 4096)
-            if (ph_entry->p_filesz > (4096 - offset_on_first_page)) then
-                bytes_on_first_page = 4096 - offset_on_first_page
+            offset_on_first_page = (ph_entry->p_vaddr mod pmm.PAGE_SIZE)
+            if (ph_entry->p_filesz > (pmm.PAGE_SIZE - offset_on_first_page)) then
+                bytes_on_first_page = pmm.PAGE_SIZE - offset_on_first_page
             else
                 bytes_on_first_page = ph_entry->p_filesz
             end if
             
-            pages = 1 + ((ph_entry->p_offset + ph_entry->p_memsz) / 4096) - (ph_entry->p_offset / 4096)
+            pages = 1 + ((ph_entry->p_offset + ph_entry->p_memsz) / pmm.PAGE_SIZE) - (ph_entry->p_offset / pmm.PAGE_SIZE)
             
             video.cout("We have to map ")
             video.cout(pages)
             video.cout(!"pages\n")
             
-            base = (ph_entry->p_vaddr / 4096) * 4096
+            base = (ph_entry->p_vaddr / pmm.PAGE_SIZE) * pmm.PAGE_SIZE
             
             '' map the pages into the adress-space of the process
             for counter as uinteger = 1 to pages
                 cur_page = pmm.alloc()
-                vmm.map_page(task_pd, (base + counter * 4096), cur_page, (vmm.FLAG_PRESENT or vmm.FLAG_WRITE or vmm.FLAG_USERSPACE))
+                vmm.map_page(task_pd, (base + counter * pmm.PAGE_SIZE), cur_page, (vmm.FLAG_PRESENT or vmm.FLAG_WRITE or vmm.FLAG_USERSPACE))
             next
             
             '' copy the stuff

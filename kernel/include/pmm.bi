@@ -4,13 +4,12 @@
 namespace pmm
     '' we have 4KB per bit, so we need a map for 32k*32bits for 4GB
     const bitmap_size = 32768
+    const PAGE_SIZE = 4096
     
     declare sub init (mbinfo as multiboot_info ptr)
     declare function alloc () as any ptr
     declare sub free (page as any ptr)
     declare sub mark_used (page as any ptr)
-    declare sub memcpy (destination as addr_t, source as addr_t, size as uinteger)
-    declare sub memset (destination as addr_t, value as ubyte, size as uinteger)
     declare function get_total () as uinteger
     declare function get_free () as uinteger
 end namespace

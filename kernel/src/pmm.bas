@@ -1,4 +1,5 @@
 #include once "pmm.bi"
+#include once "kmm.bi"
 #include once "kernel.bi"
 #include once "multiboot.bi"
 #include once "video.bi"
@@ -18,7 +19,7 @@ namespace pmm
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
         dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
         
-        pmm.memset(caddr(@bitmap(0)), 0, pmm.bitmap_size)
+        memset(@bitmap(0), 0, pmm.bitmap_size)
         
         '' free the memory listed in the memory-map
         while (mmap < mmap_end)
@@ -29,7 +30,7 @@ namespace pmm
                 
                 while (addr < end_addr)
                     pmm.free(cast(any ptr, addr))
-                    addr += 4096
+                    addr += pmm.PAGE_SIZE
                 wend
             end if
             '' go to the next entry of the map
@@ -41,7 +42,7 @@ namespace pmm
         dim kernel_end_addr as addr_t = caddr(kernel_end)
         while (kernel_addr < kernel_end_addr)
             pmm.mark_used(cast(any ptr, kernel_addr))
-            kernel_addr += 4096
+            kernel_addr += pmm.PAGE_SIZE
         wend
         
         '' mark the video-memory as used
@@ -52,7 +53,7 @@ namespace pmm
         dim mbinfo_end_addr as addr_t = caddr(mbinfo)+sizeof(multiboot_info)
         while (mbinfo_addr < mbinfo_end_addr)
             pmm.mark_used(cast(any ptr, mbinfo_addr))
-            mbinfo_addr += 4096
+            mbinfo_addr += pmm.PAGE_SIZE
         wend
         
         if (mbinfo->mods_count = 0) then return
@@ -64,7 +65,7 @@ namespace pmm
             module_end_addr = module_ptr->mod_end
             while (module_addr < module_end_addr)
                 pmm.mark_used(cast(any ptr, module_addr))
-                module_addr += 4096
+                module_addr += pmm.PAGE_SIZE
             wend
             module_ptr += 1
         next
@@ -83,8 +84,8 @@ namespace pmm
                     if (pmm.bitmap(counter) and (1 shl bitcounter)) then
                         '' found it, unset the bit and return the address
                         pmm.bitmap(counter) and= not(1 shl bitcounter)
-                        free_mem -= 4096
-                        return cast(any ptr, ((counter*32+bitcounter)*4096))
+                        free_mem -= pmm.PAGE_SIZE
+                        return cast(any ptr, ((counter*32+bitcounter)*pmm.PAGE_SIZE))
                     end if
                 next
             end if
@@ -95,35 +96,15 @@ namespace pmm
     end function
     
     sub free (page as any ptr)
-        dim index as uinteger = cast(uinteger, page) \ 4096
+        dim index as uinteger = cast(uinteger, page) \ pmm.PAGE_SIZE
         pmm.bitmap(index\32) or= (1 shl (index mod 32))
-        free_mem += 4096
+        free_mem += pmm.PAGE_SIZE
     end sub
     
     sub mark_used (page as any ptr)
-        dim index as uinteger = cast(uinteger, page) \ 4096
+        dim index as uinteger = cast(uinteger, page) \ pmm.PAGE_SIZE
         pmm.bitmap(index\32) and= (not(1 shl (index mod 32)))
-        free_mem -= 4096
-    end sub
-    
-    sub memcpy (destination as addr_t, source as addr_t, size as uinteger)
-        asm
-            mov ecx, [size]
-            mov edi, [destination]
-            mov esi, [source]
-            
-            rep movsb
-        end asm
-    end sub
-    
-    sub memset (destination as addr_t, value as ubyte, size as uinteger)
-        asm
-            mov ecx, [size]
-            mov edi, [destination]
-            mov al, [value]
-            
-            rep stosb
-        end asm
+        free_mem -= pmm.PAGE_SIZE
     end sub
     
     function get_total () as uinteger
