@@ -1,3 +1,4 @@
+#include once "kernel.bi"
 #include once "video.bi"
 #include once "kmm.bi"
 

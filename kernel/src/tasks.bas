@@ -2,6 +2,7 @@
 #include once "pmm.bi"
 #include once "cpu.bi"
 #include once "vmm.bi"
+#include once "kmm.bi"
 #include once "elf32.bi"
 #include once "video.bi"
 #include once "kernel.bi"
@@ -40,7 +41,7 @@ namespace tasks
         
         '' give the thread some ticks
         thread->ticks_max = MAX_TICKS
-        thread->ticks_lef = MAX_TICKS
+        thread->ticks_left = MAX_TICKS
         
         '' initialize the cpu-state
         cpu = (thread->stack_kernel_bottom+pmm.PAGE_SIZE-sizeof(cpu_state))
@@ -85,6 +86,7 @@ namespace tasks
         first_task = task
     end function
     
+    #if 0
     function init_task (entry as any ptr) as task_type ptr
         dim kernelstack as any ptr = pmm.alloc()
         dim userstack as any ptr = pmm.alloc()
@@ -129,10 +131,12 @@ namespace tasks
         
         return task
     end function
+    #endif
     
     '' modify scheduler to take care of the task-state
     '' maybe use a for loop to find a runnable task?
     function schedule (cpu as cpu_state ptr) as cpu_state ptr
+    #if 0
         if (not(current_task = 0)) then current_task->cpu = cpu
         
         if (current_task = 0) then
@@ -147,6 +151,7 @@ namespace tasks
         end if
         
         return current_task->cpu
+    #endif
     end function
     
     function get_current_task () as task_type ptr

@@ -9,10 +9,12 @@ namespace tasks
     const STATE_DISABLED = 0
     const STATE_RUNNING = 1
     const STATE_SLEEPING = 2
-    
+
+    type task_type_ as task_type  '' needed because of circular reference
+        
     type thread_type
         '' pointer to the process
-        process as task_type ptr
+        process as task_type_ ptr
         
         '' id of the thread
         tid as uinteger
