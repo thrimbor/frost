@@ -16,6 +16,75 @@ namespace tasks
         return next_pid-1
     end function
     
+    function thread_create (entry as any ptr, process as task_type ptr) as thread_type ptr
+        dim thread as thread_type ptr = pmm.alloc()
+        dim cpu as cpu_state ptr
+        
+        '' prepare the memory
+        pmm.memset(caddr(thread), 0, sizeof(thread_type))
+        
+        '' allocate stacks
+        thread->stack_kernel_bottom = pmm.alloc()
+        thread->stack_user_bottom = pmm.alloc()
+        
+        '' set the thread to disabled
+        thread->state = STATE_DISABLED
+        
+        '' assign a thread-id to the task
+        thread->tid = process->last_tid
+        process->last_tid += 1
+        
+        '' put the thread into the list
+        thread->next_entry = process->threads
+        process->threads = thread
+        
+        '' give the thread some ticks
+        thread->ticks_max = MAX_TICKS
+        thread->ticks_lef = MAX_TICKS
+        
+        '' initialize the cpu-state
+        cpu = (thread->stack_kernel_bottom+4096-sizeof(cpu_state))
+        
+        cpu->eax = 0
+        cpu->ebx = 0
+        cpu->ecx = 0
+        cpu->edx = 0
+        cpu->esi = 0
+        cpu->edi = 0
+        cpu->ebp = 0
+        cpu->eip = cuint(entry)
+        cpu->esp = cuint(thread->stack_user_bottom)+4096
+        cpu->cs = &h18 or &h03
+        cpu->ss = &h20 or &h03
+        cpu->eflags = &h200
+        
+        thread->cpu = cpu
+        
+        '' the thread is now ready to be run
+        thread->state = STATE_RUNNING
+        
+        return thread
+    end function
+    
+    function task_create (entry as any ptr, parent as task_type ptr) as task_type ptr
+        dim task as task_type ptr = pmm.alloc()
+        
+        '' set the task to disabled
+        task->state = STATE_DISABLED
+        
+        '' assign a process-id to the task
+        task->pid = generate_pid()
+        
+        '' set the parent
+        if (not(parent = 0)) then
+            task->parent = parent
+        end if
+        
+        '' put the task into the list
+        task->next_entry = first_task
+        first_task = task
+    end function
+    
     function init_task (entry as any ptr) as task_type ptr
         dim kernelstack as any ptr = pmm.alloc()
         dim userstack as any ptr = pmm.alloc()
@@ -61,6 +130,8 @@ namespace tasks
         return task
     end function
     
+    '' modify scheduler to take care of the task-state
+    '' maybe use a for loop to find a runnable task?
     function schedule (cpu as cpu_state ptr) as cpu_state ptr
         if (not(current_task = 0)) then current_task->cpu = cpu
         

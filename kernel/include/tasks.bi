@@ -6,10 +6,50 @@ namespace tasks
     
     const MAX_TICKS as uinteger = 50
     
+    const STATE_DISABLED = 0
+    const STATE_RUNNING = 1
+    const STATE_SLEEPING = 2
+    
+    type thread_type
+        '' pointer to the process
+        process as task_type ptr
+        
+        '' id of the thread
+        tid as uinteger
+        
+        '' state of the thread
+        state as uinteger
+        
+        '' bottom of the kernel stack
+        stack_kernel_bottom as uinteger
+        
+        '' bottom of the usermode stack
+        stack_user_bottom as uinteger
+        
+        '' cpu state of the thread
+        cpu as any ptr
+        
+        '' scheduling infos
+        ticks_left as uinteger
+        ticks_max as uinteger
+        
+        '' needed for the linked list
+        next_entry as thread_type ptr
+    end type
+    
     type task_type
         pid as uinteger
-        cpu as any ptr
+        'cpu as any ptr
         page_directory as uinteger ptr
+        
+        '' state of the task
+        state as uinteger
+        
+        '' thread list
+        threads as thread_type ptr
+        
+        '' last thread id
+        last_tid as uinteger
         
         '' important to get a tree-like structure
         parent as task_type ptr
@@ -18,13 +58,13 @@ namespace tasks
         rpc_handler as any ptr
         
         '' scheduling infos
-        ticks_left as uinteger
-        ticks_max as uinteger
+        'ticks_left as uinteger
+        'ticks_max as uinteger
         
         '' important to get a useful port-management
         io_bitmap as uinteger ptr
         
-        '' needed for the linked-list
+        '' needed for the linked list
         next_entry as task_type ptr
     end type
     

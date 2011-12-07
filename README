@@ -49,5 +49,5 @@ parameters to fbc.
 DIRECTORY:
 
 ./kernel/src              The source of the kernel
-./kernel/source/include   The headers
+./kernel/include          The headers of the kernel
 ./build                   Contains the build-scripts and the grub.cfg
