@@ -7,6 +7,7 @@
 - memory management:
 	- at the moment, it's pure shit - we can only handle 4KB blocks
 	- we _really_ need malloc() and free()
+	- implement it similar to James Molloy's implementation
 
 - I had an idea for syscalls:
 	1:
