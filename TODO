@@ -16,9 +16,10 @@
 			- next_entry
 		- these form a linked list of free blocks
 		- in occupied blocks, these fields are INVALID!
-		- minimal block size is header+footer+prev_entry+next_entry+1
+		- minimal free block size is header+footer+prev_entry+next_entry+1
+		- unify on kfree() (left and right)
+		- list of free blocks should be sorted to find best-fit as early as possible
 		
-		- does this integrate well with unifying free blocks?
 
 - I had an idea for syscalls:
 	1:
