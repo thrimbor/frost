@@ -1,15 +1,15 @@
-type kmm_block_header
+type kmm_block_header field = 1
     magic as uinteger
     is_hole as ubyte
     size as uinteger
 end type
 
-type kmm_free_block_list
+type kmm_free_block_list field = 1
     prev_entry as kmm_block_header ptr
     next_entry as kmm_block_header ptr
 end type
 
-type kmm_block_footer
+type kmm_block_footer field = 1
     magic as uinteger
     header as kmm_block_header ptr
 end type
