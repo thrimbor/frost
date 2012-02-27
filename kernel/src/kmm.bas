@@ -35,11 +35,11 @@ function kmalloc (size as uinteger) as any ptr
     if (current_block = 0) then return 0
     
     '' loop through the list and find the best free block
-    while
+    do
         if (current_block->size = size) then
             '' we found a perfect block
             best_fit_block = current_block
-            exit while
+            exit do
         end if
         
         difference = current_block->size - size
@@ -51,7 +51,7 @@ function kmalloc (size as uinteger) as any ptr
         end if
         
         current_block = cast(kmm_free_block_list ptr, current_block+1)->next_entry
-    wend
+    loop
     
     '' if we arrive here, we found a good block
 end function
