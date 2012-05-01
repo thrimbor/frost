@@ -1,4 +1,5 @@
 #include once "kmm.bi"
+#include once "kernel.bi"
 
 dim shared kmm_first_block as any ptr
 
@@ -30,7 +31,7 @@ end sub
 '' - heap expansion
 '' - splitting blocks
 
-const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_block_header)+sizeof(kmm_free_block_list)+sizeof(kmm_block_footer)+4
+const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_block_header)+sizeof(kmm_block_content_area)+sizeof(kmm_block_footer)+4
 
 function kmalloc (size as uinteger) as any ptr
     dim current_block as kmm_block_header ptr = kmm_first_block
