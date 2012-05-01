@@ -2,8 +2,8 @@
 #include once "interrupt_handler.bi"
 
 namespace idt
-    dim shared idtp as idt.table_descriptor
-    dim shared table (0 to idt.table_size-1) as idt.gate_descriptor
+    dim shared descriptor as idt.table_descriptor
+    dim shared table (0 to idt.TABLE_SIZE-1) as idt.gate_descriptor
     
     '' this sub sets up and loads an IDT for exceptions, IRQs and the syscall-interrupt.
     sub init ()
@@ -50,19 +50,18 @@ namespace idt
         '' and our syscall-interrupt
         idt.set_entry (&h62, cuint(@int_stub_98), &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_INTERRUPT_GATE_32))
         
-        '' now we load the idt
-        idt.idtp.limit = idt.table_size*8-1
-        idt.idtp.base  = cuint(@idt.table(0))
-        asm lidt [idt.idtp]
+        idt.descriptor.limit = idt.TABLE_SIZE*8-1     '' calculate the size of the entries + null-entry
+        idt.descriptor.base  = cuint(@idt.table(0))   '' set the address of the table
+        asm lidt [idt.descriptor]                     '' load the IDT
     end sub
     
     
     '' this sub is just a helper function to put the passed arguments in the right place of an IDT-entry
-    sub set_entry (i as ushort, offset as uinteger, selector as ushort, accessbyte as ubyte)
-        idt.table(i).offset_low  = loword(offset)
-        idt.table(i).offset_high = hiword(offset)
-        idt.table(i).selector    = selector
-        idt.table(i).reserved    = 0
-        idt.table(i).accessbyte  = accessbyte
+    sub set_entry (index as ushort, offset as uinteger, selector as ushort, accessbyte as ubyte)
+        idt.table(index).offset_low  = loword(offset)
+        idt.table(index).offset_high = hiword(offset)
+        idt.table(index).selector    = selector
+        idt.table(index).reserved    = 0
+        idt.table(index).accessbyte  = accessbyte
     end sub
 end namespace

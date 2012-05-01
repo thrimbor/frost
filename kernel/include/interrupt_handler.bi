@@ -1,5 +1,6 @@
 #include once "cpu.bi"
 
+'' the global interrupt-handler
 declare function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
 
 '' here are all stubs:

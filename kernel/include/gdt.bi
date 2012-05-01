@@ -13,7 +13,7 @@ namespace gdt
         base_high    as ubyte
     end type
     
-    const table_size = 5
+    const TABLE_SIZE = 5
     
     '' flags for the access-byte
     const FLAG_PRESENT          as ubyte = &h80  '' must be set for an active entry

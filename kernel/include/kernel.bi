@@ -3,7 +3,7 @@ extern kernel_start_label alias "kernel_start_label" as byte
 extern kernel_end_label   alias "kernel_end_label"   as byte
 
 #define kernel_start @kernel_start_label
-#define kernel_end @kernel_end_label
+#define kernel_end   @kernel_end_label
 
 common shared tss_ptr as uinteger ptr
 

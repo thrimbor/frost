@@ -4,7 +4,7 @@ type kmm_block_header field = 1
     size as uinteger
 end type
 
-type kmm_free_block_list field = 1
+type kmm_block_content_area field = 1
     prev_entry as kmm_block_header ptr
     next_entry as kmm_block_header ptr
 end type

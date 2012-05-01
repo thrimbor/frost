@@ -22,11 +22,11 @@ align 4
     dd MB_CHECKSUM
 
 
-; this is the entry-point of the kernel.
-; first we disable interrupts and set up the stack,
+; This is the entry-point of the kernel.
+; First we disable interrupts and set up the stack,
 ; then we push the multiboot-magic-number and the pointer
 ; to the multiboot-info struct on the stack and call main.
-; if we ever should return from main, we stop the processor.
+; If we ever should return from main, we stop the processor.
 section .text
 _start:
     cli
@@ -38,7 +38,7 @@ _start:
     hlt
 
 ; 16KB stack for the kernel should be enough ;)
-; the label comes after the 16KB because the stack grows downwards.
+; The label comes after the 16KB because the stack grows downwards.
 section .bss
     resb 16384
 kernelstack:

@@ -1,3 +1,7 @@
+#include once "zstring.bi"
+
+'' this function searches for the string-terminator (\0)
+'' to find out the lenght of the string
 function z_len (text as zstring) as uinteger
     dim text_ptr as ubyte ptr = @text
     dim counter as uinteger = 0
@@ -7,6 +11,7 @@ function z_len (text as zstring) as uinteger
     return counter
 end function
 
+'' this is a simple function to find out if and where a string is containing another
 function z_instr (text as zstring, pattern as zstring) as uinteger
     dim is_instr    as ubyte
     dim len_text    as uinteger = z_len(text)

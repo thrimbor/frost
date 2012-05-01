@@ -12,7 +12,7 @@ namespace idt
         offset_high as ushort
     end type
     
-    const table_size = &h63
+    const TABLE_SIZE = &h63
     
     '' flags for the access-byte
     const FLAG_PRESENT           as ubyte = &h80

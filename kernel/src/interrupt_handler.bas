@@ -10,15 +10,20 @@
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     dim new_cpu as cpu_state ptr = cpu
+    
     select case cpu->int_nr
-        case 0 to &h13                                     '' check for an exception
-            panic.show(1, cpu)
-        case &h20                                          '' timer IRQ, so we switch tasks
-            new_cpu = tasks.schedule(cpu)
+        case 0 to &h13                                     '' exception
+            panic.show(1, cpu)                             '' show panic screen
+            
+        case &h20                                          '' timer IRQ
+            new_cpu = tasks.schedule(cpu)                  '' switch tasks
             tss_ptr[1] = cuint(new_cpu)+sizeof(cpu_state)
-        case &h62                                          '' syscall, so we call the syscall-handler
-            syscall.handler(cpu)
+            
+        case &h62                                          '' syscall interrupt
+            syscall.handler(cpu)                           '' call the syscall-handler
+            
         case else
+            
     end select
     
     '' important: if the int is an IRQ, send the EOI

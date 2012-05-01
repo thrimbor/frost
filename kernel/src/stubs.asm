@@ -80,9 +80,9 @@ int_common:
     mov es, ax
     
     ; now call the handler
-    push esp            ; we push the address to the registers
-    call HANDLE_INTERRUPT
-    mov esp, eax        ; set the new stack address
+    push esp                  ; push the old stack address
+    call HANDLE_INTERRUPT     ; call the interrupt-handler written in FreeBASIC
+    mov esp, eax              ; set the new stack address
     
     ; load the ring-3 segment-registers
     mov ax, 0x23
