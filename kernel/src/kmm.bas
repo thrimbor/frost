@@ -31,7 +31,10 @@ end sub
 '' - heap expansion
 '' - splitting blocks
 
-const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_block_header)+sizeof(kmm_block_content_area)+sizeof(kmm_block_footer)+4
+#define spawned_block best_fit_block
+
+const BLOCK_FRAME_SIZE = sizeof(kmm_block_header)+sizeof(kmm_block_content_area)+sizeof(kmm_block_footer)
+const OVERHEAD_TO_SPLIT as uinteger = BLOCK_FRAME_SIZE + 4
 
 function kmalloc (size as uinteger) as any ptr
     dim current_block as kmm_block_header ptr = kmm_first_block
@@ -70,6 +73,25 @@ function kmalloc (size as uinteger) as any ptr
         if (overhead >= OVERHEAD_TO_SPLIT) then              '' is the block big enough to be split?
             '' block is going to be split
             
+            dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (best_fit_block + 1))
+            dim new_block_size as uinteger = overhead-BLOCK_FRAME_SIZE
+            dim req_block_address as kmm_block_header ptr = cast(any ptr, content_area)+new_block_size+sizeof(kmm_block_footer)
+            
+            '' we create a new block at the address of the found one
+            dim spawned_footer as kmm_block_footer ptr = cast(any ptr, best_fit_block)+sizeof(kmm_block_header)+new_block_size
+            spawned_block->size = new_block_size
+            spawned_footer->magic = FOOTER_MAGIC
+            spawned_footer->header = spawned_block
+            
+            '' the new block is ready! now prepare the requested one
+            req_block_address->magic = HEADER_MAGIC
+            req_block_address->is_hole = false
+            req_block_address->size = size
+            
+            dim req_footer as kmm_block_footer ptr = cast(any ptr, req_block_address)+size
+            req_footer->header = req_block_address
+            
+            return content_area
         end if
         
         '' if it's not beneficial to split the block, we just reserve the whole block
@@ -102,4 +124,31 @@ sub kfree (addr as any ptr)
     '' - unify right
     '' - sort hole into the list
     '' - if we are freeing the last block of the heap, contract the size of the heap (we should not ALWAYS contract)
+    
+    if (addr = 0) return;
+    
+    '' get header and footer of the block
+    dim header as kmm_block_header ptr = addr-sizeof(kmm_block_header)
+    dim footer as kmm_block_footer ptr = addr + header->size
+    
+    dim add_to_list as byte = true
+    
+    '' unify left
+    dim test_footer as kmm_block_footer ptr = cast(any ptr, header)-sizeof(kmm_block_footer)
+    if ((test_footer->magic = FOOTER_MAGIC) and (test_footer->header->is_hole = true)) then
+        dim cached_size as uinteger = header->size
+        header->magic = 0
+        
+        header = test_footer->header
+        footer->header = header
+        header->size += cached_size
+        add_to_list = false
+    end if
+    
+    '' unify right
+    dim test_header as kmm_block_header ptr = cast(any ptr, footer)+sizeof(kmm_block_footer)
+    if ((test_header->magic = HEADER_MAGIC) and (test_header->is_hole = true)) then
+        '' this is a little more complicated, because we have to modify the list
+    end if
+    
 end sub

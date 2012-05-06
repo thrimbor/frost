@@ -78,7 +78,7 @@ namespace pmm
         dim bitcounter as uinteger
         
         for counter=0 to pmm.bitmap_size-1
-            if (not(pmm.bitmap(counter)=0)) then
+            if (pmm.bitmap(counter) > 0) then
                 '' we found a free place and need to search for the set bit
                 for bitcounter=0 to 31 step 1
                     if (pmm.bitmap(counter) and (1 shl bitcounter)) then

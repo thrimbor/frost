@@ -18,12 +18,12 @@ namespace video
     
     '' print one char
     sub putc (char as ubyte)
-        if (char=10) then
-            cursor_pos = (cursor_pos\160+1)*160
+        if (char = 10) then
+            cursor_pos = (cursor_pos\160 + 1) * 160
             return
         end if
         
-        while (cursor_pos>3999)
+        while (cursor_pos > 3999)
             scroll_screen()
         wend
         
@@ -34,119 +34,94 @@ namespace video
     end sub
     
     sub fout (fstr as zstring, ...)
-		dim zstr as ubyte ptr = cast(ubyte ptr, @fstr)
-		dim counter as uinteger = 0
+		dim zstr as ubyte ptr    = cast(ubyte ptr, @fstr)
+		dim counter as uinteger  = 0
         dim hcounter as uinteger = 0
-        dim nbase as uinteger = 0
-		dim arg as any ptr = va_first()
+        dim nbase as uinteger    = 0
+		dim arg as any ptr       = va_first()
 		
         while zstr[counter]
-			'' check whether it's a backslash
-            if (zstr[counter] = 92) then
-                counter += 1
+			
+            if (zstr[counter] = 92) then              '' check whether it's a backslash
+                counter += 1                          '' go to the next char
                 select case (zstr[counter])
-                    '' another backslash? just print one and we're done
-                    case 92:
-                        putc(zstr[counter])
-                        counter += 1
+                    case 92:                          '' another backslash?
+                        putc(zstr[counter])           '' print this backslash
+                        counter += 1                  '' continue our loop
                         continue while
-                    '' \n - call putc with the newline-char
-                    case 110:
-                        putc(10)
-                        counter += 1
+                    case 110:                         '' do we have a "n" ? 
+                        putc(10)                      '' start a new line
+                        counter += 1                  '' continue our loop
                         continue while
-                    '' a percent sign? just print it
-                    case 37:
-                        putc(zstr[counter])
-                        counter += 1
+                    case 37:                          '' a percent-sign?
+                        putc(zstr[counter])           '' print the percent-sign
+                        counter += 1                  '' continue our loop
                         continue while
-                    case else:
-                        counter += 1
+                    case else:                        '' any other char
+                        counter += 1                  '' do nothing and continue loop
                         continue while
                 end select
             end if
             
-            '' check whether it's a percent-sign
-            if (zstr[counter] = 37) then
-				counter += 1
+            if (zstr[counter] = 37) then              '' do we have a percent-sign?
+				counter += 1                          '' go to the next char
                 
-                nbase = 10
-                select case (zstr[counter])
-                    '' "h"
-                    case 104:
-                        nbase = 16
+                nbase = 10                            '' preset the base to 10
+                select case (zstr[counter])           '' check the char
+                    case 104:                         '' a "h"?
+                        nbase = 16                    '' set to hexadecimal
                         counter += 1
-                    '' "n"
-                    case 110:
-                        nbase = 2
+                    case 110:                         '' a "n"?
+                        nbase = 2                     '' set to binary
                         counter += 1
                 end select
                 
-                hcounter = 0
-                while (zstr[counter] = 35)
-                    hcounter += 1
-                    counter += 1
-                wend
+                hcounter = 0                          ''\
+                while (zstr[counter] = 35)            '' \
+                    hcounter += 1                     ''  > count all the "#"-chars
+                    counter += 1                      '' /  this will be the number of minimum chars to print
+                wend                                  ''/
                 
 				select case (zstr[counter])
 					'' "I"
                     case 73:
-						if (hcounter > 0) then
-                            video.cout(va_arg(arg, uinteger),nbase,hcounter)
-                        else
-                            video.cout(va_arg(arg, uinteger),nbase)
-                        end if
+                        video.cout(va_arg(arg, uinteger),nbase,hcounter)
                         
 						arg = va_next(arg, uinteger)
 						counter += 1
 						continue while
                     '' "i"
                     case 105:
-                        if (hcounter > 0) then
-                            video.cout(va_arg(arg, integer),nbase,hcounter)
-                        else
-                            video.cout(va_arg(arg, integer),nbase)
-                        end if
+                        video.cout(va_arg(arg, integer),nbase,hcounter)
+                        
                         arg = va_next(arg, integer)
                         counter += 1
                         continue while
                     '' "S"
                     case 83:
-                        if (hcounter > 0) then
-                            video.cout(cuint(va_arg(arg, ushort)),nbase,hcounter)
-                        else
-                            video.cout(cuint(va_arg(arg, ushort)),nbase)
-                        end if
+                        video.cout(cuint(va_arg(arg, ushort)),nbase,hcounter)
+                        
                         arg = va_next(arg, ushort)
                         counter += 1
                         continue while
                     '' "s"
                     case 115:
-                        if (hcounter > 0) then
-                            video.cout(cint(va_arg(arg, short)),nbase,hcounter)
-                        else
-                            video.cout(cint(va_arg(arg, short)),nbase)
-                        end if
+                        video.cout(cint(va_arg(arg, short)),nbase,hcounter)
+                        
                         arg = va_next(arg, short)
                         counter += 1
                         continue while
                     '' "B"
                     case 66:
-                        if (hcounter > 0) then
-                            video.cout(cuint(va_arg(arg, ubyte)),nbase,hcounter)
-                        else
-                            video.cout(cuint(va_arg(arg, ubyte)),nbase)
-                        end if
+                        video.cout(cuint(va_arg(arg, ubyte)),nbase,hcounter)
+                        
                         arg = va_next(arg, ubyte)
                         counter += 1
                         continue while
                     '' "b"
                     case 98:
-                        if (hcounter > 0) then
-                            video.cout(cint(va_arg(arg, byte)),nbase,hcounter)
-                        else
-                            video.cout(cint(va_arg(arg, byte)),nbase)
-                        end if
+                        video.cout(cint(va_arg(arg, byte)),nbase,hcounter)
+                        
                         arg = va_next(arg, byte)
                         counter += 1
                         continue while
@@ -236,11 +211,20 @@ namespace video
     end sub
     
     '' removes the cursor from the screen
-    sub remove_cursor ()
-        out(&h3D4,14)
-        out(&h3D5,&h07)
-        out(&h3D4,15)
-        out(&h3D5,&hD0)
+    sub hide_cursor ()
+        out(&h3D4, 14)
+        out(&h3D5, &h07)
+        out(&h3D4, 15)
+        out(&h3D5, &hD0)
+    end sub
+    
+    sub move_cursor (x as ubyte, y as ubyte)
+        dim tmp as ushort = y*80 + x
+        
+        out(&h3D4, 14)
+        out(&h3D5, cubyte(tmp shr 8))
+        out(&h3D4, 15)
+        out(&h3D5, cubyte(tmp))
     end sub
     
 end namespace

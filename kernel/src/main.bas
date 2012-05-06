@@ -18,10 +18,10 @@
 '' it is called by start.asm after setting up the stack.
 sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     video.clean()
-    video.remove_cursor()
+    video.hide_cursor()
     
     if (mbinfo->flags and MULTIBOOT_INFO_CMDLINE) then                  '' we just check for the cmdline here
-        dim k_cmd as zstring ptr = cast(zstring ptr, mbinfo->cmdline)
+        dim k_cmd as zstring ptr = cast(zstring ptr, mbinfo->cmdline)   '' get the pointer to the cmdline-string
         
         if (z_instr(*k_cmd, "-verbose") > 0) then                       '' look for -verbose
             debug.set_loglevel(0)                                       '' show every log-message
@@ -29,7 +29,7 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
             debug.set_loglevel(2)                                       '' show only critical messages
         end if
         
-        if (z_instr(*k_cmd, "-no-clear-on-panic") > 0) then
+        if (z_instr(*k_cmd, "-no-clear-on-panic") > 0) then             '' look for -no-clear-on-panic
             panic.set_clear_on_panic(0)                                 '' clear screen before panic message is shown
         end if
     end if
@@ -53,7 +53,7 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     debug_wlog(debug.INFO, "pit initialized\n")
     
     pmm.init(mbinfo)
-    debug_wlog(debug.INFO, "physical memory manager initialized (free RAM: %IMB; total RAM: %IMB)\n", cuint(pmm.get_free()\1048576), cuint(pmm.get_total()\1048576))
+    debug_wlog(debug.INFO, "physical memory manager initialized\n  -> total RAM: %IMB\n  -> free  RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
     
     vmm.init()
     debug_wlog(debug.INFO, "paging initialized\n")

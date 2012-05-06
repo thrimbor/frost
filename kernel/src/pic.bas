@@ -21,7 +21,7 @@ namespace pic
     end sub
     
     sub send_eoi (irq as ubyte)
-        out(pic.MASTER_COMMAND, pic.COMMAND_EOI)
-        if (irq>7) then out(pic.SLAVE_COMMAND, pic.COMMAND_EOI)
+        out(pic.MASTER_COMMAND, pic.COMMAND_EOI)                '' send the EOI-command to the first PIC
+        if (irq>7) then out(pic.SLAVE_COMMAND, pic.COMMAND_EOI) '' if the irq was above 7, the second PIC needs to be informed also
     end sub
 end namespace

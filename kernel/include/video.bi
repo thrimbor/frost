@@ -6,5 +6,6 @@ namespace video
     declare sub clean overload ()
     declare sub clean overload (b_color as ubyte)
     declare sub set_color (fc as ubyte, bc as ubyte)
-    declare sub remove_cursor ()
+    declare sub hide_cursor ()
+    declare sub move_cursor (x as ubyte, y as ubyte)
 end namespace
