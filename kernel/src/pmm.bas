@@ -99,7 +99,7 @@ namespace pmm
     sub free (page as any ptr)
         dim index as uinteger = cast(uinteger, page) \ pmm.PAGE_SIZE
         dim modifier as uinteger = (1 shl (index mod 32))
-        index \= 32
+        index shr= 5 '' faster version of "index \= 32"
         
         '' if the page was occupied before, the free memory variable is increased
         if ((pmm.bitmap(index) and modifier) = 0) free_mem += pmm.PAGE_SIZE
@@ -111,7 +111,7 @@ namespace pmm
     sub mark_used (page as any ptr)
         dim index as uinteger = cast(uinteger, page) \ pmm.PAGE_SIZE
         dim modifier as uinteger  = (1 shl (index mod 32))
-        index \= 32
+        index shr= 5 '' faster version of "index \= 32"
         
         '' if the page wasn't occupied before, the free memory variable is reduced
         if (pmm.bitmap(index) and modifier) free_mem -= pmm.PAGE_SIZE
