@@ -19,6 +19,7 @@ namespace pmm
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
         dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
         
+        '' mark the whole memory as occupied
         memset(@bitmap(0), 0, pmm.bitmap_size)
         
         '' free the memory listed in the memory-map
@@ -97,14 +98,26 @@ namespace pmm
     
     sub free (page as any ptr)
         dim index as uinteger = cast(uinteger, page) \ pmm.PAGE_SIZE
-        pmm.bitmap(index\32) or= (1 shl (index mod 32))
-        free_mem += pmm.PAGE_SIZE
+        dim modifier as uinteger = (1 shl (index mod 32))
+        index \= 32
+        
+        '' if the page was occupied before, the free memory variable is increased
+        if ((pmm.bitmap(index) and modifier) = 0) free_mem += pmm.PAGE_SIZE
+        
+        '' set the bit
+        pmm.bitmap(index) or= modifier
     end sub
     
     sub mark_used (page as any ptr)
         dim index as uinteger = cast(uinteger, page) \ pmm.PAGE_SIZE
-        pmm.bitmap(index\32) and= (not(1 shl (index mod 32)))
-        free_mem -= pmm.PAGE_SIZE
+        dim modifier as uinteger  = (1 shl (index mod 32))
+        index \= 32
+        
+        '' if the page wasn't occupied before, the free memory variable is reduced
+        if (pmm.bitmap(index) and modifier) free_mem -= pmm.PAGE_SIZE
+        
+        '' set the bit
+        pmm.bitmap(index) and= (not(modifier))
     end sub
     
     function get_total () as uinteger
