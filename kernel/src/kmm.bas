@@ -2,6 +2,10 @@
 #include once "kernel.bi"
 
 dim shared kmm_first_block as any ptr
+dim shared kmm_minimum_size as uinteger
+dim shared kmm_maximum_size as uinteger
+dim shared kmm_start_address as uinteger
+dim shared kmm_end_address as uinteger
 
 sub memcpy (destination as any ptr, source as any ptr, size as uinteger)
     asm
@@ -117,6 +121,27 @@ function kmalloc (size as uinteger) as any ptr
     return content_area
 end function
 
+function kmm_contract (new_size as uinteger) as uinteger
+    '' get the nearest following page boundary
+    if ((new_size+kmm_start_address) mod pmm.PAGE_SIZE) > 0 then
+        new_size += pmm.PAGE_SIZE - ((new_size+kmm_start_address) mod pmm.PAGE_SIZE)
+    end if
+    
+    '' don't shrink beyound our minimum size
+    if (new_size < kmm_minimum_size) then new_size = kmm_minimum_size
+    
+    dim old_size as uinteger = kmm_end_address - kmm_start_address
+    dim i as uinteger = old_size - pmm.PAGE_SIZE
+    
+    while (new_size < i)
+        '' free the page at kmm_start_address + i
+        i -= pmm.PAGE_SIZE
+    wend
+    
+    kmm_end_address = kmm_start_address + new_size
+    return new_size
+end function
+
 sub kfree (addr as any ptr)
     '' steps to take:
     '' - set block to hole
@@ -130,8 +155,10 @@ sub kfree (addr as any ptr)
     '' get header and footer of the block
     dim header as kmm_block_header ptr = addr-sizeof(kmm_block_header)
     dim footer as kmm_block_footer ptr = addr + header->size
-    
     dim add_to_list as byte = true
+    
+    '' set block to hole
+    header->is_hole = true
     
     '' unify left
     dim test_footer as kmm_block_footer ptr = cast(any ptr, header)-sizeof(kmm_block_footer)
@@ -148,7 +175,61 @@ sub kfree (addr as any ptr)
     '' unify right
     dim test_header as kmm_block_header ptr = cast(any ptr, footer)+sizeof(kmm_block_footer)
     if ((test_header->magic = HEADER_MAGIC) and (test_header->is_hole = true)) then
-        '' this is a little more complicated, because we have to modify the list
+        '' we have a free block to our right
+        dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (test_header + 1))
+        dim prev_content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (content_area->prev_entry + 1))
+        dim next_content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (content_area->next_entry + 1))
+        
+        '' remove the block from the list
+        prev_content_area->next_entry = content_area->next_entry
+        next_content_area->prev_entry = content_area->prev_entry
+        
+        '' the space increases
+        header->size += test_header->size + sizeof(kmm_block_header) + sizeof(kmm_block_footer)
+        
+        '' modify our new footer to point to the header
+        test_header->footer->header = header
+        
+        '' we're done
+    end if
+    
+    '' is the footer end equal to the end of the heap?
+    if ((cuint(header->footer)+sizeof(kmm_block_footer) == kmm_end_address) then
+        dim old_length as uinteger = kmm_end_address - kmm_start_address
+        dim new_length as uinteger = kmm_contract(cuint(header) - kmm_start_address)
+        
+        '' is this block still existing?
+        if ((header->size - (old_length - new_length)) > 0) then
+            header->size -= old_length - new_length
+            header->footer = cast(kmm_block_footer ptr, (cuint(header+1) + header->size))
+            header->footer->magic = FOOTER_MAGIC
+            header->footer->header = header
+        else
+            '' block isn't existing any longer
+            if (add_to_list = false) then
+                '' block was already on list, so remove it
+                dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (test_header + 1))
+                dim prev_content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (content_area->prev_entry + 1))
+                dim next_content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (content_area->next_entry + 1))
+                
+                if (not(prev_content_area = 0)) then prev_content_area->next_entry = content_area->next_entry
+                if (not(next_content_area = 0)) then next_content_area->prev_entry = content_area->prev_entry
+            end if
+            
+            '' make sure the (non-existing) block isn't going to be added
+            add_to_list = false
+        end if
+    end if
+    
+    if (add_to_list = true) then
+        '' we just add the header to the beginning of the list
+        dim first_block as kmm_block_header ptr = kmm_first_block
+        dim first_blockcontent_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (first_block +1))
+        dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (header + 1))
+        first_blockcontent_area->prev_entry = header
+        content_area->prev_entry = 0
+        content_area->next_entry = first_block
+        kmm_first_block = cast(any ptr, header)
     end if
     
 end sub
