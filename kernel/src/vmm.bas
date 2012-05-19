@@ -134,7 +134,8 @@ namespace vmm
     
     sub activate_context (page_directory as context)
         asm
-            mov cr3, [page_directory]
+            mov eax, [page_directory]
+            mov cr3, eax
         end asm
     end sub
     

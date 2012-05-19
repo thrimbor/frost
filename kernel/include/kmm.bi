@@ -1,5 +1,5 @@
-const HEADER_MAGIC as uinteger = &hGABEGABE
-const FOOTER_MAGIC as uinteger = &hGABEBEEF
+const HEADER_MAGIC as uinteger = &hDEADBEEF
+const FOOTER_MAGIC as uinteger = &hFEEDBEEF
 
 type kmm_block_header field = 1
     magic as uinteger                   '' magic number to identify blocks

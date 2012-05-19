@@ -102,7 +102,7 @@ namespace pmm
         index shr= 5 '' faster version of "index \= 32"
         
         '' if the page was occupied before, the free memory variable is increased
-        if ((pmm.bitmap(index) and modifier) = 0) free_mem += pmm.PAGE_SIZE
+        if ((pmm.bitmap(index) and modifier) = 0) then free_mem += pmm.PAGE_SIZE
         
         '' set the bit
         pmm.bitmap(index) or= modifier
@@ -114,7 +114,7 @@ namespace pmm
         index shr= 5 '' faster version of "index \= 32"
         
         '' if the page wasn't occupied before, the free memory variable is reduced
-        if (pmm.bitmap(index) and modifier) free_mem -= pmm.PAGE_SIZE
+        if (pmm.bitmap(index) and modifier) then free_mem -= pmm.PAGE_SIZE
         
         '' set the bit
         pmm.bitmap(index) and= (not(modifier))

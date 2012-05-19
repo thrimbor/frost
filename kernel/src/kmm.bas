@@ -49,7 +49,7 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     kmm_first_block = cast(any ptr, kmm_start_address)
     
     dim header as kmm_block_header ptr = kmm_first_block
-    dim footer as kmm_block_footer ptr = cast(kmm_block_footer ptr, (kmm_end_address-sizeof(kmm_block_footer))
+    dim footer as kmm_block_footer ptr = cast(kmm_block_footer ptr, (kmm_end_address-sizeof(kmm_block_footer)))
     dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, header+1)
     header->magic = HEADER_MAGIC
     header->is_hole = true
@@ -173,7 +173,7 @@ sub kfree (addr as any ptr)
     '' - sort hole into the list
     '' - if we are freeing the last block of the heap, contract the size of the heap (we should not ALWAYS contract)
     
-    if (addr = 0) return;
+    if (addr = 0) then return
     
     '' get header and footer of the block
     dim header as kmm_block_header ptr = addr-sizeof(kmm_block_header)
@@ -211,22 +211,24 @@ sub kfree (addr as any ptr)
         header->size += test_header->size + sizeof(kmm_block_header) + sizeof(kmm_block_footer)
         
         '' modify our new footer to point to the header
-        test_header->footer->header = header
+        ''test_header->footer->header = header
+        footer = cast(any ptr, test_header+1) + test_header->size
+        footer->header = header
         
         '' we're done
     end if
     
     '' is the footer end equal to the end of the heap?
-    if ((cuint(header->footer)+sizeof(kmm_block_footer) == kmm_end_address) then
+    if ((cuint(footer)+sizeof(kmm_block_footer)) = kmm_end_address) then
         dim old_length as uinteger = kmm_end_address - kmm_start_address
         dim new_length as uinteger = kmm_contract(cuint(header) - kmm_start_address)
         
         '' is this block still existing?
         if ((header->size - (old_length - new_length)) > 0) then
             header->size -= old_length - new_length
-            header->footer = cast(kmm_block_footer ptr, (cuint(header+1) + header->size))
-            header->footer->magic = FOOTER_MAGIC
-            header->footer->header = header
+            footer = cast(kmm_block_footer ptr, (cuint(header+1) + header->size))
+            footer->magic = FOOTER_MAGIC
+            footer->header = header
         else
             '' block isn't existing any longer
             if (add_to_list = false) then
