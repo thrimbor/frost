@@ -40,6 +40,26 @@ end sub
 const BLOCK_FRAME_SIZE = sizeof(kmm_block_header)+sizeof(kmm_block_content_area)+sizeof(kmm_block_footer)
 const OVERHEAD_TO_SPLIT as uinteger = BLOCK_FRAME_SIZE + 4
 
+sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger, maximum as uinteger)
+    kmm_start_address = start_addr
+    kmm_end_address = end_addr
+    kmm_minimum_size = minimum
+    kmm_maximum_size = maximum
+    
+    kmm_first_block = cast(any ptr, kmm_start_address)
+    
+    dim header as kmm_block_header ptr = kmm_first_block
+    dim footer as kmm_block_footer ptr = cast(kmm_block_footer ptr, (kmm_end_address-sizeof(kmm_block_footer))
+    dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, header+1)
+    header->magic = HEADER_MAGIC
+    header->is_hole = true
+    header->size = kmm_end_address - kmm_start_address - sizeof(kmm_block_header) - sizeof(kmm_block_footer)
+    footer->magic = FOOTER_MAGIC
+    footer->header = header
+    content_area->prev_entry = 0
+    content_area->next_entry = 0
+end sub
+
 function kmalloc (size as uinteger) as any ptr
     dim current_block as kmm_block_header ptr = kmm_first_block
     dim best_fit_block as kmm_block_header ptr
@@ -122,6 +142,7 @@ function kmalloc (size as uinteger) as any ptr
 end function
 
 function kmm_contract (new_size as uinteger) as uinteger
+    /'
     '' get the nearest following page boundary
     if ((new_size+kmm_start_address) mod pmm.PAGE_SIZE) > 0 then
         new_size += pmm.PAGE_SIZE - ((new_size+kmm_start_address) mod pmm.PAGE_SIZE)
@@ -140,6 +161,8 @@ function kmm_contract (new_size as uinteger) as uinteger
     
     kmm_end_address = kmm_start_address + new_size
     return new_size
+    '/
+    return kmm_end_address - kmm_start_address
 end function
 
 sub kfree (addr as any ptr)
