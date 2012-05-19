@@ -7,8 +7,9 @@
 #include once "pic.bi"
 #include once "pit.bi"
 #include once "pmm.bi"
-#include once "tasks.bi"
 #include once "vmm.bi"
+#include once "kmm.bi"
+#include once "tasks.bi"
 #include once "debug.bi"
 #include once "panic.bi"
 #include once "video.bi"
@@ -57,6 +58,18 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     
     vmm.init()
     debug_wlog(debug.INFO, "paging initialized\n")
+    
+    kmm_init(10*1024*1024, 20*1024*1024, 10*1024*1024, 10*1024*1024)
+    debug_wlog(debug.INFO, "test-heap initialized\n")
+    debug_wlog(debug.INFO, "testing the heap...\n")
+    
+    dim a as uinteger = cuint(kmalloc(8))
+    dim b as uinteger = cuint(kmalloc(8))
+    debug_wlog(debug.INFO, "a: %hI, b: %hI\n", a, b)
+    kfree(b)
+    kfree(a)
+    dim c as uinteger = cuint(kmalloc(16))
+    debug_wlog(debug.INFO, "d: %hI")
 
     
     'debug_wlog(debug.INFO, "loading modules... ")

@@ -19,5 +19,6 @@ end type
 
 declare sub memcpy (destination as any ptr, source as any ptr, size as uinteger)
 declare sub memset (destination as any ptr, value as ubyte, size as uinteger)
+declare sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger, maximum as uinteger)
 declare function kmalloc (size as uinteger) as any ptr
 declare sub kfree (addr as any ptr)
