@@ -63,13 +63,15 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     debug_wlog(debug.INFO, "test-heap initialized\n")
     debug_wlog(debug.INFO, "testing the heap...\n")
     
-    dim a as uinteger = cuint(kmalloc(8))
+    dim a as uinteger = cuint(kmalloc(16))
     dim b as uinteger = cuint(kmalloc(8))
-    debug_wlog(debug.INFO, "a: %hI, b: %hI\n", a, b)
+    debug_wlog(debug.INFO, "a: %h########I, b: %h########I\n", a, b)
     kfree(cast(any ptr, b))
+    debug_wlog(debug.INFO, "block b freed\n")
     kfree(cast(any ptr, a))
+    debug_wlog(debug.INFO, "block a freed\n")
     dim c as uinteger = cuint(kmalloc(16))
-    debug_wlog(debug.INFO, "d: %hI")
+    debug_wlog(debug.INFO, "c: %h########I")
 
     
     'debug_wlog(debug.INFO, "loading modules... ")

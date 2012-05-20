@@ -1,5 +1,6 @@
 #include once "kmm.bi"
 #include once "kernel.bi"
+#include once "video.bi"
 
 dim shared kmm_first_block as any ptr
 dim shared kmm_minimum_size as uinteger
@@ -48,6 +49,9 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     
     kmm_first_block = cast(any ptr, kmm_start_address)
     
+    video.fout("heap start: %hI, end: %hI, min: %hI, max: %hI\n", kmm_start_address, kmm_end_address, kmm_minimum_size, kmm_maximum_size)
+    video.fout("first block: %hI\n", cuint(kmm_first_block))
+    
     dim header as kmm_block_header ptr = kmm_first_block
     dim footer as kmm_block_footer ptr = cast(kmm_block_footer ptr, (kmm_end_address-sizeof(kmm_block_footer)))
     dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, header+1)
@@ -65,17 +69,19 @@ function kmalloc (size as uinteger) as any ptr
     dim best_fit_block as kmm_block_header ptr
     dim is_block_perfect as byte = 0
     dim overhead as uinteger
-    dim last_overhead as uinteger
+    dim last_overhead as uinteger = &hFFFFFFFF
     
     '' loop through the list and find the best free block
     do until (current_block = 0)
         if (current_block->size = size) then                 '' is the size exactly right? We found a perfect block!
+			video.fout("we found a perfect block!\n")
             best_fit_block = current_block                   '' remember the block
             is_block_perfect = -1                            '' block is perfect, so we set the flag
             exit do                                          '' we have a perfect block, so we stop searching
         end if
         
         if (size < current_block->size) then                 '' is the block bigger than requested?
+            'video.fout("block is too big: %I\n", current_block->size)
             overhead = current_block->size - size            '' calculate the blocks overhead
             
             if (overhead < last_overhead) then               '' do we have less overhead than the last time?
@@ -88,14 +94,19 @@ function kmalloc (size as uinteger) as any ptr
         current_block = cast(kmm_block_content_area ptr, current_block+1)->next_entry
     loop
     
-    if (best_fit_block = 0) then return 0                    '' we could not find a suitable block
+    if (best_fit_block = 0) then
+		video.fout("Could not find a block\n")
+		return 0                    '' we could not find a suitable block
+	end if
     
     '' if we arrive here, we found a good block
     if (is_block_perfect = 0) then                           '' is the block not perfect?
         overhead = best_fit_block->size - size               '' calculate the overhead
+        video.fout("block is not perfect, overhead: %hI\n", overhead)
         
         if (overhead >= OVERHEAD_TO_SPLIT) then              '' is the block big enough to be split?
             '' block is going to be split
+            video.fout("block is going to be split\n")
             
             dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, (best_fit_block + 1))
             dim new_block_size as uinteger = overhead-BLOCK_FRAME_SIZE
@@ -115,7 +126,9 @@ function kmalloc (size as uinteger) as any ptr
             dim req_footer as kmm_block_footer ptr = cast(any ptr, req_block_address)+size
             req_footer->header = req_block_address
             
-            return content_area
+            if (best_fit_block = kmm_first_block) then kmm_first_block = spawned_block
+            
+            return cast(any ptr, req_block_address+1)
         end if
         
         '' if it's not beneficial to split the block, we just reserve the whole block
