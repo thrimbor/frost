@@ -33,7 +33,7 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     
     '' enable this if paging is ready to switch page-directories
     /'
-    if (not(cpu = new_cpu)) then
+    if (cpu <> new_cpu) then
         dim pagedir as uinteger ptr = (tasks.get_current_task())->page_directory
         asm
             mov eax, [pagedir]

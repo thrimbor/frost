@@ -77,7 +77,7 @@ namespace tasks
         task->pid = generate_pid()
         
         '' set the parent
-        if (not(parent = 0)) then
+        if (parent <> 0) then
             task->parent = parent
         end if
         
@@ -137,7 +137,7 @@ namespace tasks
     '' maybe use a for loop to find a runnable task?
     function schedule (cpu as cpu_state ptr) as cpu_state ptr
     #if 0
-        if (not(current_task = 0)) then current_task->cpu = cpu
+        if (current_task <> 0) then current_task->cpu = cpu
         
         if (current_task = 0) then
             current_task = first_task
@@ -175,7 +175,7 @@ namespace tasks
         
         dim ph_entry as elf32.Elf32_Phdr ptr = cast(any ptr, cuint(image) + elf_header->e_phoff)
         for counter as uinteger = 1 to elf_header->e_phnum
-            if (not(ph_entry->p_type = elf32.ELF_PT_LOAD)) then
+            if (ph_entry->p_type <> elf32.ELF_PT_LOAD) then
                 ph_entry = cast(any ptr, cuint(ph_entry) + elf_header->e_phentsize)
                 continue for
             end if

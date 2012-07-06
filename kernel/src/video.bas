@@ -133,7 +133,7 @@ namespace video
                         t_zstr = cast(byte ptr, va_arg(arg, addr_t))
                         arg = va_next(arg, addr_t)
                         
-                        while not (t_zstr[t_zcounter] = 0)
+                        while (t_zstr[t_zcounter] <> 0)
                             putc(t_zstr[t_zcounter])
                             t_zcounter += 1
                         wend
