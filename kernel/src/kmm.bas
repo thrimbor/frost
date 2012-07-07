@@ -31,12 +31,12 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     video.fout("heap start: %hI, end: %hI, min: %hI, max: %hI\n", kmm_start_address, kmm_end_address, kmm_minimum_size, kmm_maximum_size)
     video.fout("first block: %hI\n", cuint(kmm_first_block))
     
-    dim header as kmm_block_header ptr = kmm_first_block
-    dim footer as kmm_block_footer ptr = cast(kmm_block_footer ptr, (kmm_end_address-sizeof(kmm_block_footer)))
-    dim content_area as kmm_block_content_area ptr = cast(kmm_block_content_area ptr, header+1)
+    dim header as kmm_header ptr = kmm_first_block
+    dim footer as kmm_footer ptr = cast(kmm_footer ptr, (kmm_end_address-sizeof(kmm_footer)))
+    dim content_area as kmm_content ptr = cast(kmm_content ptr, header+1)
     header->magic = HEADER_MAGIC
     header->is_hole = true
-    header->size = kmm_end_address - kmm_start_address - sizeof(kmm_block_header) - sizeof(kmm_block_footer)
+    header->size = kmm_end_address - kmm_start_address - sizeof(kmm_header) - sizeof(kmm_footer)
     footer->magic = FOOTER_MAGIC
     footer->header = header
     content_area->prev_entry = 0
@@ -81,9 +81,20 @@ sub remove_hole (hole as kmm_header ptr)
     '' get the next and previous elements from the list
     dim prev_entry as kmm_header ptr = cast(kmm_content ptr, hole+1)->prev_entry
     dim next_entry as kmm_header ptr = cast(kmm_content ptr, hole+1)->next_entry
-    '' connect their pointers
-    if (next_entry <> 0) then next_entry->prev_entry = prev_entry
-    if (prev_entry <> 0) then prev_entry->next_entry = next_entry
+    '' check the previous one
+    if (prev_entry <> 0) then
+        '' get content area
+        dim prev_content as kmm_content ptr = cast(kmm_content ptr, prev_entry+1)
+        '' set pointer
+        prev_content->next_entry = next_entry
+    end if
+    '' check the next one
+    if (next_entry <> 0) then
+        '' get content area
+        dim next_content as kmm_content ptr = cast(kmm_content ptr, next_entry+1)
+        '' set pointer
+        next_content->prev_entry = prev_entry
+    end if
     '' hole is now removed from list
 end sub
 
@@ -96,15 +107,19 @@ end sub
 
 function kmalloc (size as uinteger) as any ptr
     '' take size of header and footer into account
-    dim real_size as uinteger = size + sizeof(kmm_header) + sizeof(kmm_footer)
+    dim new_size as uinteger = size + sizeof(kmm_header) + sizeof(kmm_footer)
+    video.fout("new_size: %###I\n", new_size)
     '' find the smallest fitting hole
     dim hole as kmm_header ptr = find_hole(new_size)
     
     if (hole = 0) then
         '' error handling code...
         '' I think we should expand the heap here
+        video.fout("no hole found!\n")
         return 0
     end if
+    
+    video.fout("Address of hole: %h########I\n", cuint(hole))
     
     '' to split or not to split, that is the question...
     if ((hole->size - new_size) < OVERHEAD_TO_SPLIT) then
@@ -120,9 +135,9 @@ function kmalloc (size as uinteger) as any ptr
         '' we also need to built a new footer
         dim new_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(new_hole)+new_hole->size-sizeof(kmm_footer))
         new_footer->magic = FOOTER_MAGIC
-        new_footer->header = kmm_header
+        new_footer->header = new_hole
         '' now fix the old hole
-        hole = cast(kmm_header ptr, cuint(new_hole) + new_hole->size))
+        hole = cast(kmm_header ptr, cuint(new_hole) + new_hole->size)
         hole->magic = HEADER_MAGIC
         hole->is_hole = false
         hole->size = new_size
@@ -130,6 +145,7 @@ function kmalloc (size as uinteger) as any ptr
         new_footer = cast(kmm_footer ptr, cuint(hole) + hole->size - sizeof(kmm_footer))
         '' magic number should still fit, so we just set the header pointer
         new_footer->header = hole
+        video.fout("hole was split: %########I, new hole: %########I\n", hole->size, new_hole->size)
     end if
     
     '' and we're done!
@@ -142,6 +158,8 @@ sub kfree (addr as any ptr)
     
     dim header as kmm_header ptr = addr - sizeof(kmm_header)
     dim footer as kmm_footer ptr = addr + header->size
+
+    video.fout("atf: %h########I, h: %h########I, s: %h########I, f: %h########I\n", cuint(addr), cuint(header), header->size, cuint(footer))
     
     '' well, we _could_ check the magic fields here ;)
     
@@ -159,6 +177,7 @@ sub kfree (addr as any ptr)
         footer->header = header
         header->size += cached_size
         do_add = false
+        video.fout("unified left\n")
     end if
     
     '' unify right
@@ -174,6 +193,7 @@ sub kfree (addr as any ptr)
         footer->header = header
         '' remove the header of the absorbed hole from the list
         remove_hole(test_header)
+        video.fout("unified right\n")
     end if
     
     '' we should check for the possibility to contract here

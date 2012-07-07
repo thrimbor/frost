@@ -1,5 +1,5 @@
 #include once "pmm.bi"
-#include once "kmm.bi"
+#include once "mem.bi"
 #include once "kernel.bi"
 #include once "multiboot.bi"
 #include once "video.bi"

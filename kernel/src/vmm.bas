@@ -1,6 +1,7 @@
 #include once "vmm.bi"
 #include once "pmm.bi"
 #include once "kmm.bi"
+#include once "mem.bi"
 #include once "kernel.bi"
 
 namespace vmm
@@ -125,7 +126,7 @@ namespace vmm
         while (bytes_left > 0)
             p_v_addr = get_p_addr(page_directory, v_addr, 1)
             size_for_this_page = ((v_addr+pmm.PAGE_SIZE) and &hFFF) - v_addr
-            memcpy(cast(any ptr, p_v_addr), p_addr, size_for_this_page)
+            memcpy(cast(any ptr, p_v_addr), cast(any ptr, p_addr), size_for_this_page)
             bytes_left -= size_for_this_page
             p_addr += size_for_this_page
             v_addr += size_for_this_page

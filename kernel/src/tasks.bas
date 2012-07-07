@@ -3,6 +3,7 @@
 #include once "cpu.bi"
 #include once "vmm.bi"
 #include once "kmm.bi"
+#include once "mem.bi"
 #include once "elf32.bi"
 #include once "video.bi"
 #include once "kernel.bi"
