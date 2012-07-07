@@ -34,10 +34,10 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     dim header as kmm_header ptr = kmm_first_block
     dim footer as kmm_footer ptr = cast(kmm_footer ptr, (kmm_end_address-sizeof(kmm_footer)))
     dim content_area as kmm_content ptr = cast(kmm_content ptr, header+1)
-    header->magic = HEADER_MAGIC
-    header->is_hole = true
+    header->magic = HEAP_MAGIC
+    header->is_hole = 1
     header->size = kmm_end_address - kmm_start_address - sizeof(kmm_header) - sizeof(kmm_footer)
-    footer->magic = FOOTER_MAGIC
+    footer->magic = HEAP_MAGIC
     footer->header = header
     content_area->prev_entry = 0
     content_area->next_entry = 0
@@ -105,6 +105,31 @@ sub insert_hole (hole as kmm_header ptr)
     kmm_first_block = hole
 end sub
 
+sub split_hole (hole as kmm_header ptr, size as uinteger)
+    '' save the old size of the hole
+    'dim old_size as uinteger = hole->size
+    '' set the new size
+    hole->size = size
+    '' create a footer at the end of the hole
+    dim footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(hole)+size-sizeof(kmm_footer))
+    footer->magic = HEAP_MAGIC
+    footer->header = hole
+    
+    '' create a new hole
+    dim new_hole as kmm_header ptr = cast(kmm_header ptr, footer+1)
+    new_hole->magic = HEAP_MAGIC
+    new_hole->is_hole = 1
+    new_hole->size = old_size-size
+    
+    '' create a footer for our new hole
+    dim new_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(new_hole)+new_hole->size)
+    new_footer->magic = HEAP_MAGIC
+    new_footer->header = new_hole
+    
+    '' at last, we have to add our new hole to the list
+    insert_hole(new_hole)
+end sub
+
 function kmalloc (size as uinteger) as any ptr
     '' take size of header and footer into account
     dim new_size as uinteger = size + sizeof(kmm_header) + sizeof(kmm_footer)
@@ -126,19 +151,22 @@ function kmalloc (size as uinteger) as any ptr
         '' don't split, increase requested size to fit
         new_size = hole->size
         '' remove hole from list
-        remove_hole(hole)
+        'remove_hole(hole)
     else
+        split_hole(hole, new_size)
+        
+        /'
         '' yes, we split
         '' create a new hole reusing the list-place of the old one
         dim new_hole as kmm_header ptr = hole
         new_hole->size = (hole->size - new_size)
         '' we also need to built a new footer
         dim new_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(new_hole)+new_hole->size-sizeof(kmm_footer))
-        new_footer->magic = FOOTER_MAGIC
+        new_footer->magic = HEAP_MAGIC
         new_footer->header = new_hole
         '' now fix the old hole
         hole = cast(kmm_header ptr, cuint(new_hole) + new_hole->size)
-        hole->magic = HEADER_MAGIC
+        hole->magic = HEAP_MAGIC
         hole->is_hole = false
         hole->size = new_size
         '' of course this hole also needs a fixed footer
@@ -146,7 +174,14 @@ function kmalloc (size as uinteger) as any ptr
         '' magic number should still fit, so we just set the header pointer
         new_footer->header = hole
         video.fout("hole was split: %########I, new hole: %########I\n", hole->size, new_hole->size)
+        '/
     end if
+    
+    '' remove hole from list
+    remove_hole(hole)
+    
+    '' hole is now a block
+    hole->is_hole = 0
     
     '' and we're done!
     return cast(any ptr, cuint(hole)+sizeof(kmm_header))
@@ -164,14 +199,14 @@ sub kfree (addr as any ptr)
     '' well, we _could_ check the magic fields here ;)
     
     '' the block is now a hole again
-    header->is_hole = true
+    header->is_hole = 1
     
     '' we want to add the header to the free holes
     dim do_add as byte = true
     
     '' unify left
     dim test_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(header)-sizeof(kmm_footer))
-    if ((test_footer->magic = FOOTER_MAGIC) and (test_footer->header->is_hole = 1)) then
+    if ((test_footer->magic = HEAP_MAGIC) and (test_footer->header->is_hole = 1)) then
         dim cached_size as uinteger = header->size
         header = test_footer->header
         footer->header = header
@@ -182,7 +217,7 @@ sub kfree (addr as any ptr)
     
     '' unify right
     dim test_header as kmm_header ptr = cast(kmm_header ptr, cuint(footer)+sizeof(kmm_footer))
-    if ((test_header->magic = HEADER_MAGIC) and (test_header->is_hole)) then
+    if ((test_header->magic = HEAP_MAGIC) and (test_header->is_hole = 1)) then
         '' increase the size of our hole
         header->size += test_header->size
         '' find the header of the following hole
