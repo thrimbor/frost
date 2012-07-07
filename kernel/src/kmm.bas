@@ -14,9 +14,6 @@ dim shared kmm_end_address as uinteger
 '' todo:
 '' - heap initialization
 '' - heap expansion
-'' - splitting blocks
-
-#define spawned_block best_fit_block
 
 const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
 
@@ -122,7 +119,7 @@ sub split_hole (hole as kmm_header ptr, size as uinteger)
     new_hole->size = old_size-size
     
     '' create a footer for our new hole
-    dim new_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(new_hole)+new_hole->size)
+    dim new_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(new_hole)+new_hole->size-sizeof(kmm_footer))
     new_footer->magic = HEAP_MAGIC
     new_footer->header = new_hole
     
@@ -146,35 +143,15 @@ function kmalloc (size as uinteger) as any ptr
     
     video.fout("Address of hole: %h########I\n", cuint(hole))
     
-    '' to split or not to split, that is the question...
-    if ((hole->size - new_size) < OVERHEAD_TO_SPLIT) then
-        '' don't split, increase requested size to fit
-        new_size = hole->size
-        '' remove hole from list
-        'remove_hole(hole)
-    else
-        split_hole(hole, new_size)
-        
-        /'
-        '' yes, we split
-        '' create a new hole reusing the list-place of the old one
-        dim new_hole as kmm_header ptr = hole
-        new_hole->size = (hole->size - new_size)
-        '' we also need to built a new footer
-        dim new_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(new_hole)+new_hole->size-sizeof(kmm_footer))
-        new_footer->magic = HEAP_MAGIC
-        new_footer->header = new_hole
-        '' now fix the old hole
-        hole = cast(kmm_header ptr, cuint(new_hole) + new_hole->size)
-        hole->magic = HEAP_MAGIC
-        hole->is_hole = false
-        hole->size = new_size
-        '' of course this hole also needs a fixed footer
-        new_footer = cast(kmm_footer ptr, cuint(hole) + hole->size - sizeof(kmm_footer))
-        '' magic number should still fit, so we just set the header pointer
-        new_footer->header = hole
-        video.fout("hole was split: %########I, new hole: %########I\n", hole->size, new_hole->size)
-        '/
+    '' was the hole perfect or not?
+    if (hole->size <> new_size) then
+        '' to split or not to split, that is the question...
+        if ((hole->size - new_size) < OVERHEAD_TO_SPLIT) then
+            '' don't split, increase requested size to fit
+            new_size = hole->size
+        else
+            split_hole(hole, new_size)
+        end if
     end if
     
     '' remove hole from list
