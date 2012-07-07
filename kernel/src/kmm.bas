@@ -107,7 +107,7 @@ end sub
 
 sub split_hole (hole as kmm_header ptr, size as uinteger)
     '' save the old size of the hole
-    'dim old_size as uinteger = hole->size
+    dim old_size as uinteger = hole->size
     '' set the new size
     hole->size = size
     '' create a footer at the end of the hole
@@ -192,7 +192,9 @@ sub kfree (addr as any ptr)
     if (addr = 0) then return
     
     dim header as kmm_header ptr = addr - sizeof(kmm_header)
-    dim footer as kmm_footer ptr = addr + header->size
+    '' only free if it's occupied
+    if (header->is_hole = 1) then return
+    dim footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(header) + header->size)
 
     video.fout("atf: %h########I, h: %h########I, s: %h########I, f: %h########I\n", cuint(addr), cuint(header), header->size, cuint(footer))
     
