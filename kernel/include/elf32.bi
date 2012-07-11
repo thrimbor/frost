@@ -1,3 +1,5 @@
+#pragma once
+
 namespace elf32
     type Elf32_Addr  as uinteger
     type Elf32_Half  as ushort

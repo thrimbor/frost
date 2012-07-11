@@ -1,4 +1,4 @@
-#include once "mem.bi"
+#include "mem.bi"
 
 sub memcpy (destination as any ptr, source as any ptr, size as uinteger)
     asm

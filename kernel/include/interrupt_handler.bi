@@ -1,4 +1,6 @@
-#include once "cpu.bi"
+#pragma once
+
+#include "cpu.bi"
 
 '' the global interrupt-handler
 declare function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr

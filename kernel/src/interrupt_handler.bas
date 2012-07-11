@@ -1,11 +1,11 @@
-#include once "kernel.bi"
-#include once "interrupt_handler.bi"
-#include once "cpu.bi"
-#include once "pic.bi"
-#include once "tasks.bi"
-#include once "syscall.bi"
-#include once "panic.bi"
-#include once "video.bi"
+#include "kernel.bi"
+#include "interrupt_handler.bi"
+#include "cpu.bi"
+#include "pic.bi"
+#include "tasks.bi"
+#include "syscall.bi"
+#include "panic.bi"
+#include "video.bi"
 
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr

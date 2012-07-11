@@ -1,3 +1,5 @@
+#pragma once
+
 namespace video
     declare sub scroll_screen ()
     declare sub fout (fstr as zstring, ...)

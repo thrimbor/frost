@@ -1,3 +1,4 @@
+#pragma once
 
 extern kernel_start_label alias "kernel_start_label" as byte
 extern kernel_end_label   alias "kernel_end_label"   as byte

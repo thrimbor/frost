@@ -1,4 +1,4 @@
-#include once "pit.bi"
+#include "pit.bi"
 
 namespace pit
     sub set_frequency (frequency as ushort)

@@ -1,3 +1,5 @@
+#pragma once
+
 namespace pic
     const MASTER_COMMAND as ubyte = &h20
     const MASTER_DATA    as ubyte = &h21

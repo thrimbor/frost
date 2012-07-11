@@ -1,8 +1,8 @@
-#include once "vmm.bi"
-#include once "pmm.bi"
-#include once "kmm.bi"
-#include once "mem.bi"
-#include once "kernel.bi"
+#include "vmm.bi"
+#include "pmm.bi"
+#include "kmm.bi"
+#include "mem.bi"
+#include "kernel.bi"
 
 namespace vmm
     dim shared kernel_context as context
@@ -28,6 +28,11 @@ namespace vmm
         '' activate paging
         activate()
     end sub
+    
+    function alloc() as any ptr
+		'' todo: implement
+		'' this function should reserve a page, map it into the kernel's address space and return it's address
+	end function
     
     '' create_context () creates and clears space for a page-directory
     function create_context () as context

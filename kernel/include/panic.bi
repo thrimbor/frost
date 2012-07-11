@@ -1,4 +1,6 @@
-#include once "cpu.bi"
+#pragma once
+
+#include "cpu.bi"
 
 namespace panic
     declare sub set_clear_on_panic (b as ubyte)

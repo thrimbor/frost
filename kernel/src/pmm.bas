@@ -1,8 +1,8 @@
-#include once "pmm.bi"
-#include once "mem.bi"
-#include once "kernel.bi"
-#include once "multiboot.bi"
-#include once "video.bi"
+#include "pmm.bi"
+#include "mem.bi"
+#include "kernel.bi"
+#include "multiboot.bi"
+#include "video.bi"
 
 namespace pmm
     '' our memory bitmap. bit=0 : page used; bit=1 : page free

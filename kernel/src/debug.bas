@@ -1,5 +1,5 @@
-#include once "debug.bi"
-#include once "video.bi"
+#include "debug.bi"
+#include "video.bi"
 
 namespace debug
     

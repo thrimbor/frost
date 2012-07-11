@@ -1,7 +1,7 @@
-#include once "kernel.bi"
-#include once "syscall.bi"
-#include once "tasks.bi"
-#include once "video.bi"
+#include "kernel.bi"
+#include "syscall.bi"
+#include "tasks.bi"
+#include "video.bi"
 
 namespace syscall
     

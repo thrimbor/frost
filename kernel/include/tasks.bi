@@ -1,6 +1,8 @@
-#include once "cpu.bi"
-#include once "elf32.bi"
-#include once "multiboot.bi"
+#pragma once
+
+#include "cpu.bi"
+#include "elf32.bi"
+#include "multiboot.bi"
 
 namespace tasks
     
@@ -13,23 +15,23 @@ namespace tasks
     type task_type_ as task_type  '' needed because of circular reference
         
     type thread_type
-        '' pointer to the process
-        process as task_type_ ptr
+        '' pointer to the owning task
+        task as task_type_ ptr
         
         '' id of the thread
-        tid as uinteger
+        id as uinteger
         
         '' state of the thread
         state as uinteger
         
         '' bottom of the kernel stack
-        stack_kernel_bottom as uinteger
+        kernelstack_bottom as any ptr
         
         '' bottom of the usermode stack
-        stack_user_bottom as uinteger
+        userstack_bottom as any ptr
         
-        '' cpu state of the thread
-        cpu as any ptr
+        '' cpu state of the thread (lies inside the kernelstack)
+        cpu as cpu_state ptr
         
         '' scheduling infos
         ticks_left as uinteger
@@ -41,8 +43,8 @@ namespace tasks
     
     type task_type
         pid as uinteger
-        'cpu as any ptr
-        page_directory as uinteger ptr
+        
+        vmm_context as uinteger ptr
         
         '' state of the task
         state as uinteger
@@ -50,18 +52,14 @@ namespace tasks
         '' thread list
         threads as thread_type ptr
         
-        '' last thread id
-        last_tid as uinteger
+        '' next available thread id
+        next_tid as uinteger
         
         '' important to get a tree-like structure
         parent as task_type ptr
         
         '' RPC
         rpc_handler as any ptr
-        
-        '' scheduling infos
-        'ticks_left as uinteger
-        'ticks_max as uinteger
         
         '' important to get a useful port-management
         io_bitmap as uinteger ptr

@@ -1,4 +1,6 @@
-#include once "cpu.bi"
+#pragma once
+
+#include "cpu.bi"
 
 namespace syscall
     enum

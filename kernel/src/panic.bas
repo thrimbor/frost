@@ -1,6 +1,6 @@
-#include once "panic.bi"
-#include once "cpu.bi"
-#include once "video.bi"
+#include "panic.bi"
+#include "cpu.bi"
+#include "video.bi"
 
 namespace panic
     dim shared clear_on_panic as ubyte = 1

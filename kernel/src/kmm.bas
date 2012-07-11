@@ -1,6 +1,6 @@
-#include once "kmm.bi"
-#include once "kernel.bi"
-#include once "video.bi"
+#include "kmm.bi"
+#include "kernel.bi"
+#include "video.bi"
 
 dim shared kmm_first_block as any ptr
 dim shared kmm_minimum_size as uinteger

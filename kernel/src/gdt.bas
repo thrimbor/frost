@@ -1,6 +1,6 @@
-#include once "kernel.bi"
-#include once "gdt.bi"
-#include once "video.bi"
+#include "kernel.bi"
+#include "gdt.bi"
+#include "video.bi"
 
 
 namespace gdt

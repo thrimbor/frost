@@ -1,5 +1,5 @@
-#include once "elf.bi"
-#include once "elf32.bi"
+#include "elf.bi"
+#include "elf32.bi"
 
 namespace elf
     function header_check (header as elf32.Elf32_Ehdr ptr) as integer

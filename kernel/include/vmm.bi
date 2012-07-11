@@ -1,3 +1,5 @@
+#pragma once
+
 namespace vmm
     const FLAG_PRESENT   as uinteger = &b1
     const FLAG_WRITE     as uinteger = &b10
@@ -6,6 +8,7 @@ namespace vmm
     type context as uinteger ptr
     
     declare sub init ()
+    declare function alloc() as any ptr
     declare function create_context () as context
     declare function map_page (page_directory as context, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
     declare function map_range (page_directory as context, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer

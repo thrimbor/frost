@@ -1,3 +1,5 @@
+#pragma once
+
 namespace gdt
     type table_descriptor field=1
         limit as ushort

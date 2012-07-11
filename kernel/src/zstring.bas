@@ -1,4 +1,4 @@
-#include once "zstring.bi"
+#include "zstring.bi"
 
 '' this function searches for the string-terminator (\0)
 '' to find out the lenght of the string

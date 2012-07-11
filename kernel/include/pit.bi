@@ -1,3 +1,5 @@
+#pragma once
+
 namespace pit
     const COMMAND_PORT as byte = &h43
     const DATA_PORT    as byte = &h40

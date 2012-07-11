@@ -1,19 +1,19 @@
 '' FROST 2 alpha version
 '' Copyright (c) 2011 by darkinsanity
 
-#include once "multiboot.bi"
-#include once "gdt.bi"
-#include once "idt.bi"
-#include once "pic.bi"
-#include once "pit.bi"
-#include once "pmm.bi"
-#include once "vmm.bi"
-#include once "kmm.bi"
-#include once "tasks.bi"
-#include once "debug.bi"
-#include once "panic.bi"
-#include once "video.bi"
-#include once "zstring.bi"
+#include "multiboot.bi"
+#include "gdt.bi"
+#include "idt.bi"
+#include "pic.bi"
+#include "pit.bi"
+#include "pmm.bi"
+#include "vmm.bi"
+#include "kmm.bi"
+#include "tasks.bi"
+#include "debug.bi"
+#include "panic.bi"
+#include "video.bi"
+#include "zstring.bi"
 
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.

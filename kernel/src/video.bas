@@ -1,6 +1,6 @@
-#include once "kernel.bi"
-#include once "video.bi"
-#include once "mem.bi"
+#include "kernel.bi"
+#include "video.bi"
+#include "mem.bi"
 
 namespace video
     dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)      '' pointer to video-memory

@@ -1,5 +1,5 @@
-#include once "idt.bi"
-#include once "interrupt_handler.bi"
+#include "idt.bi"
+#include "interrupt_handler.bi"
 
 namespace idt
     dim shared descriptor as idt.table_descriptor

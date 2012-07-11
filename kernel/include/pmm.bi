@@ -1,5 +1,7 @@
-#include once "kernel.bi"
-#include once "multiboot.bi"
+#pragma once
+
+#include "kernel.bi"
+#include "multiboot.bi"
 
 namespace pmm
     '' we have 4KB per bit, so we need a map for 32k*32bits for 4GB

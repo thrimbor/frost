@@ -1,3 +1,5 @@
+#pragma once
+
 type cpu_state
     eax as uinteger
     ebx as uinteger

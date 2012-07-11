@@ -1,3 +1,5 @@
+#pragma once
+
 const HEAP_MAGIC as uinteger = &hDEADBEEF
 
 type kmm_header field = 1

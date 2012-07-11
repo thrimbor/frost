@@ -1,12 +1,12 @@
-#include once "tasks.bi"
-#include once "pmm.bi"
-#include once "cpu.bi"
-#include once "vmm.bi"
-#include once "kmm.bi"
-#include once "mem.bi"
-#include once "elf32.bi"
-#include once "video.bi"
-#include once "kernel.bi"
+#include "tasks.bi"
+#include "pmm.bi"
+#include "cpu.bi"
+#include "vmm.bi"
+#include "kmm.bi"
+#include "mem.bi"
+#include "elf32.bi"
+#include "video.bi"
+#include "kernel.bi"
 
 namespace tasks
     dim shared first_task as task_type ptr = 0
@@ -18,121 +18,81 @@ namespace tasks
         return next_pid-1
     end function
     
-    function thread_create (entry as any ptr, process as task_type ptr) as thread_type ptr
-        dim thread as thread_type ptr = pmm.alloc()
-        dim cpu as cpu_state ptr
-        
-        '' prepare the memory
-        memset(thread, 0, sizeof(thread_type))
-        
-        '' allocate stacks
-        thread->stack_kernel_bottom = pmm.alloc()
-        thread->stack_user_bottom = pmm.alloc()
-        
-        '' set the thread to disabled
-        thread->state = STATE_DISABLED
-        
-        '' assign a thread-id to the task
-        thread->tid = process->last_tid
-        process->last_tid += 1
-        
-        '' put the thread into the list
-        thread->next_entry = process->threads
-        process->threads = thread
-        
-        '' give the thread some ticks
-        thread->ticks_max = MAX_TICKS
-        thread->ticks_left = MAX_TICKS
-        
-        '' initialize the cpu-state
-        cpu = (thread->stack_kernel_bottom+pmm.PAGE_SIZE-sizeof(cpu_state))
-        
-        cpu->eax = 0
-        cpu->ebx = 0
-        cpu->ecx = 0
-        cpu->edx = 0
-        cpu->esi = 0
-        cpu->edi = 0
-        cpu->ebp = 0
-        cpu->eip = cuint(entry)
-        cpu->esp = cuint(thread->stack_user_bottom)+pmm.PAGE_SIZE
-        cpu->cs = &h18 or &h03
-        cpu->ss = &h20 or &h03
-        cpu->eflags = &h200
-        
-        thread->cpu = cpu
-        
-        '' the thread is now ready to be run
-        thread->state = STATE_RUNNING
-        
-        return thread
-    end function
-    
-    function task_create (entry as any ptr, parent as task_type ptr) as task_type ptr
-        dim task as task_type ptr = pmm.alloc()
-        
-        '' set the task to disabled
-        task->state = STATE_DISABLED
-        
-        '' assign a process-id to the task
-        task->pid = generate_pid()
-        
-        '' set the parent
-        if (parent <> 0) then
-            task->parent = parent
-        end if
-        
-        '' put the task into the list
-        task->next_entry = first_task
-        first_task = task
-    end function
-    
-    #if 0
-    function init_task (entry as any ptr) as task_type ptr
-        dim kernelstack as any ptr = pmm.alloc()
-        dim userstack as any ptr = pmm.alloc()
-        dim task as task_type ptr = pmm.alloc()
-        dim cpu as cpu_state ptr = (kernelstack+pmm.PAGE_SIZE-sizeof(cpu_state))
-        
-        cpu->eax = 0
-        cpu->ebx = 0
-        cpu->ecx = 0
-        cpu->edx = 0
-        cpu->esi = 0
-        cpu->edi = 0
-        cpu->ebp = 0
-        cpu->eip = cuint(entry)
-        cpu->esp = cuint(userstack)+pmm.PAGE_SIZE
-        cpu->cs = &h18 or &h03
-        cpu->ss = &h20 or &h03
-        cpu->eflags = &h200
-        
-        task->cpu = cpu
-        
-        '' give the task a pid
-        task->pid = generate_pid()
-        
-        '' now the task needs a page-directory
-        task->page_directory = vmm.create_context()
-        
-        '' map the kernel to every process
-        dim kernel_addr as uinteger = cuint(kernel_start)
-        dim kernel_end_addr as uinteger = cuint(kernel_end)
-        while (kernel_addr < kernel_end_addr)
-            vmm.map_page(task->page_directory, kernel_addr, kernel_addr, (vmm.FLAG_PRESENT or vmm.FLAG_USERSPACE))
-            kernel_addr += pmm.PAGE_SIZE
-        wend
-        
-        '' give the process some ticks
-        task->ticks_max = MAX_TICKS
-        task->ticks_left = MAX_TICKS
-        
-        task->next_entry = first_task
-        first_task = task
-        
-        return task
-    end function
-    #endif
+    '' todo:
+    ''   - create a vmm context
+    ''   - clone the kernel context into it
+    ''   - map the tasks data into it
+    ''   - create a first thread inside the context
+    function task_create (entry_point as any ptr, parent as task_type ptr = 0) as task_type ptr
+		dim task as task_type ptr = kmalloc(sizeof(task_type))
+		
+		'' task is not ready to be run yet
+		task->state = STATE_DISABLED
+		
+		'' set a pid
+		task->pid = generate_pid()
+		
+		'' set the parent task
+		if (parent <> 0) then
+			task->parent = parent
+		end if
+		
+		'' insert the task into the list
+		task->next_entry = first_task
+		first_task = task
+		
+		return task
+	end function
+	
+	function thread_create (task as task_type ptr, entry as any ptr) as thread_type ptr
+		dim thread as thread_type ptr = kmalloc(sizeof(thread_type))
+		dim cpu as cpu_state ptr
+		
+		'' set the parent-task
+		thread->task = task
+		
+		'' assign a thread-id
+		thread->id = task->next_tid
+		task->next_tid += 1
+		
+		'' thread is currently disabled
+		thread->state = STATE_DISABLED
+		
+		'' put the thread into the list
+		thread->next_entry = task->threads
+		task->threads = thread
+		
+		'' set the ticks
+		thread->ticks_max = MAX_TICKS
+		thread->ticks_left = MAX_TICKS
+		
+		'' kernel stack needs to be mapped into the kernels adress space
+		thread->kernelstack_bottom = vmm.alloc()
+		
+		'' reserve space for the user stack
+		thread->userstack_bottom = pmm.alloc()
+		
+		'' initialize the threads cpu-state
+		cpu = (thread->kernelstack_bottom+pmm.PAGE_SIZE-sizeof(cpu_state))
+		
+		cpu->eax = 0
+		cpu->ebx = 0
+		cpu->ecx = 0
+		cpu->edx = 0
+		cpu->esi = 0
+		cpu->edi = 0
+		cpu->ebp = 0
+		cpu->eip = cuint(entry)
+		cpu->esp = cuint(thread->userstack_bottom)+pmm.PAGE_SIZE
+		cpu->cs = &h18 or &h03
+		cpu->ss = &h20 or &h03
+		
+		thread->cpu = cpu
+		
+		thread->state = STATE_RUNNING
+		
+		return thread
+	end function
     
     '' modify scheduler to take care of the task-state
     '' maybe use a for loop to find a runnable task?

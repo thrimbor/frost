@@ -1,3 +1,5 @@
+#pragma once
+
 #include "video.bi"
 
 namespace debug
