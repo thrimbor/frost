@@ -10,6 +10,7 @@
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     dim new_cpu as cpu_state ptr = cpu
+    dim old_task as tasks.task_type ptr = tasks.get_current_task()
     
     select case cpu->int_nr
         case 0 to &h13                                     '' exception
@@ -33,8 +34,9 @@ function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
     
     '' enable this if paging is ready to switch page-directories
     /'
-    if (cpu <> new_cpu) then
-        dim pagedir as uinteger ptr = (tasks.get_current_task())->page_directory
+    dim new_task as tasks.task_type ptr = tasks.get_current_task()
+    if (old_task <> new_task) then
+        dim pagedir as uinteger ptr = new_task->page_directory
         asm
             mov eax, [pagedir]
             mov cr3, eax

@@ -11,6 +11,7 @@
 namespace tasks
     dim shared first_task as task_type ptr = 0
     dim shared current_task as task_type ptr = 0
+    dim shared current_thread as thread_type ptr = 0
     
     function generate_pid () as uinteger
         static next_pid as uinteger = 0
@@ -19,7 +20,6 @@ namespace tasks
     end function
     
     '' todo:
-    ''   - create a vmm context
     ''   - clone the kernel context into it
     ''   - map the tasks data into it
     ''   - create a first thread inside the context
@@ -40,6 +40,9 @@ namespace tasks
 		'' insert the task into the list
 		task->next_entry = first_task
 		first_task = task
+		
+		'' create a vmm-context
+		task->vmm_context = vmm.create_context()
 		
 		return task
 	end function
@@ -94,30 +97,37 @@ namespace tasks
 		return thread
 	end function
     
-    '' modify scheduler to take care of the task-state
-    '' maybe use a for loop to find a runnable task?
+    '' modify scheduler to take care of the task- and thread-state
+    '' maybe use a for loop to find a runnable task and thread?
     function schedule (cpu as cpu_state ptr) as cpu_state ptr
-    #if 0
-        if (current_task <> 0) then current_task->cpu = cpu
-        
-        if (current_task = 0) then
-            current_task = first_task
-        else
-            current_task->ticks_left -= 1
-            if (current_task->ticks_left = 0) then
-                current_task->ticks_left = current_task->ticks_max
-                current_task = current_task->next_entry
-                if (current_task = 0) then current_task = first_task
-            end if
-        end if
-        
-        return current_task->cpu
-    #endif
+		if (current_thread <> 0) then current_thread->cpu = cpu
+		
+		if ((current_task = 0) or (current_thread = 0)) then
+			current_task = first_task
+			current_thread = current_task->threads
+		else
+			current_thread->ticks_left -= 1
+			if (current_thread->ticks_left = 0) then
+				current_thread->ticks_left = current_thread->ticks_max
+				current_thread = current_thread->next_entry
+				if (current_thread = 0) then
+					current_task = current_task->next_entry
+					if (current_task = 0) then current_task = first_task
+					current_thread = current_task->threads
+				end if
+			end if
+		end if
+		
+		return current_thread->cpu
     end function
     
     function get_current_task () as task_type ptr
         return current_task
     end function
+    
+    function get_current_thread () as thread_type ptr
+		return current_thread
+	end function
     
     sub init_elf (image as any ptr)
 #if 0

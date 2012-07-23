@@ -44,7 +44,7 @@ namespace tasks
     type task_type
         pid as uinteger
         
-        vmm_context as uinteger ptr
+        vmm_context as vmm.context
         
         '' state of the task
         state as uinteger
@@ -72,6 +72,7 @@ namespace tasks
     declare function init_task (entry as any ptr) as task_type ptr
     declare function schedule (cpu as cpu_state ptr) as cpu_state ptr
     declare function get_current_task () as task_type ptr
+    declare function get_current_thread () as thread_type ptr
     declare sub init_elf (image as any ptr)
     declare sub create_tasks_from_mb (mbinfo as multiboot_info ptr)
 end namespace

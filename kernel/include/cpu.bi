@@ -1,6 +1,7 @@
 #pragma once
 
 type cpu_state
+    '' saved per asm-code:
     eax as uinteger
     ebx as uinteger
     ecx as uinteger
@@ -9,10 +10,11 @@ type cpu_state
     edi as uinteger
     ebp as uinteger
     
+    '' saved by asm-code to identify the interrupt
     int_nr as uinteger
     errorcode as uinteger
     
-    '' saved by the CPU:
+    '' saved automatically by the cpu:
     eip as uinteger
     cs as uinteger
     eflags as uinteger

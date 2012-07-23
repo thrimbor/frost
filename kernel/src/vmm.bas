@@ -30,8 +30,13 @@ namespace vmm
     end sub
     
     function alloc() as any ptr
+		return 0
 		'' todo: implement
 		'' this function should reserve a page, map it into the kernel's address space and return it's address
+		dim page as any ptr = pmm.alloc()
+		'' map it... search for a free place
+		
+		'' return the virtual address
 	end function
     
     '' create_context () creates and clears space for a page-directory
