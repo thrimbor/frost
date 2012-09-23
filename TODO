@@ -5,23 +5,12 @@
 - rpc
 
 - memory management:
-	- at the moment, it's pure shit - we can only handle 4KB blocks
-	- we _really_ need malloc() and free()
-	- implement it similar to James Molloy's implementation
-	
-	- idea:
-		- occupied blocks are handled as in JMs implementation
-		- free blocks have to 2 uintegers in them directly after the header:
-			- prev_entry
-			- next_entry
-		- these form a linked list of free blocks
-		- in occupied blocks, these fields are INVALID!
-		- minimal free block size is header+footer+prev_entry+next_entry
-		- unify on kfree() (left and right)
-		- list of free blocks should be sorted to find best-fit as early as possible
+	- physical: done.
+	- heap: mostly done, needs implementation of contraction and extension
+	-		- could be improved by sorting the list of free blocks
 		
 
-- I had an idea for syscalls:
+- Syscall ideas:
 	1:
 		- syscalls are normally done via int 0x62
 		- a usermode application can query for an optimized syscall interface
