@@ -56,25 +56,8 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     pmm.init(mbinfo)
     debug_wlog(debug.INFO, "physical memory manager initialized\n  -> total RAM: %IMB\n  -> free  RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
     
-    'vmm.init()
+    vmm.init()
     debug_wlog(debug.INFO, "paging initialized\n")
-    
-    kmm_init(10*1024*1024, 20*1024*1024, 10*1024*1024, 10*1024*1024)
-    debug_wlog(debug.INFO, "test-heap initialized\n")
-    debug_wlog(debug.INFO, "testing the heap...\n")
-    
-    dim a as uinteger = cuint(kmalloc(16))
-    dim b as uinteger = cuint(kmalloc(8))
-    debug_wlog(debug.INFO, "a: %h########I, b: %h########I\n", a, b)
-    kfree(cast(any ptr, a))
-    debug_wlog(debug.INFO, "block a freed\n")
-    kfree(cast(any ptr, b))
-    'video.fout("beep3\n")
-    debug_wlog(debug.INFO, "block b freed\n")
-    dim c as uinteger = cuint(kmalloc(60))
-    'video.fout("beep4\n")
-    debug_wlog(debug.INFO, "c: %h########I", c)
-    kfree(cast(any ptr, c))
 
     
     'debug_wlog(debug.INFO, "loading modules... ")

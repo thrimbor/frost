@@ -12,16 +12,16 @@ namespace vmm
         '' create a kernel context (only used before the first task is started)
         kernel_context = create_context()
         
-        #if 0
+        '#if 0
         '' map the kernel
         map_range(kernel_context, cuint(kernel_start), cuint(kernel_start), cuint(kernel_end), (FLAG_PRESENT or FLAG_WRITE))
         
         '' map the video memory
         map_page(kernel_context, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))
-        #endif
+        '#endif
         
         '' map the whole first GB
-        map_range(kernel_context, 0, 0, &h40000000, (FLAG_PRESENT or FLAG_WRITE))
+        ''map_range(kernel_context, 0, 0, &h40000000, (FLAG_PRESENT or FLAG_WRITE))
         
         '' activate the context
         activate_context(kernel_context)
