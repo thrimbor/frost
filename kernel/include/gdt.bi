@@ -3,16 +3,16 @@
 namespace gdt
     type table_descriptor field=1
         limit as ushort
-        base  as uinteger
+        start  as uinteger
     end type
     
     type segment_descriptor field=1
         limit_low    as ushort
-        base_low     as ushort
-        base_middle  as ubyte
+        start_low     as ushort
+        start_middle  as ubyte
         accessbyte   as ubyte
         flags_limit2 as ubyte
-        base_high    as ubyte
+        start_high    as ubyte
     end type
     
     const TABLE_SIZE = 5
@@ -37,5 +37,5 @@ namespace gdt
     const FLAG_AVAILABLE   as ubyte = &h01 '' free bit
     
     declare sub init ()
-    declare sub set_entry (i as ushort, base as uinteger, limit as uinteger, access as ubyte, flags as ubyte)
+    declare sub set_entry (i as ushort, start as uinteger, limit as uinteger, access as ubyte, flags as ubyte)
 end namespace

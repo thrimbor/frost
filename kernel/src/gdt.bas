@@ -31,7 +31,7 @@ namespace gdt
         gdt.set_entry(5, cuint(tss_ptr), 32*4, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_TSS), 0)
              
         gdt.descriptor.limit = (gdt.TABLE_SIZE+1)*8-1 '' calculate the size of the entries + null-entry
-        gdt.descriptor.base  = cuint(@gdt.table(0))   '' set the address of the table
+        gdt.descriptor.start  = cuint(@gdt.table(0))   '' set the address of the table
         asm lgdt [gdt.descriptor]                     '' load the gdt
         
         '' refresh the segment registers, so the gdt is really being used
@@ -55,13 +55,13 @@ namespace gdt
     
     '' this sub is just a helper function to provide easier access to the GDT.
     '' it puts the passed arguments in the right place of a GDT-entry.
-    sub set_entry (index as ushort, base as uinteger, limit as uinteger, accessbyte as ubyte, flags as ubyte)
+    sub set_entry (index as ushort, start as uinteger, limit as uinteger, accessbyte as ubyte, flags as ubyte)
         gdt.table(index).limit_low      = loword(limit)
-        gdt.table(index).base_low       = loword(base)
-        gdt.table(index).base_middle    = lobyte(hiword(base))
+        gdt.table(index).start_low       = loword(start)
+        gdt.table(index).start_middle    = lobyte(hiword(start))
         gdt.table(index).accessbyte     = accessbyte
         gdt.table(index).flags_limit2   = (lobyte(hiword(limit)) and &h0F)
         gdt.table(index).flags_limit2 or= ((flags shl 4) and &hF0)
-        gdt.table(index).base_high      = hibyte(hiword(base))
+        gdt.table(index).start_high      = hibyte(hiword(start))
     end sub
 end namespace

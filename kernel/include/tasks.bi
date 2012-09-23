@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cpu.bi"
+#include "vmm.bi"
 #include "elf32.bi"
 #include "multiboot.bi"
 

@@ -154,18 +154,18 @@ namespace video
 		
     
     '' print an uinteger with a given base and at least so many chars as given in minchars
-    sub cout (number as uinteger, base as ubyte = 10, minchars as ubyte = 0)
-        if ((base > 36) or (base < 2)) then return
+    sub cout (number as uinteger, nbase as ubyte = 10, minchars as ubyte = 0)
+        if ((nbase > 36) or (nbase < 2)) then return
         dim chars(1 to 10) as ubyte
         dim num as ubyte
         dim counter as uinteger = 10
         dim rem_chars as integer = minchars
         
         do
-            chars(counter) = 48+(number mod base)
+            chars(counter) = 48+(number mod nbase)
             if (chars(counter)>57) then chars(counter) += 7
             counter -= 1
-            number \= base
+            number \= nbase
             rem_chars -= 1
         loop until ((number <= 0) and (rem_chars <= 0))
         
@@ -177,13 +177,13 @@ namespace video
     end sub
     
     '' same game with integers. if the number is negative we just print a minus and then the number.
-    sub cout (number as integer, base as ubyte = 10, minchars as ubyte = 0)
-        if ((base > 36) or (base < 2)) then return
+    sub cout (number as integer, nbase as ubyte = 10, minchars as ubyte = 0)
+        if ((nbase > 36) or (nbase < 2)) then return
         if (number<0) then
             putc(45)
             number = -number
         end if
-        video.cout(cuint(number),base,minchars)
+        video.cout(cuint(number),nbase,minchars)
     end sub
     
     '' clear the whole screen
