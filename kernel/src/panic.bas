@@ -51,6 +51,36 @@ namespace panic
                         video.fout("EXCEPTION 0x0D - General Protection Fault (#GP)\n")
                     case &h0E
                         video.fout("EXCEPTION 0x0E - Page Fault (#PF)\n")
+                        video.fout(" - page active  : ")
+                        if (cpu->errorcode and &h01) then
+							video.fout("yes\n")
+						else
+							video.fout("no\n")
+						end if
+						video.fout(" - access type  : ")
+						if (cpu->errorcode and &h02) then
+							video.fout("write\n")
+						else
+							video.fout("read\n")
+						end if
+						video.fout(" - rights       : ")
+						if (cpu->errorcode and &h04) then
+							video.fout("user\n")
+						else
+							video.fout("kernel\n")
+						end if
+						video.fout(" - reserved     : ")
+						if (cpu->errorcode and &h08) then
+							video.fout("yes\n")
+						else
+							video.fout("no\n")
+						end if
+						video.fout(" - access target: ")
+						if (cpu->errorcode and &h10) then
+							video.fout("code\n")
+						else
+							video.fout("data\n")
+						end if
                     case &h0F
                         video.fout("EXCEPTION 0x0F - RESERVED\n")
                     case &h10
