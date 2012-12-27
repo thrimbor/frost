@@ -2,3 +2,4 @@
 *.krn
 *.elf
 *.obj
+*.o
