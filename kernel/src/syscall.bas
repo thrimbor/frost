@@ -1,22 +1,22 @@
 #include "kernel.bi"
 #include "syscall.bi"
-#include "tasks.bi"
+#include "process.bi"
 #include "video.bi"
 
 namespace syscall
     
-    sub handler (cpu as cpu_state ptr)
-        dim task as tasks.task_type ptr = tasks.get_current_task()
+    sub handler (isf as interrupt_stack_frame ptr)
+        'dim task as tasks.task_type ptr = tasks.get_current_task()
         
-        select case (cpu->eax)
+        select case (isf->eax)
             case syscall.PROCESS_GET_PID
-                cpu->ebx = task->pid
+                'cpu->ebx = task->pid
             case syscall.PROCESS_GET_PARENT_PID
-                if (not(caddr(task->parent) = 0)) then
-                    cpu->ebx = task->parent->pid
-                else
-                    cpu->ebx = 0
-                end if
+                'if (not(caddr(task->parent) = 0)) then
+                    'cpu->ebx = task->parent->pid
+                'else
+                    'cpu->ebx = 0
+                'end if
             case syscall.FORTY_TWO
                 video.fout("The answer to life, the universe and everything is... 42\n")
         end select

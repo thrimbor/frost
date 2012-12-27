@@ -1,9 +1,9 @@
 #pragma once
 
-#include "cpu.bi"
+#include "isf.bi"
 
 '' the global interrupt-handler
-declare function handle_interrupt cdecl (cpu as cpu_state ptr) as cpu_state ptr
+declare function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
 
 '' here are all stubs:
 declare sub int_stub_0 ()

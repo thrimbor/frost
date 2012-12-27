@@ -1,6 +1,6 @@
 #pragma once
 
-type cpu_state
+type interrupt_stack_frame
     '' saved per asm-code:
     eax as uinteger
     ebx as uinteger

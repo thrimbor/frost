@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # first clean up
 rm -f frost.iso
 

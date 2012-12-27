@@ -1,5 +1,5 @@
 '' FROST 2 alpha version
-'' Copyright (c) 2011 by darkinsanity
+'' Copyright (c) 2012 by darkinsanity
 
 #include "multiboot.bi"
 #include "gdt.bi"
@@ -9,7 +9,9 @@
 #include "pmm.bi"
 #include "vmm.bi"
 #include "kmm.bi"
-#include "tasks.bi"
+#include "mem.bi"
+#include "process.bi"
+#include "modules.bi"
 #include "debug.bi"
 #include "panic.bi"
 #include "video.bi"
@@ -17,12 +19,19 @@
 
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
-sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
+sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
+    '' we copy the mbinfo-structure, this has several reasons
+    '' it now is on the stack and thus lies in the kernel, so it is
+    '' automatically mapped when the kernel is getting mapped
+    '' plus, the space of the original struct can be freed
+    dim mb_info as multiboot_info
+    memcpy(@mb_info, t_mbinfo, sizeof(multiboot_info))
+    
     video.clean()
     video.hide_cursor()
     
-    if (mbinfo->flags and MULTIBOOT_INFO_CMDLINE) then                  '' we just check for the cmdline here
-        dim k_cmd as zstring ptr = cast(zstring ptr, mbinfo->cmdline)   '' get the pointer to the cmdline-string
+    if (mb_info.flags and MULTIBOOT_INFO_CMDLINE) then                  '' we just check for the cmdline here
+        dim k_cmd as zstring ptr = cast(zstring ptr, mb_info.cmdline)   '' get the pointer to the cmdline-string
         
         if (z_instr(*k_cmd, "-verbose") > 0) then                       '' look for -verbose
             debug.set_loglevel(0)                                       '' show every log-message
@@ -31,15 +40,15 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
         end if
         
         if (z_instr(*k_cmd, "-no-clear-on-panic") > 0) then             '' look for -no-clear-on-panic
-            panic.set_clear_on_panic(0)                                 '' clear screen before panic message is shown
+            panic.set_clear_on_panic(0)                                 '' don't clear screen before printing panic message
         end if
     end if
     
     video.set_color(9,0)
     debug_wlog(debug.INFO, "FROST V2 alpha\n")
     video.set_color(7,0)
-    debug_wlog(debug.INFO, "name of the bootloader: %z\n", cast(zstring ptr, mbinfo->boot_loader_name))
-    debug_wlog(debug.INFO, "cmdline: %z\n", cast(zstring ptr, mbinfo->cmdline))
+    debug_wlog(debug.INFO, "bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
+    debug_wlog(debug.INFO, "cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     
     gdt.init()
     debug_wlog(debug.INFO, "gdt loaded\n")
@@ -53,12 +62,14 @@ sub main (magicnumber as multiboot_uint32_t, mbinfo as multiboot_info ptr)
     pit.set_frequency(100)
     debug_wlog(debug.INFO, "pit initialized\n")
     
-    pmm.init(mbinfo)
-    debug_wlog(debug.INFO, "physical memory manager initialized\n  -> total RAM: %IMB\n  -> free  RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
+    pmm.init(@mb_info)
+    debug_wlog(debug.INFO, "physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
     
     vmm.init()
     debug_wlog(debug.INFO, "paging initialized\n")
-
+    
+    debug_wlog(debug.INFO, "loading init module...")
+    load_init_module(@mb_info)
     
     'debug_wlog(debug.INFO, "loading modules... ")
     'tasks.create_tasks_from_mb(mbinfo)

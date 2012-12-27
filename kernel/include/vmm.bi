@@ -5,15 +5,23 @@ namespace vmm
     const FLAG_WRITE     as uinteger = &b10
     const FLAG_USERSPACE as uinteger = &b100
     
-    type context as uinteger ptr
+    '' the kernel's address space is from 0-1 gb, so we put the pagetables at 1gb-4mb
+    const PAGETABLES_VIRT_START as uinteger = &h3FC00000
+    
+    type context
+		version as uinteger
+		pagedir as uinteger ptr
+		v_pagedir as uinteger ptr
+	end type
     
     declare sub init ()
     declare function alloc() as any ptr
-    declare function create_context () as context
-    declare function map_page (page_directory as context, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
-    declare function map_range (page_directory as context, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
-    declare function get_p_addr (page_directory as context, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
-    declare sub copy_to_context (page_directory as context, p_start as uinteger, v_dest as uinteger, size as uinteger)
-    declare sub activate_context (page_directory as context)
+    declare sub context_initialize (cntxt as context ptr)
+    declare function map_page (page_directory as uinteger ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
+    declare function map_range (page_directory as uinteger ptr, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
+    declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
+    declare function get_p_addr (page_directory as uinteger ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
+    declare sub activate_context (cntxt as context ptr)
     declare sub activate ()
+    declare function get_current_pagedir () as uinteger ptr
 end namespace

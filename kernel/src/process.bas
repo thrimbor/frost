@@ -1,23 +1,59 @@
-#include "tasks.bi"
+#include "process.bi"
 #include "pmm.bi"
-#include "cpu.bi"
+#include "isf.bi"
 #include "vmm.bi"
 #include "kmm.bi"
 #include "mem.bi"
 #include "elf32.bi"
 #include "video.bi"
 #include "kernel.bi"
+#include "panic.bi"
 
+function generate_pid () as uinteger
+    static next_pid as uinteger = 0
+    next_pid += 1
+    return next_pid-1
+end function
+
+dim shared processlist_first as process_type ptr
+
+
+function process_create (parent as process_type ptr = 0) as process_type ptr
+	dim process as process_type ptr = kmalloc(sizeof(process_type))
+	
+	if (process = 0) then return 0
+	
+	'' assign a process-ID
+	process->id = generate_pid()
+	
+	'' set parent
+	process->parent = parent
+	
+	'' set the address of the stack of the first thread
+	process->next_stack = 0
+	
+	'' insert the process into the list
+	process->prev_process = 0
+	process->next_process = processlist_first
+	processlist_first = process
+	
+	'' create a vmm-context
+	vmm.context_initialize(@process->vmm_context)
+	panic_error("kernel not ready for this yet!")
+	
+	'' TODO: - copy kernel context into the new context
+	''       - copy the executable image into the address space of the process
+	
+	return process
+end function
+
+/'
 namespace tasks
     dim shared first_task as task_type ptr = 0
     dim shared current_task as task_type ptr = 0
     dim shared current_thread as thread_type ptr = 0
     
-    function generate_pid () as uinteger
-        static next_pid as uinteger = 0
-        next_pid += 1
-        return next_pid-1
-    end function
+    
     
     '' todo:
     ''   - clone the kernel context into it
@@ -121,6 +157,29 @@ namespace tasks
 		return current_thread->cpu
     end function
     
+    function schedule (cpu as cpu_state ptr) as cpu_state ptr
+		if (current_thread <> 0) then current_thread->cpu = cpu
+		
+		if ((current_task = 0) or (current_thread = 0)) then
+			current_task = first_task
+			current_thread = current_task->threads
+		else
+			current_thread->ticks_left -= 1
+			
+			if (current_thread->ticks_left = 0) then
+				current_thread->ticks_left = current_thread->ticks_max
+				current_thread = current_thread->next_entry
+				
+				'' loop until we find a running thread or we reach the end of the list
+				while (current_thread <> 0)
+					if (current_thread->state = STATE_RUNNING) exit while
+				wend
+				if (current_thread = 0) then
+					
+			end if
+		end if
+	end function
+    
     function get_current_task () as task_type ptr
         return current_task
     end function
@@ -181,11 +240,13 @@ namespace tasks
         next
         
         task = init_task(cast(any ptr, elf_header->e_entry))
-#endif
+
     end sub
     
     sub create_tasks_from_mb (mbinfo as multiboot_info ptr)
         dim mods_ptr as multiboot_mod_list ptr = cast(any ptr, mbinfo->mods_addr)
         init_elf(cast(any ptr, mods_ptr->mod_start))
     end sub
+    #endif
 end namespace
+'/

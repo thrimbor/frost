@@ -4,6 +4,7 @@
 
 namespace debug
     const INFO as ubyte = 1
+    const ERROR as ubyte = 3
     
     common shared loglevel as ubyte
     

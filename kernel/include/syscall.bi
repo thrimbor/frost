@@ -1,10 +1,12 @@
 #pragma once
 
-#include "cpu.bi"
+#include "isf.bi"
 
 namespace syscall
-    enum
-        PROCESS_GET_PID = 1
+    enum syscalls
+        KERNEL_REQUEST_FAST_SYSCALL_INTERFACE
+        
+        PROCESS_GET_PID
         PROCESS_GET_PARENT_PID
         PROCESS_CREATE
         PROCESS_SUICIDE
@@ -20,5 +22,5 @@ namespace syscall
         FORTY_TWO = 42
     end enum
     
-    declare sub handler (cpu as cpu_state ptr)
+    declare sub handler (isf as interrupt_stack_frame ptr)
 end namespace

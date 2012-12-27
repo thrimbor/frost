@@ -153,7 +153,7 @@ namespace video
 		
 		
     
-    '' print an uinteger with a given base and at least so many chars as given in minchars
+    '' print an uinteger with a given base and at least as many chars as given in minchars
     sub cout (number as uinteger, nbase as ubyte = 10, minchars as ubyte = 0)
         if ((nbase > 36) or (nbase < 2)) then return
         dim chars(1 to 10) as ubyte
