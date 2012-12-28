@@ -7,7 +7,7 @@
 
 namespace vmm
 
-	declare function get_pagetable_addr (pdir as uinteger ptr, index as uinteger) as uinteger ptr
+	declare function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
 	
     dim shared kernel_context as context
     dim shared paging_activated as byte = 0
@@ -21,21 +21,24 @@ namespace vmm
         kernel_context.version = 0
         kernel_context.pagedir = pmm.alloc()
         memset(kernel_context.pagedir, 0, pmm.PAGE_SIZE)
-        kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
+        kernel_context.v_pagedir = kernel_context.pagedir
+        'kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
         
         '' map the page directory
-        map_page(kernel_context.pagedir, cuint(kernel_context.pagedir), cuint(kernel_context.pagedir), FLAG_PRESENT or FLAG_WRITE)
+        map_page(@kernel_context, cuint(kernel_context.pagedir), cuint(kernel_context.pagedir), FLAG_PRESENT or FLAG_WRITE)
         
         '' map the page tables
         kernel_context.pagedir[PAGETABLES_VIRT_START shr 22] = cuint(kernel_context.pagedir) or FLAG_PRESENT or FLAG_WRITE
         
         '' map the kernel
-        map_range(kernel_context.pagedir, cuint(kernel_start), cuint(kernel_start), cuint(kernel_end), (FLAG_PRESENT or FLAG_WRITE))
+        map_range(@kernel_context, cuint(kernel_start), cuint(kernel_start), cuint(kernel_end), (FLAG_PRESENT or FLAG_WRITE))
         
         '' map the video memory
-        map_page(kernel_context.pagedir, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))    
+        map_page(@kernel_context, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))    
         
         '' the pmm's bitmap lies inside the bss-section of the kernel, so it doesn't need extra mapping
+        
+        kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
         
         '' activate the context
         activate_context(@kernel_context)
@@ -66,7 +69,8 @@ namespace vmm
     end sub
     
     '' map_page maps a single page into a given context
-    function map_page (page_directory as uinteger ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
+    function map_page (cntxt as context ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
+        dim page_directory as uinteger ptr = cntxt->v_pagedir
         dim pd_index as uinteger = (virtual shr 22)            '' extract the page-directory (bits 0-11)
         dim pt_index as uinteger = (virtual shr 12) and &h3FF  '' extract the page-table (bits 12-21)
         dim page_table as uinteger ptr
@@ -90,7 +94,7 @@ namespace vmm
         end if
         
         '' fetch page-table address from page directory
-		page_table = get_pagetable_addr(page_directory, pd_index)
+		page_table = get_pagetable_addr(cntxt, pd_index)
         
         
         '' set address and flags
@@ -104,12 +108,12 @@ namespace vmm
         return -1
     end function
     
-    sub unmap_page (page_directory as uinteger ptr, v_addr as any ptr)
+    sub unmap_page (cntxt as context ptr, v_addr as any ptr)
 		'' TODO: implement
 		'' - should remove the mapping and, if possible, the page table
 	end sub
     
-    function map_range (page_directory as uinteger ptr, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
+    function map_range (cntxt as context ptr, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
         'panic_error("this sub does not reverse the mapping if it fails")
         dim v_dest as uinteger = v_addr-(v_addr mod pmm.PAGE_SIZE)
         dim p_src as uinteger = p_start-(p_start mod pmm.PAGE_SIZE)
@@ -117,7 +121,7 @@ namespace vmm
 		'' TODO: first check if the area is free, and map only then
         
         while (p_src < p_end)
-            if ((map_page(page_directory, v_dest, p_src, flags)=0)) then
+            if ((map_page(cntxt, v_dest, p_src, flags)=0)) then
                 return 0
             end if
             p_src += pmm.PAGE_SIZE
@@ -127,12 +131,13 @@ namespace vmm
         return -1
     end function
     
-    function move_pages (source_pdir as uinteger ptr, dest_pdir as uinteger ptr, src_page as uinteger, dest_page as uinteger, pages as uinteger) as byte
+    function move_pages (cntxt as context ptr, dest_pdir as uinteger ptr, src_page as uinteger, dest_page as uinteger, pages as uinteger) as byte
 		'' TODO: moves page mappings from one context to another
 		return 0
 	end function
 	
-	function get_pagetable_addr (pdir as uinteger ptr, index as uinteger) as uinteger ptr
+	function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
+		dim pdir as uinteger ptr = cntxt->v_pagedir
 		if (pdir = get_current_pagedir()) then
 			'' the pdir is currently active
 			if (paging_activated) then
@@ -151,7 +156,8 @@ namespace vmm
 		'/
 	end function
 	
-	function find_free_pages (pdir as uinteger ptr, num_pages as uinteger) as uinteger
+	function find_free_pages (cntxt as context ptr, num_pages as uinteger) as uinteger
+		dim pdir as uinteger ptr = cntxt->v_pagedir
 		dim free_pages_found as uinteger = 0
 		dim lower_limit as uinteger = pmm.PAGE_SIZE
 		dim upper_limit as uinteger = &h40000000
@@ -162,7 +168,7 @@ namespace vmm
 		while ((free_pages_found < num_pages) and ((cur_page_table shl 22) < upper_limit))
 			if (pdir[cur_page_table] and FLAG_PRESENT) then
 				'' ok, there is a page table, search the entries
-				dim ptable as uinteger ptr = get_pagetable_addr(pdir, cur_page_table)
+				dim ptable as uinteger ptr = get_pagetable_addr(cntxt, cur_page_table)
 				
 				while (cur_page < 1024)
 					''is the entry free?
@@ -196,23 +202,24 @@ namespace vmm
 		'' this maps a piece of physical memory to a free location in the kernel's address space
 		'' and returns the virtual address
 		if (size = 0) then return 0
-		dim pagedir as uinteger ptr = iif(paging_activated, kernel_context.v_pagedir, kernel_context.pagedir)
+		'dim pagedir as uinteger ptr = iif(paging_activated, kernel_context.v_pagedir, kernel_context.pagedir)
 		dim aligned_addr as uinteger = cuint(p_start) and &hFFFFF000
 		dim aligned_bytes as uinteger = size + (cuint(p_start) - aligned_addr)
 		
-		dim vaddr as uinteger = find_free_pages(pagedir, num_pages(aligned_bytes))
+		dim vaddr as uinteger = find_free_pages(@kernel_context, num_pages(aligned_bytes))
 		if (vaddr = 0) then
 			'' we have a problem, we could not find enough space
 			return 0
 		end if
 		
-		map_range(pagedir, vaddr, aligned_addr, aligned_addr+aligned_bytes, FLAG_PRESENT or FLAG_WRITE)
+		map_range(@kernel_context, vaddr, aligned_addr, aligned_addr+aligned_bytes, FLAG_PRESENT or FLAG_WRITE)
 		return vaddr + (p_start - aligned_addr)
 	end function
     
-    function get_p_addr (page_directory as uinteger ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
+    function get_p_addr (cntxt as context ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
         '' TODO: needs to use get_pagetable_addr, otherwise it will fail when paging is activated
         
+        dim page_directory as uinteger ptr = cntxt->v_pagedir
         dim pd_index as uinteger = (v_addr shr 22)
         dim pt_index as uinteger = (v_addr shr 12) and &h3FF
         dim page_table as uinteger ptr

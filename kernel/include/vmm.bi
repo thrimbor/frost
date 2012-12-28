@@ -17,10 +17,10 @@ namespace vmm
     declare sub init ()
     declare function alloc() as any ptr
     declare sub context_initialize (cntxt as context ptr)
-    declare function map_page (page_directory as uinteger ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
-    declare function map_range (page_directory as uinteger ptr, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
+    declare function map_page (cntxt as context ptr, virtual as uinteger, physical as uinteger, flags as uinteger) as integer
+    declare function map_range (cntxt as context ptr, v_addr as uinteger, p_start as uinteger, p_end as uinteger, flags as uinteger) as integer
     declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
-    declare function get_p_addr (page_directory as uinteger ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
+    declare function get_p_addr (cntxt as context ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
     declare sub activate_context (cntxt as context ptr)
     declare sub activate ()
     declare function get_current_pagedir () as uinteger ptr
