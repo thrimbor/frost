@@ -10,6 +10,7 @@ namespace vmm
 	declare function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
 	
     dim shared kernel_context as context
+    dim shared current_context as context ptr
     dim shared paging_activated as byte = 0
     
     #define num_pages(n) (((n + &hFFF) and (&hFFFFF000)) shr 12)
@@ -22,7 +23,9 @@ namespace vmm
         kernel_context.pagedir = pmm.alloc()
         memset(kernel_context.pagedir, 0, pmm.PAGE_SIZE)
         kernel_context.v_pagedir = kernel_context.pagedir
-        'kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
+        
+        '' we need to activate the context early for kernel_context to be valid
+        activate_context(@kernel_context)
         
         '' map the page directory
         map_page(@kernel_context, cuint(kernel_context.pagedir), cuint(kernel_context.pagedir), FLAG_PRESENT or FLAG_WRITE)
@@ -34,14 +37,9 @@ namespace vmm
         map_range(@kernel_context, cuint(kernel_start), cuint(kernel_start), cuint(kernel_end), (FLAG_PRESENT or FLAG_WRITE))
         
         '' map the video memory
-        map_page(@kernel_context, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))    
-        
-        '' the pmm's bitmap lies inside the bss-section of the kernel, so it doesn't need extra mapping
+        map_page(@kernel_context, &hB8000, &hB8000, (FLAG_PRESENT or FLAG_WRITE))
         
         kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
-        
-        '' activate the context
-        activate_context(@kernel_context)
         
         '' activate paging
         activate()
@@ -138,22 +136,20 @@ namespace vmm
 	
 	function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
 		dim pdir as uinteger ptr = cntxt->v_pagedir
-		if (pdir = get_current_pagedir()) then
+		
+		'' is there no pagetable?
+		if ((pdir[index] and FLAG_PRESENT) = 0) then return nullptr
+		
+		if (cntxt->pagedir = get_current_pagedir()) then
 			'' the pdir is currently active
 			if (paging_activated) then
-				return cast(uinteger ptr, pdir[index] and &hFFFFF000)
-			else
 				return cast(uinteger ptr, PAGETABLES_VIRT_START + 4096*index)
+			else
+				return cast(uinteger ptr, pdir[index] and &hFFFFF000)
 			end if
-		end if
-		/'
-		if (paging_activated) then
-			'' this only works if we are in the kernel context
-			return cast(uinteger ptr, PAGETABLES_VIRT_START + 4096*index)
 		else
-			return cast(uinteger ptr, pdir[index] and &hFFFFF000)
+			return kernel_automap(cast(any ptr, (pdir[index] and &hFFFFF000)), pmm.PAGE_SIZE)
 		end if
-		'/
 	end function
 	
 	function find_free_pages (cntxt as context ptr, num_pages as uinteger) as uinteger
@@ -250,6 +246,7 @@ namespace vmm
     end function
     
     sub activate_context (cntxt as context ptr)
+        current_context = cntxt
         dim pagedir as uinteger ptr = cntxt->pagedir
         asm
             mov eax, [pagedir]
@@ -267,9 +264,6 @@ namespace vmm
     end sub
     
     function get_current_pagedir () as uinteger ptr
-		asm
-			mov eax, cr0
-			mov [function], eax
-		end asm
+		return current_context->pagedir
 	end function
 end namespace
