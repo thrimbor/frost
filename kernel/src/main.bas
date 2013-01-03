@@ -1,5 +1,5 @@
 '' FROST 2 alpha version
-'' Copyright (c) 2012 by darkinsanity
+'' Copyright (c) 2010-2013 by Stefan Schmidt
 
 #include "multiboot.bi"
 #include "gdt.bi"
