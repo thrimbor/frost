@@ -134,6 +134,8 @@ namespace vmm
 		return 0
 	end function
 	
+	
+	'' TODO: a function to free the automapped space
 	function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
 		dim pdir as uinteger ptr = cntxt->v_pagedir
 		
