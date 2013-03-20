@@ -8,7 +8,7 @@ extern kernel_end_label   alias "kernel_end_label"   as byte
 
 common shared tss_ptr as uinteger ptr
 
-const true = 1
+const true = -1
 const false = 0
 
 const nullptr as any ptr = cast(any ptr, 0)
