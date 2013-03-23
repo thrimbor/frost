@@ -57,7 +57,7 @@ namespace idt
     
     
     '' this sub is just a helper function to put the passed arguments in the right place of an IDT-entry
-    sub set_entry (index as ushort, offset as any ptr, selector as ushort, accessbyte as ubyte)
+    sub set_entry (index as ushort, offset as sub (), selector as ushort, accessbyte as ubyte)
         idt.table(index).offset_low  = loword(cuint(offset))
         idt.table(index).offset_high = hiword(cuint(offset))
         idt.table(index).selector    = selector
