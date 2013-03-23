@@ -30,5 +30,5 @@ namespace idt
     const FLAG_TRAP_GATE_32      as ubyte = &h0F
     
     declare sub init ()
-    declare sub set_entry (i as ushort, offset as uinteger, selector as ushort, accessbyte as ubyte)
+    declare sub set_entry (i as ushort, offset as any ptr, selector as ushort, accessbyte as ubyte)
 end namespace

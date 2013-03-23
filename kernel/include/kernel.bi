@@ -8,10 +8,12 @@ extern kernel_end_label   alias "kernel_end_label"   as byte
 
 common shared tss_ptr as uinteger ptr
 
-const true = -1
-const false = 0
-
 const nullptr as any ptr = cast(any ptr, 0)
+
+type boolean as integer
+
+const true as boolean = -1
+const false as boolean = 0
 
 type paddr_t as uinteger
 type vaddr_t as uinteger

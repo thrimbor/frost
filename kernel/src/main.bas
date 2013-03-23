@@ -40,7 +40,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
         end if
         
         if (z_instr(*k_cmd, "-no-clear-on-panic") > 0) then             '' look for -no-clear-on-panic
-            panic.set_clear_on_panic(0)                                 '' don't clear screen before printing panic message
+            panic.set_clear_on_panic(false)                             '' don't clear screen before printing panic message
         end if
     end if
     

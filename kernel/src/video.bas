@@ -188,7 +188,7 @@ namespace video
     
     '' clear the whole screen
     sub clean ()
-        memset(memory, 0, 4000)                         '' set the complete screen to zero (and black)
+        memset(memory, 0, 4000)                                    '' set the complete screen to zero (and black)
         cursor_pos = 0                                             '' reset cursor position
     end sub
     

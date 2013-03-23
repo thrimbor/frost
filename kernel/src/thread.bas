@@ -42,7 +42,7 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	thread->userstack_bottom = cast(any ptr, process->next_stack - pmm.PAGE_SIZE)
 	
 	'' map the usermode stack to the context of the process
-	vmm.map_page(@process->vmm_context, cuint(thread->userstack_bottom), cuint(phys_user_stack), (vmm.FLAG_PRESENT or vmm.FLAG_WRITE or vmm.FLAG_USERSPACE))
+	vmm.map_page(@process->vmm_context, cuint(thread->userstack_bottom), cuint(phys_user_stack), (vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.WRITEABLE or vmm.PTE_FLAGS.USERSPACE))
 	
 	'' create a pointer to the isf
 	dim isf as interrupt_stack_frame ptr = thread->kernelstack_bottom + pmm.PAGE_SIZE - sizeof(interrupt_stack_frame)

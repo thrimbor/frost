@@ -17,11 +17,11 @@ namespace elf
         return 0
     end function
     
-    function load_image (process as process_type ptr, image as uinteger, size as uinteger) as byte
+    function load_image (process as process_type ptr, image as uinteger, size as uinteger) as boolean
 		dim header as elf32.Elf32_Ehdr ptr = cast(elf32.Elf32_Ehdr ptr, image)
 		
-		if (size < sizeof(elf32.Elf32_Ehdr)) then return 0
-		if (header_check(header) > 0) then return 0
+		if (size < sizeof(elf32.Elf32_Ehdr)) then return false
+		if (header_check(header) > 0) then return false
 		
 		'' create the thread
 		thread_create(process, cast(any ptr, header->e_entry))
@@ -71,6 +71,6 @@ namespace elf
 		asm cli
 		asm hlt
 		
-		return 0
+		return true
 	end function
 end namespace

@@ -5,7 +5,7 @@
 namespace panic
     'dim shared clear_on_panic as ubyte = 1
     
-    sub set_clear_on_panic (b as ubyte)
+    sub set_clear_on_panic (b as boolean)
         clear_on_panic = b
     end sub
     
@@ -22,7 +22,7 @@ namespace panic
     sub panic_exception (isf as interrupt_stack_frame ptr)
         asm cli
 		video.set_color(0,3)
-		if (clear_on_panic = 1) then video.clean(3)
+		if (clear_on_panic) then video.clean(3)
 		video.fout("\nKERNEL PANIC\n")
 		
         select case (isf->int_nr)
