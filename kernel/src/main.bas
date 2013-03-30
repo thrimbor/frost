@@ -16,6 +16,7 @@
 #include "panic.bi"
 #include "video.bi"
 #include "zstring.bi"
+#include "cpu.bi"
 
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
@@ -50,6 +51,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     debug_wlog(debug.INFO, "bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
     debug_wlog(debug.INFO, "cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     
+    debug_wlog(debug.INFO, "CPU vendor: %z\n", cpu.get_vendor())
+    
     gdt.init()
     debug_wlog(debug.INFO, "gdt loaded\n")
     
@@ -77,8 +80,12 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     'asm mov eax, 42
     'asm int &h62
-    asm hlt
-    'debug_wlog(debug.INFO, !"done.\n")
-    'asm sti
-    'do : loop
+    'asm hlt
+    debug_wlog(debug.INFO, !"done.\n")
+    asm sti
+    dim xi as integer
+    do
+		xi += 1
+		debug_wlog(debug.INFO, "%i ", xi)
+    loop
 end sub

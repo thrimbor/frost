@@ -7,12 +7,21 @@
 #include "elf32.bi"
 #include "video.bi"
 #include "kernel.bi"
+#include "spinlock.bi"
 #include "panic.bi"
 
 function generate_pid () as uinteger
-    static next_pid as uinteger = 0
-    next_pid += 1
-    return next_pid-1
+    static next_pid as uinteger = 0  '' next process id to assign
+    static pid_lock as spinlock = 0  '' spinlock to protect concurrent access
+    
+    dim pid as uinteger              '' the generated pid
+    
+    spinlock_acquire(@pid_lock)      '' acquire lock
+    pid = next_pid                   '' save pid
+    next_pid += 1                    '' increase pid counter
+    spinlock_release(@pid_lock)      '' release lock
+    
+    return pid                       '' return generated pid
 end function
 
 dim shared processlist_first as process_type ptr

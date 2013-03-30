@@ -32,6 +32,7 @@ namespace elf
 		dim min_addr as uinteger = &hFFFFFFFF
 		dim max_addr as uinteger = 0
 		
+		'' determine the size of the needed memory area
 		for counter as uinteger = 0 to header->e_phnum-1
 			'' skip entries that are not loadable
 			if (program_header[counter].p_type <> elf32.ELF_PT_LOAD) then continue for
@@ -66,10 +67,10 @@ namespace elf
 		video.fout("\npages reserved: %I\n", pages)
 		video.fout("min_addr: %hI\nmax_addr: %hI\n", min_addr, max_addr)
 		
-		'' at this point, we need to move the pages we just mapped to the context of the process
+		'' TODO: at this point, we need to move the pages we just mapped to the context of the process
 		
-		asm cli
-		asm hlt
+		'asm cli
+		'asm hlt
 		
 		return true
 	end function

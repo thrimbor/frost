@@ -57,11 +57,11 @@ namespace gdt
     '' it puts the passed arguments in the right place of a GDT-entry.
     sub set_entry (index as ushort, start as uinteger, limit as uinteger, accessbyte as ubyte, flags as ubyte)
         gdt.table(index).limit_low      = loword(limit)
-        gdt.table(index).start_low       = loword(start)
-        gdt.table(index).start_middle    = lobyte(hiword(start))
+        gdt.table(index).start_low      = loword(start)
+        gdt.table(index).start_middle   = lobyte(hiword(start))
         gdt.table(index).accessbyte     = accessbyte
         gdt.table(index).flags_limit2   = (lobyte(hiword(limit)) and &h0F)
         gdt.table(index).flags_limit2 or= ((flags shl 4) and &hF0)
-        gdt.table(index).start_high      = hibyte(hiword(start))
+        gdt.table(index).start_high     = hibyte(hiword(start))
     end sub
 end namespace

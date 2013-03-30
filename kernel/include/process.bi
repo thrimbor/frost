@@ -14,7 +14,7 @@ type process_type
 	
 	vmm_context as vmm.context
 	
-	next_stack as uinteger
+	next_stack as uinteger  '' virtual address of the place of the next stack
 	
 	state as UBYTE
 	

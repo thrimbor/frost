@@ -35,14 +35,15 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	dim phys_kernel_stack as any ptr = pmm.alloc()
 	dim phys_user_stack as any ptr = pmm.alloc()
 	
-	'' map the kernel stack
-	'thread->kernelstack_bottom = vmm.kernel_automap(phys_kernel_stack, 4096)
+	'' map the kernel stack into the kernel's address space (unreachable from userspace)
+	thread->kernelstack_bottom = vmm.kernel_automap(phys_kernel_stack, pmm.PAGE_SIZE)
 	
 	'' set the virtual adress of the usermode stack
-	thread->userstack_bottom = cast(any ptr, process->next_stack - pmm.PAGE_SIZE)
+	process->next_stack -= pmm.PAGE_SIZE
+	thread->userstack_bottom = cast(any ptr, process->next_stack)
 	
 	'' map the usermode stack to the context of the process
-	vmm.map_page(@process->vmm_context, cuint(thread->userstack_bottom), cuint(phys_user_stack), (vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.WRITEABLE or vmm.PTE_FLAGS.USERSPACE))
+	vmm.map_page(@process->vmm_context, thread->userstack_bottom, phys_user_stack, (vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.WRITABLE or vmm.PTE_FLAGS.USERSPACE))
 	
 	'' create a pointer to the isf
 	dim isf as interrupt_stack_frame ptr = thread->kernelstack_bottom + pmm.PAGE_SIZE - sizeof(interrupt_stack_frame)
@@ -51,6 +52,7 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	memset(isf, 0, sizeof(interrupt_stack_frame))
 	
 	'' initialize the isf
+	isf->eflags = &h0202
 	isf->eax = 0
 	isf->ebx = 0
 	isf->ecx = 0
@@ -59,23 +61,15 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	isf->edi = 0
 	isf->ebp = 0
 	isf->eip = cuint(entry)
-	isf->esp = process->next_stack
+	isf->esp = cuint(thread->userstack_bottom) + pmm.PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
 	
-	'' adjust the address of the next stack
-	process->next_stack -= pmm.PAGE_SIZE
+	'' activate thread and put it in the active list
+	thread_activate(thread)
 	
-	'' unlock the thread
-	'' put the thread in the active-thread list
-	
+	'' we're done
 	return thread
-	
-	
-	
-	'' the user stack has to be in the userspace and has to be mapped so the userspace can access it
-	'' the user stack variable has to be set to the virtual address of the userspace
-	'' tyndur code: kernel/src/task.c:216
 end function
 
 sub thread_activate (thread as thread_type ptr)
