@@ -46,37 +46,37 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     end if
     
     video.set_color(9,0)
-    debug_wlog(debug.INFO, "FROST V2 alpha\n")
+    debug_wlog(debug.INFO, !"FROST V2 alpha\n")
     video.set_color(7,0)
-    debug_wlog(debug.INFO, "bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
-    debug_wlog(debug.INFO, "cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
+    debug_wlog(debug.INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
+    debug_wlog(debug.INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     
-    debug_wlog(debug.INFO, "CPU vendor: %z\n", cpu.get_vendor())
+    debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu.get_vendor())
     
     gdt.init()
-    debug_wlog(debug.INFO, "gdt loaded\n")
+    debug_wlog(debug.INFO, !"gdt loaded\n")
     
     pic.init()
-    debug_wlog(debug.INFO, "pic initialized\n")
+    debug_wlog(debug.INFO, !"pic initialized\n")
     
     idt.init()
-    debug_wlog(debug.INFO, "idt loaded\n")
+    debug_wlog(debug.INFO, !"idt loaded\n")
     
     pit.set_frequency(100)
-    debug_wlog(debug.INFO, "pit initialized\n")
+    debug_wlog(debug.INFO, !"pit initialized\n")
     
     pmm.init(@mb_info)
-    debug_wlog(debug.INFO, "physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
+    debug_wlog(debug.INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
     
     vmm.init()
-    debug_wlog(debug.INFO, "paging initialized\n")
+    debug_wlog(debug.INFO, !"paging initialized\n")
     
-    debug_wlog(debug.INFO, "loading init module...")
+    debug_wlog(debug.INFO, !"loading init module...")
     load_init_module(@mb_info)
     
-    'debug_wlog(debug.INFO, "loading modules... ")
+    'debug_wlog(debug.INFO, !"loading modules... ")
     'tasks.create_tasks_from_mb(mbinfo)
-    'debug_wlog(debug.INFO, "done.\n")
+    'debug_wlog(debug.INFO, !"done.\n")
     
     'asm mov eax, 42
     'asm int &h62
@@ -86,6 +86,6 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     dim xi as integer
     do
 		xi += 1
-		debug_wlog(debug.INFO, "%i ", xi)
+		'debug_wlog(debug.INFO, "%i ", xi)
     loop
 end sub

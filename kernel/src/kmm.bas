@@ -25,8 +25,8 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     
     kmm_first_block = cast(any ptr, kmm_start_address)
     
-    video.fout("heap start: %hI, end: %hI, min: %hI, max: %hI\n", kmm_start_address, kmm_end_address, kmm_minimum_size, kmm_maximum_size)
-    video.fout("first block: %hI\n", cuint(kmm_first_block))
+    video.fout(!"heap start: %hI, end: %hI, min: %hI, max: %hI\n", kmm_start_address, kmm_end_address, kmm_minimum_size, kmm_maximum_size)
+    video.fout(!"first block: %hI\n", cuint(kmm_first_block))
     
     dim header as kmm_header ptr = kmm_first_block
     dim footer as kmm_footer ptr = cast(kmm_footer ptr, (kmm_end_address-sizeof(kmm_footer)))

@@ -64,8 +64,8 @@ namespace elf
 			end if
 		next
 		
-		video.fout("\npages reserved: %I\n", pages)
-		video.fout("min_addr: %hI\nmax_addr: %hI\n", min_addr, max_addr)
+		video.fout(!"\npages reserved: %I\n", pages)
+		video.fout(!"min_addr: %hI\nmax_addr: %hI\n", min_addr, max_addr)
 		
 		'' TODO: at this point, we need to move the pages we just mapped to the context of the process
 		

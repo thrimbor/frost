@@ -93,7 +93,7 @@ function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 	
 	if (current_thread = 0) then
 		'' we should active an idle-thread here
-		panic_error("There is no active thread to run!")
+		panic_error(!"There is no active thread to run!")
 	end if
 	
 	return current_thread

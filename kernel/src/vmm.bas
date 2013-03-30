@@ -64,7 +64,7 @@ namespace vmm
     end sub
     
     function alloc() as any ptr
-		panic_error("NOT IMPLEMENTED YET!")
+		panic_error(!"NOT IMPLEMENTED YET!")
 		return 0
 		'' todo: implement
 		'' this function should reserve a page, map it into the kernel's address space and return it's address

@@ -5,7 +5,10 @@
 namespace video
     dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)      '' pointer to video-memory
     dim shared cursor_pos as addr_t = 0                        '' the position of the cursor
+    dim shared cursor_hidden as boolean = false
     dim shared textColor as ubyte = 7                            '' the color of the text
+    
+    declare sub update_cursor ()
     
     
     '' scroll the screen down one row
@@ -18,19 +21,29 @@ namespace video
     
     '' print one char
     sub putc (char as ubyte)
-        if (char = 10) then
-            cursor_pos = (cursor_pos\160 + 1) * 160
-            return
-        end if
+        select case (char)
+			'' backspace
+			case &h08
+				if (cursor_pos > 0) then cursor_pos -= 1
+			'' tab
+			case &h09
+				cursor_pos = (cursor_pos + 8) and &hFFFFFFF8
+			'' line feed
+			case &h0A
+				cursor_pos = (cursor_pos\160 + 1) * 160
+			'' carriage return
+			case &h0D
+				if (cursor_pos > 159) then cursor_pos -= cursor_pos mod 160
+			'' printable character
+			case is >= &h20
+				memory[cursor_pos]   = char
+				memory[cursor_pos+1] = textColor
+				cursor_pos += 2
+		end select
         
         while (cursor_pos > 3999)
             scroll_screen()
         wend
-        
-        memory[cursor_pos]   = char
-        memory[cursor_pos+1] = textColor
-        
-        cursor_pos += 2
     end sub
     
     sub fout (fstr as zstring, ...)
@@ -41,28 +54,6 @@ namespace video
 		dim arg as any ptr       = va_first()
 		
         while zstr[counter]
-			
-            if (zstr[counter] = 92) then              '' check whether it's a backslash
-                counter += 1                          '' go to the next char
-                select case (zstr[counter])
-                    case 92:                          '' another backslash?
-                        putc(zstr[counter])           '' print this backslash
-                        counter += 1                  '' continue our loop
-                        continue while
-                    case 110:                         '' do we have a "n" ? 
-                        putc(10)                      '' start a new line
-                        counter += 1                  '' continue our loop
-                        continue while
-                    case 37:                          '' a percent-sign?
-                        putc(zstr[counter])           '' print the percent-sign
-                        counter += 1                  '' continue our loop
-                        continue while
-                    case else:                        '' any other char
-                        counter += 1                  '' do nothing and continue loop
-                        continue while
-                end select
-            end if
-            
             if (zstr[counter] = 37) then              '' do we have a percent-sign?
 				counter += 1                          '' go to the next char
                 
@@ -140,6 +131,10 @@ namespace video
                         
                         counter += 1
                         continue while
+                    '' "%"
+                    case &h25:
+					    putc(&h25)
+					    counter += 1
                     case else:
                         counter += 1
                         continue while
@@ -149,9 +144,9 @@ namespace video
 			putc(zstr[counter])
 			counter += 1
 		wend
+		
+		update_cursor()
 	end sub
-		
-		
     
     '' print an uinteger with a given base and at least as many chars as given in minchars
     sub cout (number as uinteger, nbase as ubyte = 10, minchars as ubyte = 0)
@@ -210,21 +205,35 @@ namespace video
         textColor = ((b_color and &h0F) shl 4) or (f_color and &h0F)
     end sub
     
+    sub update_cursor ()
+		if (not cursor_hidden) then
+			out(&h3D4, 14)
+			out(&h3D5, cubyte(((cursor_pos shr 1) + 1) shr 8))
+			out(&h3D4, 15)
+			out(&h3D5, cubyte(((cursor_pos shr 1) + 1)))
+		end if
+	end sub
+    
     '' removes the cursor from the screen
     sub hide_cursor ()
+        cursor_hidden = true
         out(&h3D4, 14)
         out(&h3D5, &h07)
         out(&h3D4, 15)
         out(&h3D5, &hD0)
     end sub
     
+    sub show_cursor ()
+		cursor_hidden = false
+		update_cursor()
+	end sub
+    
     sub move_cursor (x as ubyte, y as ubyte)
-        dim tmp as ushort = y*80 + x
+        dim t_cursor as uinteger = y*160 + x*2
+        if (t_cursor > 3999) then return
         
-        out(&h3D4, 14)
-        out(&h3D5, cubyte(tmp shr 8))
-        out(&h3D4, 15)
-        out(&h3D5, cubyte(tmp))
+        cursor_pos = t_cursor
+        update_cursor()
     end sub
     
 end namespace

@@ -18,7 +18,7 @@ namespace syscall
                     'cpu->ebx = 0
                 'end if
             case syscall.FORTY_TWO
-                video.fout("The answer to life, the universe and everything is... 42\n")
+                video.fout(!"The answer to life, the universe and everything is... 42\n")
         end select
     end sub
     

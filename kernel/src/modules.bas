@@ -10,7 +10,7 @@
 sub load_init_module (mbinfo as multiboot_info ptr)
 	'' if no modules are available, we have a problem
 	if (mbinfo->mods_count = 0) then
-		panic_error("No init-module available.\n")
+		panic_error(!"No init-module available.\n")
 	end if
 	
 	
@@ -29,7 +29,7 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	'v_multiboot_module = vmm.kernel_automap_page(multiboot_module)
 	v_multiboot_module = vmm.kernel_automap(multiboot_module, sizeof(multiboot_module_t))
 	if (v_multiboot_module = 0) then
-		panic_error("Could not map the module-structure of the module\n")
+		panic_error(!"Could not map the module-structure of the module\n")
 	end if
 	
 	'' map the image
@@ -41,7 +41,7 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	process = process_create(nullptr)
 	
 	if (not(elf.load_image(process, v_image, size))) then
-		panic_error("Could not load the init-module!")
+		panic_error(!"Could not load the init-module!")
 	end if
 	
 	'' TODO:
