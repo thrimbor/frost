@@ -3,6 +3,17 @@
 #include "debug.bi"
 
 namespace smp
+	function checksum (type_ptr as any ptr, size as uinteger) as ubyte
+		dim checksum_byte as ubyte = 0
+		dim bp as ubyte ptr = cast(ubyte ptr, type_ptr)
+		
+		for counter as uinteger = 0 to size-1 step 1
+			checksum_byte += bp[counter]
+		next counter
+		
+		return checksum_byte
+	end function
+	
 	function find_floating_pointer_in_area (start as uinteger, size as uinteger) as floating_pointer_type ptr
 		dim floating_pointer as floating_pointer_type ptr = cast(floating_pointer_type ptr, start)
 		
@@ -10,13 +21,7 @@ namespace smp
 			'' signature found
 			if (floating_pointer->signature = FP_SIGNATURE) then
 				'' check checksum, sum of all bytes must be zero
-				dim checksum as ubyte = 0
-				dim fp as ubyte ptr = cast(ubyte ptr, floating_pointer)
-				for counter as uinteger = 0 to sizeof(floating_pointer_type)-1 step 1
-					checksum += fp[counter]
-				next
-				
-				if (checksum = 0) then
+				if (checksum(floating_pointer, sizeof(floating_pointer_type)) = 0) then
 					'' structure found, return address
 					return floating_pointer
 				end if
@@ -44,6 +49,7 @@ namespace smp
 	
 	sub init ()
 		dim floating_pointer as floating_pointer_type ptr = find_floating_pointer()
+		dim config_table as config_table_type ptr
 		
 		if (floating_pointer = nullptr) then
 			debug_wlog(debug.INFO, !"  -> floating pointer not found\n")
@@ -51,6 +57,24 @@ namespace smp
 		end if
 		
 		debug_wlog(debug.INFO, !"  -> floating pointer found: %hI\n", cuint(floating_pointer))
+		
+		if (floating_pointer->features(0) = 0) then
+			config_table = cast(any ptr, floating_pointer->config_table)
+			
+			if (config_table->signature <> CT_SIGNATURE) then
+				debug_wlog(debug.INFO, !"  -> signature of the config table is damaged!\n")
+				return
+			end if
+			
+			if (checksum(config_table, config_table->base_table_length) <> 0) then
+				debug_wlog(debug.INFO, !"  -> checksum of the config table is wrong!\n")
+				return
+			end if
+			
+			debug_wlog(debug.INFO, !"  -> config table valid\n")
+			
+		end if
+		
 		debug_wlog(debug.INFO, !"  -> SMP support not implemented yet\n")
 	end sub
 end namespace
