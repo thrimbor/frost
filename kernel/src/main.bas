@@ -17,6 +17,7 @@
 #include "video.bi"
 #include "zstring.bi"
 #include "cpu.bi"
+#include "smp.bi"
 
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
@@ -67,6 +68,9 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     pmm.init(@mb_info)
     debug_wlog(debug.INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
+    
+    debug_wlog(debug.INFO, !"initializing SMP\n")
+    smp.init()
     
     vmm.init()
     debug_wlog(debug.INFO, !"paging initialized\n")
