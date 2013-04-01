@@ -29,6 +29,50 @@ namespace smp
 		extended_table_checksum as ubyte
 		reserved as ubyte
 	end type
+	
+	type cte_processor field=1
+		entry_type as ubyte
+		local_apic_id as ubyte
+		local_apic_version as ubyte
+		flags as ubyte
+		signature as zstring*4
+		feature_flags as uinteger
+		reserved as ulongint
+	end type
+	
+	type cte_bus field=1
+		entry_type as ubyte
+		bus_id as ubyte
+		type_string as zstring*6
+	end type
+	
+	type cte_io_apic field=1
+		entry_type as ubyte
+		id as ubyte
+		version as ubyte
+		flags as ubyte
+		address as uinteger
+	end type
+	
+	type cte_io_interrupt_assignment field=1
+		entry_type as ubyte
+		interrupt_type as ubyte
+		flags as ushort
+		bus_id as ubyte
+		bus_irq as ubyte
+		apic_id as ubyte
+		apic_int as ubyte
+	end type
+	
+	type cte_local_interrupt_assignment field=1
+		entry_type as ubyte
+		interrupt_type as ubyte
+		flags as ushort
+		bus_id as ubyte
+		bus_irq as ubyte
+		apic_id as ubyte
+		apic_int as ubyte
+	end type
 
 	declare sub init ()
 end namespace

@@ -71,10 +71,38 @@ namespace smp
 				return
 			end if
 			
-			debug_wlog(debug.INFO, !"  -> config table valid\n")
+			'' pointer for the table
+			dim entry as ubyte ptr = cast(ubyte ptr, cuint(config_table) + sizeof(config_table_type))
+			dim num_procs as uinteger = 0
+			
+			for entry_count as uinteger = 0 to config_table->entry_count-1 step 1
+				select case *entry
+					'' processor
+					case 0:
+						num_procs += 1
+						debug_wlog(debug.INFO, !"  -> processor #%I found\n", num_procs)
+						entry += sizeof(cte_processor)
+					'' bus
+					case 1:
+						entry += sizeof(cte_bus)
+					''io apic
+					case 2:
+						entry += sizeof(cte_io_apic)
+					'' io interrupt assignment
+					case 3:
+						entry += sizeof(cte_io_interrupt_assignment)
+					'' local interrupt assignment
+					case 4:
+						entry += sizeof(cte_local_interrupt_assignment)
+					'' something went wrong
+					case else:
+						debug_wlog(debug.INFO, !"  -> config table entries corrupt!\n")
+						return
+				end select
+			next
 			
 		end if
-		
-		debug_wlog(debug.INFO, !"  -> SMP support not implemented yet\n")
 	end sub
+	
+	'' we don't do much more here because FROST can't handle multiple processors atm
 end namespace

@@ -55,13 +55,10 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu.get_vendor())
     
     gdt.init()
-    debug_wlog(debug.INFO, !"gdt loaded\n")
+    idt.init()
     
     pic.init()
     debug_wlog(debug.INFO, !"pic initialized\n")
-    
-    idt.init()
-    debug_wlog(debug.INFO, !"idt loaded\n")
     
     pit.set_frequency(100)
     debug_wlog(debug.INFO, !"pit initialized\n")
