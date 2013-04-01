@@ -1,4 +1,5 @@
 #include "kmm.bi"
+#include "vmm.bi"
 #include "kernel.bi"
 #include "video.bi"
 
@@ -14,6 +15,8 @@ dim shared kmm_end_address as uinteger
 '' todo:
 '' - heap initialization
 '' - heap expansion
+'' - heap should probably automatically have "minimum" as it's initial size
+'' - correctly use the vmm
 
 const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
 

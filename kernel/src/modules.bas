@@ -40,6 +40,10 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	dim process as process_type ptr
 	process = process_create(nullptr)
 	
+	if (process = nullptr) then
+		panic_error(!"Could not create init-process!\n")
+	end if
+	
 	if (not(elf.load_image(process, v_image, size))) then
 		panic_error(!"Could not load the init-module!")
 	end if

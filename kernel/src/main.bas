@@ -72,6 +72,13 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     vmm.init()
     debug_wlog(debug.INFO, !"paging initialized\n")
     
+    '' initialize the heap:
+    '' starts at 256MB
+    '' initial size 1MB
+    '' minimum size 1MB
+    '' maximum size 256MB
+    kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
+    
     debug_wlog(debug.INFO, !"loading init module...")
     load_init_module(@mb_info)
     
