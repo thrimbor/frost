@@ -49,7 +49,6 @@ namespace vmm
     declare function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
     declare function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
     declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
-    ''declare function get_p_addr (cntxt as context ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
     declare sub activate_context (cntxt as context ptr)
     declare sub activate ()
     declare function get_current_pagedir () as uinteger ptr

@@ -260,40 +260,6 @@ namespace vmm
 		return result
 	end function
     
-    #if 0
-    function get_p_addr (cntxt as context ptr, v_addr as uinteger, reserve_if_na as ubyte) as uinteger
-        '' TODO: needs to use get_pagetable_addr, otherwise it will fail when paging is activated
-        
-        dim page_directory as uinteger ptr = cntxt->v_pagedir
-        dim pd_index as uinteger = (v_addr shr 22)
-        dim pt_index as uinteger = (v_addr shr 12) and &h3FF
-        dim page_table as uinteger ptr
-        
-        if (page_directory[pd_index] = 0) then
-            if (reserve_if_na = 1) then
-                page_directory[pd_index] = cuint(pmm.alloc())
-                memset(cast(any ptr, page_directory[pd_index]), 0, pmm.PAGE_SIZE)
-                page_directory[pd_index] or= (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE or PTE_FLAGS.USERSPACE)
-            else
-                return 0
-            end if
-        end if
-        
-        page_table = cast(uinteger ptr, (page_directory[pd_index] and PTE_FLAGS.FRAME))
-        
-        if (page_table[pt_index] = 0) then
-            if (reserve_if_na = 1) then
-                page_table[pt_index] = cuint(pmm.alloc())
-                memset(cast(any ptr, page_table[pt_index]), 0, pmm.PAGE_SIZE)
-                page_table[pt_index] or= (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE or PTE_FLAGS.USERSPACE)
-            else
-                return 0
-            end if
-        end if
-        
-        return ((page_table[pt_index] and PTE_FLAGS.FRAME) or (v_addr and &hFFF))
-    end function
-    #endif
     sub activate_context (cntxt as context ptr)
         current_context = cntxt
         dim pagedir as uinteger ptr = cntxt->p_pagedir
