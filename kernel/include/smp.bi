@@ -30,6 +30,15 @@ namespace smp
 		reserved as ubyte
 	end type
 	
+	enum CT_ENTRY_TYPES explicit
+		PROCESSOR = 0
+		BUS = 1
+		IO_APIC = 2
+		IO_INTERRUPT_ASSIGNMENT = 3
+		LOCAL_INTERRUPT_ASSIGNMENT = 4
+	end enum
+		
+	
 	type cte_processor field=1
 		entry_type as ubyte
 		local_apic_id as ubyte

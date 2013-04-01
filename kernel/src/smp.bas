@@ -78,21 +78,21 @@ namespace smp
 			for entry_count as uinteger = 0 to config_table->entry_count-1 step 1
 				select case *entry
 					'' processor
-					case 0:
+					case CT_ENTRY_TYPES.PROCESSOR:
 						num_procs += 1
 						debug_wlog(debug.INFO, !"  -> processor #%I found\n", num_procs)
 						entry += sizeof(cte_processor)
 					'' bus
-					case 1:
+					case CT_ENTRY_TYPES.BUS:
 						entry += sizeof(cte_bus)
 					''io apic
-					case 2:
+					case CT_ENTRY_TYPES.IO_APIC:
 						entry += sizeof(cte_io_apic)
 					'' io interrupt assignment
-					case 3:
+					case CT_ENTRY_TYPES.IO_INTERRUPT_ASSIGNMENT:
 						entry += sizeof(cte_io_interrupt_assignment)
 					'' local interrupt assignment
-					case 4:
+					case CT_ENTRY_TYPES.LOCAL_INTERRUPT_ASSIGNMENT:
 						entry += sizeof(cte_local_interrupt_assignment)
 					'' something went wrong
 					case else:
