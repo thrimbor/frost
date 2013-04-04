@@ -11,7 +11,7 @@ namespace gdt
     
     '' this sub initializes the GDT with Code- and Data-Segments for Ring 0 and Ring 3.
     '' it also does basic tss-setup
-    sub init ()
+    sub prepare ()
         tss_ptr = @tss(0) '' initialize the tss-pointer (used in other parts of the kernel)
         tss(2) = &h10     '' set the ss0-entry (kernel stack segment) of the tss
         
@@ -32,7 +32,11 @@ namespace gdt
              
         gdt.descriptor.limit = (gdt.TABLE_SIZE+1)*8-1 '' calculate the size of the entries + null-entry
         gdt.descriptor.start  = cuint(@gdt.table(0))   '' set the address of the table
-        asm lgdt [gdt.descriptor]                     '' load the gdt
+    end sub
+    
+    sub load ()
+		'' load the gdt
+		asm lgdt [gdt.descriptor]
         
         '' refresh the segment registers, so the gdt is really being used
         asm
@@ -51,7 +55,7 @@ namespace gdt
             mov ax, &h28
             ltr ax
         end asm
-    end sub
+	end sub
     
     '' this sub is just a helper function to provide easier access to the GDT.
     '' it puts the passed arguments in the right place of a GDT-entry.

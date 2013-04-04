@@ -36,6 +36,7 @@ namespace gdt
     const FLAG_LONG_MODE   as ubyte = &h02 '' if set, it's a long mode segment
     const FLAG_AVAILABLE   as ubyte = &h01 '' free bit
     
-    declare sub init ()
+    declare sub prepare ()
+    declare sub load ()
     declare sub set_entry (i as ushort, start as uinteger, limit as uinteger, access as ubyte, flags as ubyte)
 end namespace

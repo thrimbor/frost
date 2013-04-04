@@ -29,6 +29,7 @@ namespace idt
     const FLAG_TRAP_GATE_16      as ubyte = &h07
     const FLAG_TRAP_GATE_32      as ubyte = &h0F
     
-    declare sub init ()
+    declare sub prepare ()
+    declare sub load ()
     declare sub set_entry (index as ushort, offset as sub (), selector as ushort, accessbyte as ubyte)
 end namespace

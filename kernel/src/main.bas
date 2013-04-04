@@ -54,14 +54,14 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu.get_vendor())
     
-    gdt.init()
-    idt.init()
+    gdt.prepare()
+    gdt.load()
+    idt.prepare()
+    idt.load()
     
     pic.init()
-    debug_wlog(debug.INFO, !"pic initialized\n")
     
     pit.set_frequency(100)
-    debug_wlog(debug.INFO, !"pit initialized\n")
     
     pmm.init(@mb_info)
     debug_wlog(debug.INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
@@ -78,6 +78,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' minimum size 1MB
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
+    debug_wlog(debug.INFO, !"heap initialized\n")
     
     debug_wlog(debug.INFO, !"loading init module...")
     load_init_module(@mb_info)

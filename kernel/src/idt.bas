@@ -6,7 +6,7 @@ namespace idt
     dim shared table (0 to idt.TABLE_SIZE-1) as idt.gate_descriptor
     
     '' this sub sets up and loads an IDT for exceptions, IRQs and the syscall-interrupt.
-    sub init ()
+    sub prepare ()
         '' register the handlers for the exceptions
         idt.set_entry (&h00, @int_stub_0, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h01, @int_stub_1, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
@@ -52,8 +52,12 @@ namespace idt
         
         idt.descriptor.limit = idt.TABLE_SIZE*8-1     '' calculate the size of the entries + null-entry
         idt.descriptor.base  = cuint(@idt.table(0))   '' set the address of the table
-        asm lidt [idt.descriptor]                     '' load the IDT
     end sub
+    
+    sub load ()
+		'' load the IDT
+		asm lidt [idt.descriptor]
+	end sub
     
     
     '' this sub is just a helper function to put the passed arguments in the right place of an IDT-entry

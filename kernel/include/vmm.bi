@@ -44,7 +44,8 @@ namespace vmm
 	end type
     
     declare sub init ()
-    declare function alloc() as any ptr
+    declare function alloc (v_addr as any ptr) as boolean
+    'declare function alloc() as any ptr
     declare sub context_initialize (cntxt as context ptr)
     declare function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
     declare function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean

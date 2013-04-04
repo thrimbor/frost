@@ -1,7 +1,9 @@
 #include "kmm.bi"
+#include "pmm.bi"
 #include "vmm.bi"
 #include "kernel.bi"
 #include "video.bi"
+#include "panic.bi"
 
 dim shared kmm_first_block as any ptr
 dim shared kmm_minimum_size as uinteger
@@ -16,11 +18,21 @@ dim shared kmm_end_address as uinteger
 '' - heap initialization
 '' - heap expansion
 '' - heap should probably automatically have "minimum" as it's initial size
-'' - correctly use the vmm
+'' - correctly use the vmm when contracting/expanding
+
 
 const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
 
 sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger, maximum as uinteger)
+    '' first map memory. heap has to start on a page boundary!
+    dim addr as uinteger = start_addr
+    while (addr < end_addr)
+		if (not(vmm.alloc(addr))) then
+		end if
+		addr += pmm.PAGE_SIZE
+	wend
+    
+    
     kmm_start_address = start_addr
     kmm_end_address = end_addr
     kmm_minimum_size = minimum

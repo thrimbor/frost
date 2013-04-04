@@ -1,4 +1,5 @@
 #include "cpu.bi"
+#include "kernel.bi"
 #include "mem.bi"
 
 function cpu.get_vendor () as zstring ptr
@@ -13,4 +14,15 @@ function cpu.get_vendor () as zstring ptr
 	end asm
 	
 	return @zstr
+end function
+
+function cpu.has_apic () as boolean
+	dim t_edx as uinteger
+	asm
+		mov eax, 1
+		cpuid
+		mov dword ptr [t_edx], edx
+	end asm
+	
+	return iif((t_edx and &h200), true, false)
 end function

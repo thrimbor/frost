@@ -63,6 +63,20 @@ namespace vmm
         paging_activated = -1
     end sub
     
+    '' reserve a page and map it
+    'function alloc (cntxt as context ptr, v_addr as any ptr) as boolean
+    function alloc (v_addr as any ptr) as boolean
+		'' allocate a page
+		dim page as any ptr = pmm.alloc()
+		
+		'' unsuccessful? return false
+		if (page = nullptr) then return false
+		
+		'' try to map it where we need it
+		return map_page(current_context, v_addr, page, (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE))
+	end function
+    
+    #if 0
     function alloc() as any ptr
 		panic_error(!"NOT IMPLEMENTED YET!")
 		return 0
@@ -73,6 +87,7 @@ namespace vmm
 		
 		'' return the virtual address
 	end function
+	#endif
    
     '' create_context () creates and clears space for a page-directory
     sub context_initialize (cntxt as context ptr)
@@ -84,8 +99,11 @@ namespace vmm
     
     '' map_page maps a single page into a given context
     function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
+        '' memorize if the pagetable needs to be cleared (needed when we allocate a new pagetable)
+        dim clear_pagetable as boolean = false
+        '' the entry in the pagedir
         dim pagedir_entry_ptr as uinteger ptr = @cntxt->v_pagedir[GET_PAGEDIR_INDEX(cuint(virtual))]
-        
+		
         '' is one of the addresses not 4k-aligned?
         if ((cuint(virtual) and &hFFF) or (cuint(physical) and &hFFF)) then return false
         
@@ -95,19 +113,26 @@ namespace vmm
         '' page table not present?
         if ((*pagedir_entry_ptr and PDE_FLAGS.PRESENT) <> PDE_FLAGS.PRESENT) then
             '' reserve memory
-            *pagedir_entry_ptr = cuint(pmm.alloc())
-            '' clear it
-            memset(cast(any ptr, *pagedir_entry_ptr), 0, pmm.PAGE_SIZE)
-            '' set the flags
-            *pagedir_entry_ptr or= PDE_FLAGS.PRESENT or PDE_FLAGS.WRITABLE or PDE_FLAGS.USERSPACE
+            dim pagetable as any ptr = pmm.alloc()
+            
+            '' insert the new pagetable into the pagedir
+            *pagedir_entry_ptr = cuint(pagetable) or (PDE_FLAGS.PRESENT or PDE_FLAGS.WRITABLE or PDE_FLAGS.USERSPACE)
+            
+            '' set the clear flag because the table is new, we cannot clear it now because it's not mapped
+            clear_pagetable = true
         end if
         
         '' fetch page-table address from page directory
 		dim page_table as uinteger ptr = get_pagetable_addr(cntxt, GET_PAGEDIR_INDEX(cuint(virtual)))
+		
+		if (clear_pagetable) then
+			'' if the table needs to be cleared we clear it now because it is now mapped
+			memset(page_table, 0, pmm.PAGE_SIZE)
+		end if
         
         '' set address and flags
         page_table[GET_PAGETABLE_INDEX(cuint(virtual))] = (cuint(physical) or flags)
-        
+		
         '' invalidate virtual address
         asm
             invlpg [virtual]
