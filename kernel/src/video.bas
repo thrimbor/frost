@@ -30,10 +30,10 @@ namespace video
 				cursor_pos = (cursor_pos + 8) and &hFFFFFFF8
 			'' line feed
 			case &h0A
-				cursor_pos = (cursor_pos\160 + 1) * 160
+				cursor_pos += 160 - (cursor_pos mod 160)
 			'' carriage return
 			case &h0D
-				if (cursor_pos > 159) then cursor_pos -= cursor_pos mod 160
+				cursor_pos -= cursor_pos mod 160
 			'' printable character
 			case is >= &h20
 				memory[cursor_pos]   = char
