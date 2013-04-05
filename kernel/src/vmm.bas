@@ -75,26 +75,13 @@ namespace vmm
 		'' try to map it where we need it
 		return map_page(current_context, v_addr, page, (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE))
 	end function
-    
-    #if 0
-    function alloc() as any ptr
-		panic_error(!"NOT IMPLEMENTED YET!")
-		return 0
-		'' todo: implement
-		'' this function should reserve a page, map it into the kernel's address space and return it's address
-		dim page as any ptr = pmm.alloc()
-		'' map it... search for a free place
-		
-		'' return the virtual address
-	end function
-	#endif
    
     '' create_context () creates and clears space for a page-directory
     sub context_initialize (cntxt as context ptr)
         cntxt->version = 0
         cntxt->p_pagedir = pmm.alloc()
-        memset(cntxt->p_pagedir, 0, pmm.PAGE_SIZE)
         cntxt->v_pagedir = kernel_automap(cntxt->p_pagedir, pmm.PAGE_SIZE)
+        memset(cntxt->v_pagedir, 0, pmm.PAGE_SIZE)
     end sub
     
     '' map_page maps a single page into a given context
