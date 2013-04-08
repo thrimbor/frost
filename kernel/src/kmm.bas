@@ -11,9 +11,6 @@ dim shared kmm_maximum_size as uinteger
 dim shared kmm_start_address as uinteger
 dim shared kmm_end_address as uinteger
 
-'' the following issues are left:
-'' - the function does not check for errors (checksum, is_hole not true...) -> isn't needed, list is guaranteed to be correct
-
 '' todo:
 '' - heap initialization
 '' - heap expansion
@@ -24,10 +21,12 @@ dim shared kmm_end_address as uinteger
 const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
 
 sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger, maximum as uinteger)
-    '' first map memory. heap has to start on a page boundary!
+    '' heap has to start on a page boundary
+    assert((start_addr mod 4096) = 0)
+    '' first map memory
     dim addr as uinteger = start_addr
     while (addr < end_addr)
-		if (not(vmm.alloc(addr))) then
+		if (not(vmm.alloc(cast(any ptr, addr)))) then
 		end if
 		addr += pmm.PAGE_SIZE
 	wend
@@ -162,8 +161,7 @@ function kmalloc (size as uinteger) as any ptr
     dim hole as kmm_header ptr = find_hole(new_size)
     
     if (hole = 0) then
-        '' error handling code...
-        '' I think we should expand the heap here
+        '' FIXME: check if we could expand the heap
         return 0
     end if
     
@@ -197,7 +195,10 @@ sub kfree (addr as any ptr)
     if (header->is_hole = 1) then return
     dim footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(header) + header->size - sizeof(kmm_footer))
     
-    '' well, we _could_ check the magic fields here ;)
+    '' check the magic fields only when debugging
+    assert(header->magic = HEAP_MAGIC)
+    assert(footer->magic = HEAP_MAGIC)
+    assert(footer->header = footer)
     
     '' the block is now a hole again
     header->is_hole = 1
