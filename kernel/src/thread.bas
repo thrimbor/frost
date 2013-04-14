@@ -10,6 +10,18 @@
 dim shared running_threads as thread_type ptr = nullptr
 dim shared current_thread as thread_type ptr = nullptr
 
+function generate_tid (process as process_type ptr) as uinteger
+	dim tid as uinteger
+	
+	spinlock_acquire(@process->tid_lock)
+	tid = process->next_tid
+	process->next_tid += 1
+	spinlock_release(@process->tid_lock)
+	
+	return tid
+end function
+	
+
 function thread_create (process as process_type ptr, entry as any ptr) as thread_type ptr
 	dim thread as thread_type ptr = kmalloc(sizeof(thread_type))
 	
@@ -17,8 +29,7 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	if (thread = 0) then return 0
 	
 	'' assign id
-	thread->id = process->next_tid
-	process->next_tid += 1
+	thread->id = generate_tid(process)
 	
 	'' set owning process
 	thread->parent_process = process

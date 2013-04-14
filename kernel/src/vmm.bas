@@ -77,6 +77,7 @@ namespace vmm
 	end function
    
     '' create_context () creates and clears space for a page-directory
+    '' TODO: we somehow need to map the kernel space into this new context
     sub context_initialize (cntxt as context ptr)
         cntxt->version = 0
         cntxt->p_pagedir = pmm.alloc()

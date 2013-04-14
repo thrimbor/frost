@@ -5,6 +5,7 @@
 #include "elf32.bi"
 #include "multiboot.bi"
 #include "thread.bi"
+#include "spinlock.bi"
 
 
 type process_type
@@ -24,6 +25,7 @@ type process_type
 	
 	threads as thread_type ptr
 	next_tid as uinteger
+	tid_lock as spinlock
 	
 	prev_process as process_type ptr
 	next_process as process_type ptr
