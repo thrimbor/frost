@@ -48,9 +48,9 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	
 	'' create a vmm-context
 	vmm.context_initialize(@process->vmm_context)
-	panic_error(!"kernel not ready for this yet!")
+	'panic_error(!"kernel not ready for this yet!")
 	
-	'' TODO: - copy kernel context into the new context
+	'' TODO:
 	''       - copy the executable image into the address space of the process
 	
 	return process

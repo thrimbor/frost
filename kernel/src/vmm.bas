@@ -83,6 +83,9 @@ namespace vmm
         cntxt->p_pagedir = pmm.alloc()
         cntxt->v_pagedir = kernel_automap(cntxt->p_pagedir, pmm.PAGE_SIZE)
         memset(cntxt->v_pagedir, 0, pmm.PAGE_SIZE)
+        '' copy the kernel address space
+        'memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 256*4)
+        memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 4096)
     end sub
     
     '' map_page maps a single page into a given context
@@ -168,7 +171,7 @@ namespace vmm
 		'' is there no pagetable?
 		if ((pdir[index] and PTE_FLAGS.PRESENT) = 0) then return nullptr
 		
-		if (cntxt->p_pagedir = get_current_pagedir()) then
+		if (cntxt = current_context) then
 			'' the pdir is currently active
 			if (paging_activated) then
 				return cast(uinteger ptr, PAGETABLES_VIRT_START + 4096*index)
@@ -181,7 +184,7 @@ namespace vmm
 	end function
 	
 	sub free_pagetable (cntxt as context ptr, table as uinteger ptr)
-		if (cntxt->p_pagedir <> get_current_pagedir()) then
+		if (cntxt <> current_context) then
 			
 		end if
 	end sub
@@ -290,8 +293,4 @@ namespace vmm
             mov cr0, eax
         end asm
     end sub
-    
-    function get_current_pagedir () as uinteger ptr
-		return current_context->p_pagedir
-	end function
 end namespace

@@ -51,5 +51,4 @@ namespace vmm
     declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
     declare sub activate_context (cntxt as context ptr)
     declare sub activate ()
-    declare function get_current_pagedir () as uinteger ptr
 end namespace
