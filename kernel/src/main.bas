@@ -1,5 +1,20 @@
-'' FROST 2 alpha version
-'' Copyright (c) 2010-2013 by Stefan Schmidt
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
 
 #include "multiboot.bi"
 #include "gdt.bi"
@@ -71,6 +86,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     vmm.init()
     debug_wlog(debug.INFO, !"paging initialized\n")
+	
+	debug_wlog(debug.INFO, !"initializing kmm\n")
     
     '' initialize the heap:
     '' starts at 256MB
@@ -95,6 +112,6 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     dim xi as integer
     do
 		xi += 1
-		'debug_wlog(debug.INFO, "%i ", xi)
+		'debug_wlog(debug.INFO, !"%i\n", xi)
     loop
 end sub

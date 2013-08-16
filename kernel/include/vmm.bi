@@ -1,3 +1,21 @@
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
+
 #pragma once
 
 #include "kernel.bi"
@@ -39,8 +57,8 @@ namespace vmm
     
     type context
 		version as uinteger         '' important to keep the kernel section up to date
-		p_pagedir as uinteger ptr   '' physical address of the pagedir
-		v_pagedir as uinteger ptr   '' virtual address of the pagedir
+		p_pagedir as uinteger ptr   '' physical address of the pagedir, needed for the cpu
+		v_pagedir as uinteger ptr   '' virtual address of the pagedir, needed to access the pagedir later
 	end type
     
     declare sub init ()
@@ -49,6 +67,9 @@ namespace vmm
     declare function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
     declare function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
     declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
+    declare sub kernel_unmap (v_start as any ptr, size as uinteger)
+    declare function resolve (cntxt as context ptr, vaddr as any ptr) as any ptr
     declare sub activate_context (cntxt as context ptr)
+    declare function get_current_context () as context ptr
     declare sub activate ()
 end namespace

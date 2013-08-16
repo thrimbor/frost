@@ -1,7 +1,27 @@
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
+
 #include "pmm.bi"
 #include "mem.bi"
 #include "kernel.bi"
 #include "multiboot.bi"
+#include "spinlock.bi"
+#include "panic.bi"
 
 namespace pmm
     '' our memory bitmap. bit=0 : page used; bit=1 : page free
@@ -9,6 +29,8 @@ namespace pmm
     '' the amount of free memory
     dim shared free_mem as uinteger = 0
     dim shared total_mem as uinteger = 0
+    
+    dim shared pmm_lock as spinlock = 0
     
     sub init (mbinfo as multiboot_info ptr)
         '' this sub will take 3 steps:
@@ -70,93 +92,78 @@ namespace pmm
         next
     end sub
     
-    
-    function alloc () as any ptr
-        '' first search for a free place
-        dim counter as uinteger
-        dim bitcounter as uinteger
-        
-        for counter=0 to pmm.bitmap_size-1
-            if (pmm.bitmap(counter) > 0) then
-                '' we found a free place and need to search for the set bit
-                for bitcounter=0 to 31 step 1
-                    if (pmm.bitmap(counter) and (1 shl bitcounter)) then
-                        '' found it, unset the bit and return the address
-                        pmm.bitmap(counter) and= not(1 shl bitcounter)
-                        free_mem -= pmm.PAGE_SIZE
-                        return cast(any ptr, ((counter*32+bitcounter)*pmm.PAGE_SIZE))
-                    end if
-                next
-            end if
-        next
-        
-        '' if we get here, there's nothing free
-        return 0
-    end function
-    
-    function alloc (blocks as uinteger) as any ptr
-		dim counter as uinteger = 0
-		dim blocks_found as uinteger = 0
-		dim blocks_start as uinteger = 0
+    function alloc (num_pages as uinteger = 1) as any ptr
+		spinlock_acquire(@pmm_lock)
 		
-		'' find some free blocks
-		while (blocks_found <  blocks)
-			if (pmm.bitmap(counter) = 0) then
-				blocks_found += 32
+		dim pages_found as uinteger = 0
+		dim pages_start as uinteger = 0
+		
+		'' find some free pages
+		for counter as uinteger = 0 to pmm.bitmap_size-1
+			if (pmm.bitmap(counter) = &hFFFFFFFF) then
+				'' all bits of the uinteger are marked free
+				pages_found += 32
 			else
+				'' at least one page in this block is occupied
 				for bitcounter as uinteger = 0 to 31
 					if (pmm.bitmap(counter) and (1 shl bitcounter)) then
-						blocks_found += 1
+						'' this page is free
+						pages_found += 1
 					else
-						blocks_found = 0
-						blocks_start = counter*32 + bitcounter + 1
+						'' this page is occupied, reset our found-counter and remember the next position
+						pages_found = 0
+						pages_start = counter*32 + bitcounter + 1
 					end if
 					
-					if (blocks_found >= blocks) then exit for
+					'' enough free pages found?
+					if (pages_found >= num_pages) then exit for
 				next
 			end if
 			
-			counter += 1
-		wend
-		
-		'' if we found no blocks, return a null-pointer
-		if (blocks_found = 0) then return nullptr
-		
-		'' now reserve them
-		for i as uinteger = 0 to blocks_found-1
-			mark_used(cast(any ptr, (blocks_start+i)*pmm.PAGE_SIZE))
+			'' enough free pages found?
+			if (pages_found >= num_pages) then exit for
 		next
 		
-		'' return the address
-		return cast(any ptr, blocks_start * pmm.PAGE_SIZE)
+		'' if the loop didn't find enough pages, return a null-pointer
+		if (pages_found >= num_pages) then
+			'' only reserve needed blocks, not all available
+			for i as uinteger = 0 to num_pages-1
+				mark_used(cast(any ptr, (pages_start+i)*pmm.PAGE_SIZE))
+			next
+			
+			'' return the address
+			function = cast(any ptr, pages_start * pmm.PAGE_SIZE)
+		else
+			function = nullptr
+		end if
+		
+		'' never forget to release the lock
+		spinlock_release(@pmm_lock)
 	end function
 	
 	sub free (page as any ptr, num_pages as uinteger)
+		spinlock_acquire(@pmm_lock)
+		
 		dim blocks_start as uinteger = cuint(page) \ pmm.PAGE_SIZE
 		
 		for i as uinteger = 0 to num_pages-1
 			dim index as uinteger = (blocks_start+i) shr 5
-			dim modifier as uinteger = (1 shl (blocks_start+i))
+			dim modifier as uinteger = (1 shl ((blocks_start+i) mod 32))
 			
-			'' if the page was occupied before, we increase the free memory variable
-			if ((pmm.bitmap(index) and modifier) = 0) then free_mem += pmm.PAGE_SIZE
+			'' if the page wasn't occupied before, we panic
+			if ((pmm.bitmap(index) and modifier) <> 0) then
+				panic_error("Tried to free already free physical memory area!")
+			end if
+			
+			'' increase the free memory variable
+			free_mem += pmm.PAGE_SIZE
 			
 			'' set the bit
 			pmm.bitmap(index) or= modifier
 		next
+		
+		spinlock_release(@pmm_lock)
 	end sub
-    
-    sub free (page as any ptr)
-        dim index as uinteger = cuint(page) \ pmm.PAGE_SIZE
-        dim modifier as uinteger = (1 shl (index mod 32))
-        index shr= 5 '' faster version of "index \= 32"
-        
-        '' if the page was occupied before, the free memory variable is increased
-        if ((pmm.bitmap(index) and modifier) = 0) then free_mem += pmm.PAGE_SIZE
-        
-        '' set the bit
-        pmm.bitmap(index) or= modifier
-    end sub
     
     sub mark_used (page as any ptr)
         dim index as uinteger = cuint(page) \ pmm.PAGE_SIZE

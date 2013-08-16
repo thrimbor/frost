@@ -1,3 +1,21 @@
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
+
 #include "vmm.bi"
 #include "pmm.bi"
 #include "kmm.bi"
@@ -7,7 +25,8 @@
 
 namespace vmm
 
-	declare function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
+	declare function get_pagetable (cntxt as context ptr, index as uinteger) as uinteger ptr
+	declare sub free_pagetable (cntxt as context ptr, table as uinteger ptr)
 	
     dim shared kernel_context as context
     dim shared current_context as context ptr
@@ -15,23 +34,9 @@ namespace vmm
     
     #define num_pages(n) (((n + &hFFF) and (&hFFFFF000)) shr 12)
     
-    function allocate_page (entry as uinteger ptr) as boolean
-		'' allocate a free physical page frame
-		dim p as any ptr = pmm.alloc()
-		if (p = nullptr) then return false
-		
-		'' map it
-		*entry = cuint(p) or PTE_FLAGS.PRESENT
-    end function
-    
-    sub free_page (entry as uinteger ptr)
-		dim p as any ptr = cast(any ptr, (*entry and PTE_FLAGS.FRAME))
-		if (p <> nullptr) then pmm.free(p)
-		
-		*entry and= not PTE_FLAGS.PRESENT
-	end sub
-    
-    '' init () sets up the required structures and activates paging
+    /''
+     ' Sets up the required structures and activates paging
+     '/
     sub init ()
         '' initialize the kernel context (only used before the first task is started)
         '' the pagedir is also automatically mapped
@@ -43,9 +48,6 @@ namespace vmm
         '' we need to activate the context early for kernel_context to be valid
         activate_context(@kernel_context)
         
-        '' map the page directory
-        map_page(@kernel_context, kernel_context.p_pagedir, kernel_context.p_pagedir, PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE)
-        
         '' map the page tables
         kernel_context.p_pagedir[PAGETABLES_VIRT_START shr 22] = cuint(kernel_context.p_pagedir) or PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE
         
@@ -55,6 +57,7 @@ namespace vmm
         '' map the video memory 1:1
         map_page(@kernel_context, cast(any ptr, &hB8000), cast(any ptr, &hB8000), (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE))
         
+        '' set the virtual address
         kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
         
         '' activate paging
@@ -73,7 +76,12 @@ namespace vmm
 		if (page = nullptr) then return false
 		
 		'' try to map it where we need it
-		return map_page(current_context, v_addr, page, (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE))
+		if (not(map_page(current_context, v_addr, page, (PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE)))) then
+			pmm.free(page)
+			return false
+		end if
+		
+		return true
 	end function
    
     '' create_context () creates and clears space for a page-directory
@@ -84,19 +92,26 @@ namespace vmm
         cntxt->v_pagedir = kernel_automap(cntxt->p_pagedir, pmm.PAGE_SIZE)
         memset(cntxt->v_pagedir, 0, pmm.PAGE_SIZE)
         '' copy the kernel address space
-        'memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 256*4)
-        memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 4096)
+        memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 256*4)
+        
+        '' pagetables need to be accessible
+        cntxt->v_pagedir[PAGETABLES_VIRT_START shr 22] = cuint(cntxt->p_pagedir) or PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE
     end sub
     
     '' map_page maps a single page into a given context
-    function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
+    function map_page (cntxt as context ptr, v_addr as any ptr, physical as any ptr, flags as uinteger) as boolean
         '' memorize if the pagetable needs to be cleared (needed when we allocate a new pagetable)
         dim clear_pagetable as boolean = false
         '' the entry in the pagedir
-        dim pagedir_entry_ptr as uinteger ptr = @cntxt->v_pagedir[GET_PAGEDIR_INDEX(cuint(virtual))]
+        dim pagedir_entry_ptr as uinteger ptr = @cntxt->v_pagedir[GET_PAGEDIR_INDEX(cuint(v_addr))]
+        
+        '// multiline if because of the multiline macro - this is a problem of fbc we have to work around
+        if (v_addr = 0) then
+			panic_error("tried to map to zero!")
+		end if
 		
         '' is one of the addresses not 4k-aligned?
-        if ((cuint(virtual) and &hFFF) or (cuint(physical) and &hFFF)) then return false
+        if ((cuint(v_addr) and &hFFF) or (cuint(physical) and &hFFF)) then return false
         
         '' do the flags try to manipulate the address?
         if (flags and (not &h01F)) then return false
@@ -114,7 +129,7 @@ namespace vmm
         end if
         
         '' fetch page-table address from page directory
-		dim page_table as uinteger ptr = get_pagetable_addr(cntxt, GET_PAGEDIR_INDEX(cuint(virtual)))
+		dim page_table as uinteger ptr = get_pagetable(cntxt, GET_PAGEDIR_INDEX(cuint(v_addr)))
 		
 		if (clear_pagetable) then
 			'' if the table needs to be cleared we clear it now because it is now mapped
@@ -122,15 +137,21 @@ namespace vmm
 		end if
         
         '' set address and flags
-        page_table[GET_PAGETABLE_INDEX(cuint(virtual))] = (cuint(physical) or flags)
+        page_table[GET_PAGETABLE_INDEX(cuint(v_addr))] = (cuint(physical) or flags)
 		
         '' invalidate virtual address
         asm
-            invlpg [virtual]
+            invlpg [v_addr]
         end asm
+        
+        free_pagetable(cntxt, page_table)
         
         return true
     end function
+    
+    sub unmap_page (cntxt as context ptr, v_addr as any ptr)
+		map_page(cntxt, v_addr, nullptr, 0)
+	end sub
     
     function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
         'panic_error("this sub does not reverse the mapping if it fails")
@@ -150,22 +171,13 @@ namespace vmm
         return true
     end function
     
-    function move_pages (src as context ptr, dest as context ptr, src_addr as any ptr, dest_addr as any ptr, pages as uinteger) as boolean
-		'' TODO: moves page mappings from one context to another
-		
-		dim src_cur as uinteger = cuint(src_addr)
-		dim dest_cur as uinteger = cuint(dest_addr)
-		
-		for counter as uinteger = 1 to pages step 1
-			
+    sub unmap_range (cntxt as context ptr, v_addr as any ptr, num_pages as uinteger)
+		for counter as uinteger = 0 to num_pages
+			unmap_page(cntxt, v_addr+counter*pmm.PAGE_SIZE)
 		next
-		
-		return false
-	end function
+	end sub
 	
-	
-	'' TODO: a function to free the automapped space
-	function get_pagetable_addr (cntxt as context ptr, index as uinteger) as uinteger ptr
+	function get_pagetable (cntxt as context ptr, index as uinteger) as uinteger ptr
 		dim pdir as uinteger ptr = cntxt->v_pagedir
 		
 		'' is there no pagetable?
@@ -185,7 +197,7 @@ namespace vmm
 	
 	sub free_pagetable (cntxt as context ptr, table as uinteger ptr)
 		if (cntxt <> current_context) then
-			
+			unmap_page(current_context, table)
 		end if
 	end sub
 	
@@ -201,7 +213,7 @@ namespace vmm
 		while ((free_pages_found < num_pages) and ((cur_page_table shl 22) < upper_limit))
 			if (pdir[cur_page_table] and PTE_FLAGS.PRESENT) then
 				'' ok, there is a page table, search the entries
-				dim ptable as uinteger ptr = get_pagetable_addr(cntxt, cur_page_table)
+				dim ptable as uinteger ptr = get_pagetable(cntxt, cur_page_table)
 				
 				while (cur_page < 1024)
 					''is the entry free?
@@ -230,7 +242,7 @@ namespace vmm
 			return 0
 		end if
 	end function
-	
+
 	function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
 		'' this maps a piece of physical memory to a free location in the kernel's address space
 		'' and returns the virtual address
@@ -238,33 +250,38 @@ namespace vmm
 		'dim pagedir as uinteger ptr = iif(paging_activated, kernel_context.v_pagedir, kernel_context.p_pagedir)
 		dim aligned_addr as uinteger = cuint(p_start) and PTE_FLAGS.FRAME
 		dim aligned_bytes as uinteger = size + (cuint(p_start) - aligned_addr)
+		dim cntxt as context ptr = get_current_context()
 		
-		dim vaddr as uinteger = find_free_pages(@kernel_context, num_pages(aligned_bytes))
+		dim vaddr as uinteger = find_free_pages(cntxt, num_pages(aligned_bytes))
 		if (vaddr = 0) then
 			'' we have a problem, we could not find enough space
 			return 0
 		end if
 		
-		map_range(@kernel_context, cast(any ptr, vaddr), cast(any ptr, aligned_addr), cast(any ptr, aligned_addr+aligned_bytes), PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE)
+		map_range(cntxt, cast(any ptr, vaddr), cast(any ptr, aligned_addr), cast(any ptr, aligned_addr+aligned_bytes), PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE)
 		return vaddr + (p_start - aligned_addr)
 	end function
 	
-	function resolve (cntxt as context ptr, vaddr as uinteger) as uinteger
+	sub kernel_unmap (v_start as any ptr, size as uinteger)
+		unmap_range(get_current_context(), v_start, num_pages(size))
+	end sub
+	
+	function resolve (cntxt as context ptr, vaddr as any ptr) as any ptr
 		dim pagetable_virt as uinteger ptr 
 		dim result as uinteger
 		
 		'' get the pagetable
-		pagetable_virt = get_pagetable_addr(cntxt, GET_PAGEDIR_INDEX(vaddr))
+		pagetable_virt = get_pagetable(cntxt, GET_PAGEDIR_INDEX(cuint(vaddr)))
 		
 		'' pagetable not present?
 		if (pagetable_virt = 0) then return 0
 		
 		'' get the entry of the page
-		result = pagetable_virt[GET_PAGETABLE_INDEX(vaddr)]
+		result = pagetable_virt[GET_PAGETABLE_INDEX(cuint(vaddr))]
 		
 		if (result and PTE_FLAGS.PRESENT) then
 			'' page present
-			result = (result and PTE_FLAGS.FRAME) or (vaddr and &hFFF)
+			result = (result and PTE_FLAGS.FRAME) or (cuint(vaddr) and &hFFF)
 		else
 			'' page not present
 			result = 0
@@ -273,9 +290,13 @@ namespace vmm
 		'' free the pagetable
 		free_pagetable(cntxt, pagetable_virt)
 		
-		return result
+		return cast(any ptr, result)
 	end function
     
+    /'*
+        \brief Activates a vmm context by moving it's pagedir to cr3
+        \param cntxt The pointer to the context which is to be activated
+    '/
     sub activate_context (cntxt as context ptr)
         current_context = cntxt
         dim pagedir as uinteger ptr = cntxt->p_pagedir
@@ -285,7 +306,14 @@ namespace vmm
         end asm
     end sub
     
-    '' activate () sets the paging-bit (31) in cr0
+    function get_current_context () as context ptr
+		return current_context
+	end function
+    
+    
+    /'* 
+        \brief activates paging by setting the paging-bit (31) in cr0
+    '/
     sub activate ()
         asm
             mov eax, cr0

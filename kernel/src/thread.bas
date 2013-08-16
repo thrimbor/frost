@@ -1,3 +1,21 @@
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
+
 #include "thread.bi"
 #include "process.bi"
 #include "pmm.bi"
@@ -21,7 +39,6 @@ function generate_tid (process as process_type ptr) as uinteger
 	return tid
 end function
 	
-
 function thread_create (process as process_type ptr, entry as any ptr) as thread_type ptr
 	dim thread as thread_type ptr = kmalloc(sizeof(thread_type))
 	
@@ -58,33 +75,29 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	
 	'' create a pointer to the isf
 	dim isf as interrupt_stack_frame ptr = thread->kernelstack_bottom + pmm.PAGE_SIZE - sizeof(interrupt_stack_frame)
+	thread->isf = isf
 	
 	'' clear the whole structure
 	memset(isf, 0, sizeof(interrupt_stack_frame))
 	
 	'' initialize the isf
 	isf->eflags = &h0202
-	isf->eax = 0
-	isf->ebx = 0
-	isf->ecx = 0
-	isf->edx = 0
-	isf->esi = 0
-	isf->edi = 0
-	isf->ebp = 0
 	isf->eip = cuint(entry)
 	isf->esp = cuint(thread->userstack_bottom) + pmm.PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
 	
 	'' activate thread and put it in the active list
-	thread_activate(thread)
+	'thread_activate(thread)
 	
 	'' we're done
 	return thread
 end function
 
 sub thread_activate (thread as thread_type ptr)
-	if (thread->state = THREAD_STATE_RUNNING) then panic_error("Kernel tried to activate an already activated thread!")
+	if (thread->state = THREAD_STATE_RUNNING) then
+		panic_error("Kernel tried to activate an already activated thread!")
+	end if
 	
 	'' set the state
 	thread->state = THREAD_STATE_RUNNING
@@ -95,15 +108,17 @@ sub thread_activate (thread as thread_type ptr)
 end sub
 
 function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
-	if (current_thread <> 0) then
+	if (cuint(current_thread) <> 0) then
 		current_thread->isf = isf
 		current_thread = current_thread->next_thread
 	end if
 	
-	if (current_thread = 0) then current_thread = running_threads
+	if (cuint(current_thread) = 0) then
+		current_thread = running_threads
+	end if
 	
-	if (current_thread = 0) then
-		'' we should active an idle-thread here
+	if (cuint(current_thread) = 0) then
+		'' we should activate an idle-thread here
 		panic_error(!"There is no active thread to run!")
 	end if
 	

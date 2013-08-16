@@ -1,3 +1,21 @@
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
+
 #include "elf.bi"
 #include "elf32.bi"
 #include "process.bi"
@@ -21,6 +39,7 @@ namespace elf
 		dim header as elf32.Elf32_Ehdr ptr = cast(elf32.Elf32_Ehdr ptr, image)
 		
 		if (size < sizeof(elf32.Elf32_Ehdr)) then return false
+		
 		if (header_check(header) > 0) then return false
 		
 		'' create the thread
@@ -48,29 +67,40 @@ namespace elf
 		
 		'' reserve space by reserving it with pmm.alloc and mapping it with vmm.kernel_automap
 		dim pages as uinteger = (max_addr shr 12) - (min_addr shr 12) + 1
-		dim dest_memory as any ptr = vmm.kernel_automap(pmm.alloc(pages), pages*pmm.PAGE_SIZE)
 		min_addr and= &hFFFFF000
 		
+		'' reserve enough space for the program
+		dim xmem as any ptr = pmm.alloc(pages)
+		dim mem as any ptr = vmm.kernel_automap(pmm.alloc(pages), pages*pmm.PAGE_SIZE)
+		
+		memset(mem, 0, pages*4096)
+		
+		'' copy the program into the reserved space
 		for counter as uinteger = 0 to header->e_phnum-1
 			if (program_header[counter].p_type = elf32.ELF_PT_LOAD) then
 				'' copy the segment
-				memcpy(cast(any ptr, cuint(dest_memory) + program_header[counter].p_vaddr - min_addr), _
-					   cast(any ptr, cuint(image) + program_header[counter].p_offset), _
+				memcpy(cast(any ptr, cuint(mem)+program_header[counter].p_vaddr - min_addr), _
+					   cast(any ptr, cuint(image)+program_header[counter].p_offset), _
 					   program_header[counter].p_filesz)
-				'' fill the rest of the segment with zeroes
-				memset(cast(any ptr, cuint(dest_memory) + program_header[counter].p_vaddr - min_addr + program_header[counter].p_filesz), _
-					   0, _
-					   program_header[counter].p_memsz - program_header[counter].p_filesz)
+				'' fill the rest of the segment with zeroes (this would be more efficient than using memset to clear ALL the memory)
+				'memset(cast(any ptr, cuint(dest_memory) + program_header[counter].p_vaddr - min_addr + program_header[counter].p_filesz), _
+				'	   0, _
+				'	   program_header[counter].p_memsz - program_header[counter].p_filesz)
 			end if
 		next
 		
-		video.fout(!"\npages reserved: %I\n", pages)
-		video.fout(!"min_addr: %hI\nmax_addr: %hI\n", min_addr, max_addr)
+		'' map the pages into the context of the process
+		for counter as uinteger = 0 to pages
+			'' FIXME: check return value
+			if (not (vmm.map_page(@process->vmm_context, cast(any ptr, min_addr + counter*pmm.PAGE_SIZE), _
+								  vmm.resolve(@process->vmm_context, mem+ counter*pmm.PAGE_SIZE), _
+						          (vmm.PTE_FLAGS.WRITABLE or vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.USERSPACE)))) then
+				panic_error("Could not assign memory to the process")
+			end if
+		next
 		
-		'' TODO: at this point, we need to move the pages we just mapped to the context of the process
-		
-		'asm cli
-		'asm hlt
+		'' unmap the target-memory from the kernel context
+		vmm.kernel_unmap(mem, pages*pmm.PAGE_SIZE)
 		
 		return true
 	end function

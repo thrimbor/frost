@@ -1,3 +1,21 @@
+/'
+ ' FROST x86 microkernel
+ ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' 
+ ' This program is free software: you can redistribute it and/or modify
+ ' it under the terms of the GNU General Public License as published by
+ ' the Free Software Foundation, either version 3 of the License, or
+ ' (at your option) any later version.
+ ' 
+ ' This program is distributed in the hope that it will be useful,
+ ' but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ' GNU General Public License for more details.
+ ' 
+ ' You should have received a copy of the GNU General Public License
+ ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ '/
+
 #include "modules.bi"
 #include "multiboot.bi"
 #include "process.bi"
@@ -12,7 +30,6 @@ sub load_init_module (mbinfo as multiboot_info ptr)
 	if (mbinfo->mods_count = 0) then
 		panic_error(!"No init-module available.\n")
 	end if
-	
 	
 	'' load the module
 	load_module(cast(multiboot_module_t ptr, mbinfo->mods_addr))
@@ -34,7 +51,6 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	
 	'' map the image
 	dim size as uinteger = v_multiboot_module->mod_end - v_multiboot_module->mod_start
-	'dim v_image as uinteger = cuint(vmm.kernel_automap_page(cast(any ptr, v_multiboot_module->mod_start)))
 	dim v_image as uinteger = cuint(vmm.kernel_automap(cast(any ptr, v_multiboot_module->mod_start), size))
 	
 	dim process as process_type ptr
@@ -47,6 +63,8 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	if (not(elf.load_image(process, v_image, size))) then
 		panic_error(!"Could not load the init-module!")
 	end if
+	
+	thread_activate(process->threads)
 	
 	'' TODO:
 	'' - free our mapped stuff and physical pages

@@ -24,20 +24,20 @@ entirely in FreeBASIC and Assembly.
 
 DEPENDENCIES:
 
-- fbc, 0.24.0 recommended (the FreeBASIC compiler, available on freebasic.net)
-- nasm, 2.09.04 recommended (the Netwide Assembler, available on nasm.us)
+- fbc, tested with 0.90.1 (the FreeBASIC compiler, available on freebasic.net)
+- nasm, tested with 2.10.09 (the Netwide Assembler, available on nasm.us)
 - GNU make, GNU assembler and the GNU linker
 
 
 BUILDING:
 
-To build the kernel, you can type "make" in the main directory. You will then
+To build the kernel, you can type "make" in the "kernel" directory. You will then
 get a file called "frost.krn" which is the kernel.
 Building the init-process is very similar.
 If you want to get a full iso with grub2 and a menu, type "./build_iso.sh" in
 the "build"-directory. You will then get a file called "frost.iso" which is
 the iso-image.
-On some Linux distributions the script will fail because the contain genisoimage
+On some Linux distributions the script will fail because they contain genisoimage
 instead of mkisofs. You need to either create a link on genisoimage named mkisofs
 or edit the script.
 
