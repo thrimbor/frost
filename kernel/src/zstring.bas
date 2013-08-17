@@ -17,33 +17,34 @@
  '/
 
 #include "zstring.bi"
+#include "kernel.bi"
 
 '' this function searches for the string-terminator (\0)
-'' to find out the lenght of the string
-function z_len (text as zstring) as uinteger
-    dim text_ptr as ubyte ptr = @text
+'' to find out the length of the string
+function zstring_len (zstr as zstring) as uinteger
+    dim zstr_ptr as ubyte ptr = @zstr
     dim counter as uinteger = 0
-    while (text_ptr[counter] > 0)
+    while (zstr_ptr[counter] > 0)
         counter += 1
     wend
     return counter
 end function
 
 '' this is a simple function to find out if and where a string is containing another
-function z_instr (text as zstring, pattern as zstring) as uinteger
-    dim is_instr    as ubyte
-    dim len_text    as uinteger = z_len(text)
-    dim len_pattern as uinteger = z_len(pattern)
-    dim text_ptr    as ubyte ptr = @text
-    dim pattern_ptr as ubyte ptr = @pattern
+function zstring_instr (zstr as zstring, substr as zstring) as uinteger
+    dim is_substring as boolean
+    dim len_zstr as uinteger = zstring_len(zstr)
+    dim len_substr as uinteger = zstring_len(substr)
+    dim zstr_ptr as ubyte ptr = @zstr
+    dim substr_ptr as ubyte ptr = @substr
     
-    if (len_text < len_pattern) then return 0
+    if (len_zstr < len_substr) then return 0
     
-    for i as uinteger = 0 to len_text-len_pattern
-        is_instr = 1
-        for x as uinteger = 0 to len_pattern-1
-            if (text_ptr[i+x] <> pattern_ptr[x]) then is_instr = 0
+    for counter as uinteger = 0 to len_zstr-len_substr
+        is_substring = true
+        for substring_length as uinteger = 0 to len_substr-1
+            if (zstr_ptr[counter+substring_length] <> substr_ptr[substring_length]) then is_substring = false
         next
-        if (is_instr=1) then return i+1
+        if (is_substring) then return counter+1
     next
 end function

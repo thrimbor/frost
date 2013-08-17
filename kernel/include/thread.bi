@@ -51,3 +51,4 @@ end type
 declare function thread_create (process as process_type_ ptr, entry as any ptr) as thread_type ptr
 declare sub thread_activate (thread as thread_type ptr)
 declare function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
+declare function get_current_thread () as thread_type ptr

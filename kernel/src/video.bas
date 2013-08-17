@@ -21,10 +21,10 @@
 #include "mem.bi"
 
 namespace video
-    dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)      '' pointer to video-memory
+    dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)  '' pointer to video-memory
     dim shared cursor_pos as addr_t = 0                        '' the position of the cursor
     dim shared cursor_hidden as boolean = false
-    dim shared textColor as ubyte = 7                            '' the color of the text
+    dim shared textColor as ubyte = 7                          '' the color of the text
     
     declare sub update_cursor ()
     
@@ -59,80 +59,80 @@ namespace video
 				cursor_pos += 2
 		end select
         
-        while (cursor_pos > 3999)
+        if (cursor_pos > 3999) then
             scroll_screen()
-        wend
+        end if
     end sub
     
     sub fout (fstr as zstring, ...)
-		dim zstr as ubyte ptr    = cast(ubyte ptr, @fstr)
-		dim counter as uinteger  = 0
-        dim hcounter as uinteger = 0
-        dim nbase as uinteger    = 0
-		dim arg as any ptr       = va_first()
+		dim zstr as ubyte ptr = cast(ubyte ptr, @fstr)
+		dim char_counter as uinteger = 0
+        dim digit_counter as uinteger = 0
+        dim numerical_base as uinteger = 0
+		dim arg as any ptr = va_first()
 		
-        while zstr[counter]
-            if (zstr[counter] = 37) then              '' do we have a percent-sign?
-				counter += 1                          '' go to the next char
+        while zstr[char_counter]
+            if (zstr[char_counter] = 37) then         '' do we have a percent-sign?
+				char_counter += 1                     '' go to the next char
                 
-                nbase = 10                            '' preset the base to 10
-                select case (zstr[counter])           '' check the char
+                numerical_base = 10                   '' preset the base to 10
+                select case (zstr[char_counter])      '' check the char
                     case 104:                         '' a "h"?
-                        nbase = 16                    '' set to hexadecimal
-                        counter += 1
+                        numerical_base = 16           '' set to hexadecimal
+                        char_counter += 1
                     case 110:                         '' a "n"?
-                        nbase = 2                     '' set to binary
-                        counter += 1
+                        numerical_base = 2            '' set to binary
+                        char_counter += 1
                 end select
                 
-                hcounter = 0                          ''\
-                while (zstr[counter] = 35)            '' \
-                    hcounter += 1                     ''  > count all the "#"-chars
-                    counter += 1                      '' /  this will be the number of minimum chars to print
+                digit_counter = 0                     ''\
+                while (zstr[char_counter] = 35)       '' \
+                    digit_counter += 1                ''  > count all the "#"-chars, they are the minimum digits to print
+                    char_counter += 1                 '' /  
                 wend                                  ''/
                 
-				select case (zstr[counter])
+				select case (zstr[char_counter])
 					'' "I"
                     case 73:
-                        video.cout(va_arg(arg, uinteger),nbase,hcounter)
+                        video.cout(va_arg(arg, uinteger),numerical_base,digit_counter)
                         
 						arg = va_next(arg, uinteger)
-						counter += 1
+						char_counter += 1
 						continue while
                     '' "i"
                     case 105:
-                        video.cout(va_arg(arg, integer),nbase,hcounter)
+                        video.cout(va_arg(arg, integer),numerical_base,digit_counter)
                         
                         arg = va_next(arg, integer)
-                        counter += 1
+                        char_counter += 1
                         continue while
                     '' "S"
                     case 83:
-                        video.cout(cuint(va_arg(arg, ushort)),nbase,hcounter)
+                        video.cout(cuint(va_arg(arg, ushort)),numerical_base,digit_counter)
                         
                         arg = va_next(arg, ushort)
-                        counter += 1
+                        char_counter += 1
                         continue while
                     '' "s"
                     case 115:
-                        video.cout(cint(va_arg(arg, short)),nbase,hcounter)
+                        video.cout(cint(va_arg(arg, short)),numerical_base,digit_counter)
                         
                         arg = va_next(arg, short)
-                        counter += 1
+                        char_counter += 1
                         continue while
                     '' "B"
                     case 66:
-                        video.cout(cuint(va_arg(arg, ubyte)),nbase,hcounter)
+                        video.cout(cuint(va_arg(arg, ubyte)),numerical_base,digit_counter)
                         
                         arg = va_next(arg, ubyte)
-                        counter += 1
+                        char_counter += 1
                         continue while
                     '' "b"
                     case 98:
-                        video.cout(cint(va_arg(arg, byte)),nbase,hcounter)
+                        video.cout(cint(va_arg(arg, byte)),numerical_base,digit_counter)
                         
                         arg = va_next(arg, byte)
-                        counter += 1
+                        char_counter += 1
                         continue while
                     '' "z"
                     case 122:
@@ -147,38 +147,38 @@ namespace video
                             t_zcounter += 1
                         wend
                         
-                        counter += 1
+                        char_counter += 1
                         continue while
                     '' "%"
                     case &h25:
 					    putc(&h25)
-					    counter += 1
+					    char_counter += 1
                     case else:
-                        counter += 1
+                        char_counter += 1
                         continue while
 				end select
 			end if
 			
-			putc(zstr[counter])
-			counter += 1
+			putc(zstr[char_counter])
+			char_counter += 1
 		wend
 		
 		update_cursor()
 	end sub
     
-    '' print an uinteger with a given base and at least as many chars as given in minchars
-    sub cout (number as uinteger, nbase as ubyte = 10, minchars as ubyte = 0)
-        if ((nbase > 36) or (nbase < 2)) then return
+    '' print an uinteger with a given base and at least as many digits as given in minchars
+    sub cout (number as uinteger, numerical_base as ubyte = 10, minchars as ubyte = 0)
+        if ((numerical_base > 36) or (numerical_base < 2)) then return
         dim chars(1 to 10) as ubyte
         dim num as ubyte
         dim counter as uinteger = 10
         dim rem_chars as integer = minchars
         
         do
-            chars(counter) = 48+(number mod nbase)
+            chars(counter) = 48+(number mod numerical_base)
             if (chars(counter)>57) then chars(counter) += 7
             counter -= 1
-            number \= nbase
+            number \= numerical_base
             rem_chars -= 1
         loop until ((number <= 0) and (rem_chars <= 0))
         
@@ -190,13 +190,13 @@ namespace video
     end sub
     
     '' same game with integers. if the number is negative we just print a minus and then the number.
-    sub cout (number as integer, nbase as ubyte = 10, minchars as ubyte = 0)
-        if ((nbase > 36) or (nbase < 2)) then return
+    sub cout (number as integer, numerical_base as ubyte = 10, minchars as ubyte = 0)
+        if ((numerical_base > 36) or (numerical_base < 2)) then return
         if (number<0) then
             putc(45)
             number = -number
         end if
-        video.cout(cuint(number),nbase,minchars)
+        video.cout(cuint(number),numerical_base,minchars)
     end sub
     
     '' clear the whole screen
@@ -208,19 +208,17 @@ namespace video
     '' clear the screen with a given color
     sub clean (b_color as ubyte)
         dim c_word as ushort = (((b_color and &h0F) shl 4) or (textColor and &h0F)) shl 8
-        asm
-            mov ecx, 2000
-            mov edi, [memory]
-            mov ax, [c_word]
-            
-            rep stosw
-        end asm
+        
+        for mem as ushort ptr = cast(ushort ptr, memory) to cast(ushort ptr, memory)+2000
+			*mem = c_word
+		next
+		
         cursor_pos = 0
     end sub
     
     '' set the foreground and background color
-    sub set_color (f_color as ubyte, b_color as ubyte)
-        textColor = ((b_color and &h0F) shl 4) or (f_color and &h0F)
+    sub set_color (foreground_color as ubyte, background_color as ubyte)
+        textColor = ((background_color and &h0F) shl 4) or (foreground_color and &h0F)
     end sub
     
     sub update_cursor ()
@@ -232,7 +230,6 @@ namespace video
 		end if
 	end sub
     
-    '' removes the cursor from the screen
     sub hide_cursor ()
         cursor_hidden = true
         out(&h3D4, 14)

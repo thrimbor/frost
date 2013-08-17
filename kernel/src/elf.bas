@@ -65,15 +65,12 @@ namespace elf
 			end if
 		next
 		
-		'' reserve space by reserving it with pmm.alloc and mapping it with vmm.kernel_automap
+		'' calculate memory requirements
 		dim pages as uinteger = (max_addr shr 12) - (min_addr shr 12) + 1
 		min_addr and= &hFFFFF000
 		
 		'' reserve enough space for the program
-		dim xmem as any ptr = pmm.alloc(pages)
 		dim mem as any ptr = vmm.kernel_automap(pmm.alloc(pages), pages*pmm.PAGE_SIZE)
-		
-		memset(mem, 0, pages*4096)
 		
 		'' copy the program into the reserved space
 		for counter as uinteger = 0 to header->e_phnum-1
@@ -82,16 +79,15 @@ namespace elf
 				memcpy(cast(any ptr, cuint(mem)+program_header[counter].p_vaddr - min_addr), _
 					   cast(any ptr, cuint(image)+program_header[counter].p_offset), _
 					   program_header[counter].p_filesz)
-				'' fill the rest of the segment with zeroes (this would be more efficient than using memset to clear ALL the memory)
-				'memset(cast(any ptr, cuint(dest_memory) + program_header[counter].p_vaddr - min_addr + program_header[counter].p_filesz), _
-				'	   0, _
-				'	   program_header[counter].p_memsz - program_header[counter].p_filesz)
+				'' fill the rest of the segment with zeroes (this is more efficient than using memset to clear ALL the memory)
+				memset(cast(any ptr, cuint(mem)+program_header[counter].p_vaddr - min_addr + program_header[counter].p_filesz), _
+					   0, _
+					   program_header[counter].p_memsz - program_header[counter].p_filesz)
 			end if
 		next
 		
 		'' map the pages into the context of the process
 		for counter as uinteger = 0 to pages
-			'' FIXME: check return value
 			if (not (vmm.map_page(@process->vmm_context, cast(any ptr, min_addr + counter*pmm.PAGE_SIZE), _
 								  vmm.resolve(@process->vmm_context, mem+ counter*pmm.PAGE_SIZE), _
 						          (vmm.PTE_FLAGS.WRITABLE or vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.USERSPACE)))) then

@@ -29,21 +29,27 @@
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
     dim new_isf as interrupt_stack_frame ptr = isf
-    'dim old_task as tasks.task_type ptr = tasks.get_current_task()
     
     select case isf->int_nr
-        case 0 to &h13                                     '' exception
+        case 0 to &h13                                      '' exception
             panic.panic_exception(isf)                      '' show panic screen
             
+        case &h20                                           '' timer IRQ
+			dim old_process as process_type ptr = nullptr
+			if (get_current_thread() <> nullptr) then
+				old_process = get_current_thread()->parent_process
+			end if
+			
+            dim new_thread as thread_type ptr = schedule(isf)  '' select a new thread
             
-        case &h20                                          '' timer IRQ
-			'' select a new thread
-            dim new_thread as thread_type ptr = schedule(isf)
             '' set his esp0 in the tss
             tss_ptr[1] = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
+            
             '' load the new pagedir
-            '' TODO: - only load a new pagedir if the process-id has changed
-            vmm.activate_context(@new_thread->parent_process->vmm_context)
+            if (new_thread->parent_process <> old_process) then
+				vmm.activate_context(@new_thread->parent_process->vmm_context)
+			end if
+			
             '' load the new stack frame
             new_isf = new_thread->isf
             

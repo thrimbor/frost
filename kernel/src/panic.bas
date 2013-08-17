@@ -21,8 +21,7 @@
 #include "video.bi"
 
 namespace panic
-    'dim shared clear_on_panic as ubyte = 1
-    
+
     sub set_clear_on_panic (b as boolean)
         clear_on_panic = b
     end sub
@@ -136,7 +135,7 @@ namespace panic
 		video.fout(!"ebp: 0x%h########I, esp: 0x%h########I, esi: 0x%h########I, edi: 0x%h########I\n", isf->ebp, isf->esp, isf->esi, isf->edi)
 		video.fout(!"eip: 0x%h########I, ss: 0x%h####S, cs: 0x%h####S, eflags: 0x%h########I\n", isf->eip, isf->ss, isf->cs, isf->eflags)
 		
-		' print some other registers here
+		' maybe print some other registers here
         hlt()
     end sub
 end namespace

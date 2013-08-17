@@ -25,7 +25,7 @@ namespace idt
     
     '' this sub sets up and loads an IDT for exceptions, IRQs and the syscall-interrupt.
     sub prepare ()
-        '' register the handlers for the exceptions
+        '' exceptions
         idt.set_entry (&h00, @int_stub_0, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h01, @int_stub_1, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h02, @int_stub_2, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
@@ -47,7 +47,7 @@ namespace idt
         idt.set_entry (&h12, @int_stub_18, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         '' 19-31 are reserved
         
-        '' now the IRQ's
+        '' IRQs
         idt.set_entry (&h20, @int_stub_32, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h21, @int_stub_33, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))
         idt.set_entry (&h22, @int_stub_34, &h08, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_INTERRUPT_GATE_32))

@@ -37,27 +37,26 @@
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
 sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
-    '' we copy the mbinfo-structure, this has several reasons
-    '' it now is on the stack and thus lies in the kernel, so it is
-    '' automatically mapped when the kernel is getting mapped
-    '' plus, the space of the original struct can be freed
+    '' we copy the mbinfo structure so it gets automatically mapped with the kernel
     dim mb_info as multiboot_info
     memcpy(@mb_info, t_mbinfo, sizeof(multiboot_info))
     
     video.clean()
     video.hide_cursor()
     
-    if (mb_info.flags and MULTIBOOT_INFO_CMDLINE) then                  '' we just check for the cmdline here
-        dim k_cmd as zstring ptr = cast(zstring ptr, mb_info.cmdline)   '' get the pointer to the cmdline-string
+    if (mb_info.flags and MULTIBOOT_INFO_CMDLINE) then
+        dim cmd_string as zstring ptr = cast(zstring ptr, mb_info.cmdline)
         
-        if (z_instr(*k_cmd, "-verbose") > 0) then                       '' look for -verbose
-            debug.set_loglevel(0)                                       '' show every log-message
+        if (zstring_instr(*cmd_string, "-verbose") > 0) then
+            debug.set_loglevel(0) '' show every log-message
         else
-            debug.set_loglevel(2)                                       '' show only critical messages
+            debug.set_loglevel(2) '' show only critical messages
         end if
         
-        if (z_instr(*k_cmd, "-no-clear-on-panic") > 0) then             '' look for -no-clear-on-panic
-            panic.set_clear_on_panic(false)                             '' don't clear screen before printing panic message
+        if (zstring_instr(*cmd_string, "-no-clear-on-panic") > 0) then
+            panic.set_clear_on_panic(false)
+		else
+			panic.set_clear_on_panic(true)
         end if
     end if
     
@@ -99,19 +98,9 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     debug_wlog(debug.INFO, !"loading init module...")
     load_init_module(@mb_info)
-    
-    'debug_wlog(debug.INFO, !"loading modules... ")
-    'tasks.create_tasks_from_mb(mbinfo)
-    'debug_wlog(debug.INFO, !"done.\n")
-    
-    'asm mov eax, 42
-    'asm int &h62
-    'asm hlt
     debug_wlog(debug.INFO, !"done.\n")
+
+    '' the scheduler takes over here
     asm sti
-    dim xi as integer
-    do
-		xi += 1
-		'debug_wlog(debug.INFO, !"%i\n", xi)
-    loop
+    do : loop
 end sub

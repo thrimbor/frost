@@ -123,4 +123,5 @@ namespace smp
 	end sub
 	
 	'' we don't do much more here because FROST can't handle multiple processors atm
+	'' TODO: proper SMP support
 end namespace

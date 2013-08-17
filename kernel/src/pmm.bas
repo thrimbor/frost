@@ -32,6 +32,7 @@ namespace pmm
     
     dim shared pmm_lock as spinlock = 0
     
+    '' TODO: the cmdline of the modules should be reserved also
     sub init (mbinfo as multiboot_info ptr)
         '' this sub will take 3 steps:
         '' 1. mark the whole memory as used
@@ -74,9 +75,7 @@ namespace pmm
         '' mark the video-memory as used
         pmm.mark_used(cast(any ptr, &hB8000))
         
-        '' the mbinfo-structure was copied to the kernel stack, so it
-        '' doesn't need to be marked because: kernel_start < mbinfo < kernel_end
-        '' however, the modules need to be protected
+        '' reserve the memory of the multiboot modules
         if (mbinfo->mods_count = 0) then return
         dim module_addr as addr_t
         dim module_end_addr as addr_t
@@ -127,8 +126,8 @@ namespace pmm
 		'' if the loop didn't find enough pages, return a null-pointer
 		if (pages_found >= num_pages) then
 			'' only reserve needed blocks, not all available
-			for i as uinteger = 0 to num_pages-1
-				mark_used(cast(any ptr, (pages_start+i)*pmm.PAGE_SIZE))
+			for counter as uinteger = 0 to num_pages-1
+				mark_used(cast(any ptr, (pages_start+counter)*pmm.PAGE_SIZE))
 			next
 			
 			'' return the address
@@ -146,9 +145,9 @@ namespace pmm
 		
 		dim blocks_start as uinteger = cuint(page) \ pmm.PAGE_SIZE
 		
-		for i as uinteger = 0 to num_pages-1
-			dim index as uinteger = (blocks_start+i) shr 5
-			dim modifier as uinteger = (1 shl ((blocks_start+i) mod 32))
+		for counter as uinteger = 0 to num_pages-1
+			dim index as uinteger = (blocks_start+counter) shr 5
+			dim modifier as uinteger = (1 shl ((blocks_start+counter) mod 32))
 			
 			'' if the page wasn't occupied before, we panic
 			if ((pmm.bitmap(index) and modifier) <> 0) then

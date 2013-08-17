@@ -33,23 +33,23 @@ namespace gdt
         tss_ptr = @tss(0) '' initialize the tss-pointer (used in other parts of the kernel)
         tss(2) = &h10     '' set the ss0-entry (kernel stack segment) of the tss
         
-        '' first the RING-0 Code-Segment
+        '' RING-0 Code-Segment
         gdt.set_entry(1, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_SEGMENT or FLAG_EXECUTABLE or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         
-        '' now the RING-0 Data-Segment
+        '' RING-0 Data-Segment
         gdt.set_entry(2, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_SEGMENT or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         
-        '' the RING-3 Code-Segment
+        '' RING-3 Code-Segment
         gdt.set_entry(3, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_SEGMENT or FLAG_EXECUTABLE or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         
-        '' the RING-3 Data-Segment
+        '' RING-3 Data-Segment
         gdt.set_entry(4, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_SEGMENT or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         
-        '' the tss
+        '' TSS
         gdt.set_entry(5, cuint(tss_ptr), 32*4, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_TSS), 0)
              
         gdt.descriptor.limit = (gdt.TABLE_SIZE+1)*8-1 '' calculate the size of the entries + null-entry
-        gdt.descriptor.start  = cuint(@gdt.table(0))   '' set the address of the table
+        gdt.descriptor.start  = cuint(@gdt.table(0))  '' set the address of the table
     end sub
     
     sub load ()

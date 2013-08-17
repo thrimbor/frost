@@ -23,6 +23,7 @@
 #include "kernel.bi"
 #include "panic.bi"
 #include "vmm.bi"
+#include "pmm.bi"
 #include "video.bi"
 
 sub load_init_module (mbinfo as multiboot_info ptr)
@@ -31,7 +32,6 @@ sub load_init_module (mbinfo as multiboot_info ptr)
 		panic_error(!"No init-module available.\n")
 	end if
 	
-	'' load the module
 	load_module(cast(multiboot_module_t ptr, mbinfo->mods_addr))
 
 	'' we loaded the module, so remove it from the list
@@ -39,11 +39,11 @@ sub load_init_module (mbinfo as multiboot_info ptr)
 	mbinfo->mods_count -= 1
 end sub
 
+'' TODO: the cmdline should be given to the module somehow
 sub load_module (multiboot_module as multiboot_module_t ptr)
 	dim v_multiboot_module as multiboot_module_t ptr
 
 	'' map the module structure
-	'v_multiboot_module = vmm.kernel_automap_page(multiboot_module)
 	v_multiboot_module = vmm.kernel_automap(multiboot_module, sizeof(multiboot_module_t))
 	if (v_multiboot_module = 0) then
 		panic_error(!"Could not map the module-structure of the module\n")
@@ -66,7 +66,10 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	
 	thread_activate(process->threads)
 	
-	'' TODO:
-	'' - free our mapped stuff and physical pages
-	
+	'' unmap the image, we don't need it any longer
+	vmm.kernel_unmap(cast(any ptr, v_image), size)
+	'' physically free the space occupied by the image
+	pmm.free(cast(any ptr, v_multiboot_module->mod_start), num_pages(size))
+	'' unmap the module struct
+	vmm.kernel_unmap(v_multiboot_module, sizeof(multiboot_module_t))
 end sub

@@ -20,7 +20,6 @@
 #include "pmm.bi"
 #include "vmm.bi"
 #include "kernel.bi"
-#include "video.bi"
 #include "panic.bi"
 
 dim shared kmm_first_block as any ptr
@@ -30,11 +29,9 @@ dim shared kmm_start_address as uinteger
 dim shared kmm_end_address as uinteger
 
 '' todo:
-'' - heap initialization
 '' - heap expansion
 '' - heap should probably automatically have "minimum" as it's initial size
 '' - correctly use the vmm when contracting/expanding
-
 
 const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
 
@@ -55,9 +52,6 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     kmm_maximum_size = maximum
     
     kmm_first_block = cast(any ptr, kmm_start_address)
-    
-    video.fout(!"heap start: %hI, end: %hI, min: %hI, max: %hI\n", kmm_start_address, kmm_end_address, kmm_minimum_size, kmm_maximum_size)
-    video.fout(!"first block: %hI\n", cuint(kmm_first_block))
     
     dim header as kmm_header ptr = kmm_first_block
     dim footer as kmm_footer ptr = cast(kmm_footer ptr, (kmm_end_address-sizeof(kmm_footer)))
@@ -130,20 +124,15 @@ end sub
 
 sub insert_hole (hole as kmm_header ptr)
     '' adjust the first block in the list
-    'video.fout("1\n")
     dim first_block_content as kmm_content ptr = cast(kmm_content ptr, cast(kmm_header ptr, kmm_first_block)+1)
-    'video.fout("2\n")
     first_block_content->prev_entry = hole
-    'video.fout("3\n")
+    
     '' attach the new hole to the beginning of the list
     dim content as kmm_content ptr = cast(kmm_content ptr, hole+1)
-    'video.fout("4\n")
     content->next_entry = kmm_first_block
-    'video.fout("5\n")
     content->prev_entry = 0
-    'video.fout("6\n")
+    
     kmm_first_block = hole
-    'video.fout("7\n")
 end sub
 
 sub split_hole (hole as kmm_header ptr, size as uinteger)

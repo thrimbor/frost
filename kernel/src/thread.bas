@@ -58,7 +58,6 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	thread->next_thread = process->threads
 	process->threads = thread
 	
-	'' the kernel stack has to be in kernel space
 	'' reserve space for the stacks
 	dim phys_kernel_stack as any ptr = pmm.alloc()
 	dim phys_user_stack as any ptr = pmm.alloc()
@@ -86,9 +85,6 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	isf->esp = cuint(thread->userstack_bottom) + pmm.PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
-	
-	'' activate thread and put it in the active list
-	'thread_activate(thread)
 	
 	'' we're done
 	return thread
@@ -122,5 +118,9 @@ function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 		panic_error(!"There is no active thread to run!")
 	end if
 	
+	return current_thread
+end function
+
+function get_current_thread () as thread_type ptr
 	return current_thread
 end function

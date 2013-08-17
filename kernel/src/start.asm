@@ -18,11 +18,11 @@ global _start
 
 
 ; First we define some constants here,
-; then we write the actual multiboot header.
+; then the multiboot header follows.
 ; Notice that the mb-header has it's own section
 ; which is mapped to the beginning of .text by
 ; the linkerscript to prevent it from falling behind
-; the first 8KB of the kernel.
+; the first 8KB of the kernel (which would mean problems with grub).
 section multiboot
 align 4
 
@@ -38,17 +38,14 @@ align 4
 
 
 ; This is the entry-point of the kernel.
-; First we disable interrupts and set up the stack,
-; then we push the multiboot-magic-number and the pointer
-; to the multiboot-info struct on the stack and call main.
-; If we ever should return from main, we stop the processor.
 section .text
 _start:
-    cli
-    mov esp, kernelstack
-    push ebx
-    push eax
+    cli                  ;; no interrupts during initialization
+    mov esp, kernelstack ;; set up the stack
+    push ebx             ;; pointer to the multiboot structure
+    push eax             ;; push the multiboot magic number
     call MAIN
+    
     cli
     hlt
 

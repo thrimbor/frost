@@ -24,17 +24,17 @@
 namespace syscall
     
     sub handler (isf as interrupt_stack_frame ptr)
-        'dim task as tasks.task_type ptr = tasks.get_current_task()
+        dim cur_thread as thread_type ptr = get_current_thread()
         
         select case (isf->eax)
             case syscall.PROCESS_GET_PID
-                'cpu->ebx = task->pid
+                isf->ebx = cur_thread->parent_process->id
             case syscall.PROCESS_GET_PARENT_PID
-                'if (not(caddr(task->parent) = 0)) then
-                    'cpu->ebx = task->parent->pid
-                'else
-                    'cpu->ebx = 0
-                'end if
+				if (cur_thread->parent_process->parent = 0) then
+					isf->ebx = cur_thread->parent_process->parent->id
+				else
+					isf->ebx = 0
+				end if
             case syscall.FORTY_TWO
                 video.fout(!"The answer to life, the universe and everything is... 42\n")
         end select

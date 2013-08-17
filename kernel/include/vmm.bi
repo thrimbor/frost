@@ -20,6 +20,8 @@
 
 #include "kernel.bi"
 
+#define num_pages(n) (((n + &hFFF) and (&hFFFFF000)) shr 12)
+
 namespace vmm
     '' flags for page-table-entries
     enum PTE_FLAGS explicit

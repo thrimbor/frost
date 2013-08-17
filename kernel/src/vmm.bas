@@ -32,11 +32,7 @@ namespace vmm
     dim shared current_context as context ptr
     dim shared paging_activated as byte = 0
     
-    #define num_pages(n) (((n + &hFFF) and (&hFFFFF000)) shr 12)
-    
-    /''
-     ' Sets up the required structures and activates paging
-     '/
+    '' sets up the required structures and activates paging
     sub init ()
         '' initialize the kernel context (only used before the first task is started)
         '' the pagedir is also automatically mapped
@@ -67,7 +63,6 @@ namespace vmm
     end sub
     
     '' reserve a page and map it
-    'function alloc (cntxt as context ptr, v_addr as any ptr) as boolean
     function alloc (v_addr as any ptr) as boolean
 		'' allocate a page
 		dim page as any ptr = pmm.alloc()
@@ -85,13 +80,14 @@ namespace vmm
 	end function
    
     '' create_context () creates and clears space for a page-directory
-    '' TODO: we somehow need to map the kernel space into this new context
     sub context_initialize (cntxt as context ptr)
         cntxt->version = 0
         cntxt->p_pagedir = pmm.alloc()
         cntxt->v_pagedir = kernel_automap(cntxt->p_pagedir, pmm.PAGE_SIZE)
         memset(cntxt->v_pagedir, 0, pmm.PAGE_SIZE)
+        
         '' copy the kernel address space
+        '' FIXME: we should use the up-to-date context, not the kernel-init-context!
         memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 256*4)
         
         '' pagetables need to be accessible
@@ -105,7 +101,7 @@ namespace vmm
         '' the entry in the pagedir
         dim pagedir_entry_ptr as uinteger ptr = @cntxt->v_pagedir[GET_PAGEDIR_INDEX(cuint(v_addr))]
         
-        '// multiline if because of the multiline macro - this is a problem of fbc we have to work around
+        '// multiline if because of the multiline macro - we would get strange errors otherwise
         if (v_addr = 0) then
 			panic_error("tried to map to zero!")
 		end if
@@ -140,10 +136,9 @@ namespace vmm
         page_table[GET_PAGETABLE_INDEX(cuint(v_addr))] = (cuint(physical) or flags)
 		
         '' invalidate virtual address
-        asm
-            invlpg [v_addr]
-        end asm
+        asm invlpg [v_addr]
         
+        '' don't forget to free the pagetable
         free_pagetable(cntxt, page_table)
         
         return true
@@ -154,11 +149,10 @@ namespace vmm
 	end sub
     
     function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
-        'panic_error("this sub does not reverse the mapping if it fails")
         dim v_dest as uinteger = cuint(v_addr)-(cuint(v_addr) mod pmm.PAGE_SIZE)
         dim p_src as uinteger = cuint(p_start)-(cuint(p_start) mod pmm.PAGE_SIZE)
         
-		'' TODO: first check if the area is free, and map only then
+		'' FIXME: first check if the area is free, and map only then
         
         while (p_src < p_end)
             if ((map_page(cntxt, cast(any ptr, v_dest), cast(any ptr, p_src), flags)=0)) then
@@ -247,7 +241,6 @@ namespace vmm
 		'' this maps a piece of physical memory to a free location in the kernel's address space
 		'' and returns the virtual address
 		if (size = 0) then return 0
-		'dim pagedir as uinteger ptr = iif(paging_activated, kernel_context.v_pagedir, kernel_context.p_pagedir)
 		dim aligned_addr as uinteger = cuint(p_start) and PTE_FLAGS.FRAME
 		dim aligned_bytes as uinteger = size + (cuint(p_start) - aligned_addr)
 		dim cntxt as context ptr = get_current_context()
@@ -293,10 +286,7 @@ namespace vmm
 		return cast(any ptr, result)
 	end function
     
-    /'*
-        \brief Activates a vmm context by moving it's pagedir to cr3
-        \param cntxt The pointer to the context which is to be activated
-    '/
+    '' activates a vmm context by putting the pagedir address into cr3
     sub activate_context (cntxt as context ptr)
         current_context = cntxt
         dim pagedir as uinteger ptr = cntxt->p_pagedir
@@ -310,10 +300,7 @@ namespace vmm
 		return current_context
 	end function
     
-    
-    /'* 
-        \brief activates paging by setting the paging-bit (31) in cr0
-    '/
+    '' activates paging by setting the paging-bit (31) in cr0
     sub activate ()
         asm
             mov eax, cr0
