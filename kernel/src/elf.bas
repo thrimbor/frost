@@ -67,10 +67,11 @@ namespace elf
 		
 		'' calculate memory requirements
 		dim pages as uinteger = (max_addr shr 12) - (min_addr shr 12) + 1
-		min_addr and= &hFFFFF000
+		min_addr and= vmm.PAGE_MASK
 		
 		'' reserve enough space for the program
-		dim mem as any ptr = vmm.kernel_automap(pmm.alloc(pages), pages*pmm.PAGE_SIZE)
+		dim phys_mem as any ptr = pmm.alloc(pages)
+		dim mem as any ptr = vmm.kernel_automap(phys_mem, pages*pmm.PAGE_SIZE)
 		
 		'' copy the program into the reserved space
 		for counter as uinteger = 0 to header->e_phnum-1
@@ -87,9 +88,9 @@ namespace elf
 		next
 		
 		'' map the pages into the context of the process
-		for counter as uinteger = 0 to pages
+		for counter as uinteger = 0 to pages-1
 			if (not (vmm.map_page(@process->vmm_context, cast(any ptr, min_addr + counter*pmm.PAGE_SIZE), _
-								  vmm.resolve(@process->vmm_context, mem+ counter*pmm.PAGE_SIZE), _
+								  phys_mem+(counter*pmm.PAGE_SIZE), _
 						          (vmm.PTE_FLAGS.WRITABLE or vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.USERSPACE)))) then
 				panic_error("Could not assign memory to the process")
 			end if

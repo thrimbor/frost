@@ -99,7 +99,7 @@ namespace vmm
         '' memorize if the pagetable needs to be cleared (needed when we allocate a new pagetable)
         dim clear_pagetable as boolean = false
         '' the entry in the pagedir
-        dim pagedir_entry_ptr as uinteger ptr = @cntxt->v_pagedir[GET_PAGEDIR_INDEX(cuint(v_addr))]
+        dim pagedir_entry_ptr as uinteger ptr = @(cntxt->v_pagedir[GET_PAGEDIR_INDEX(v_addr)])
         
         '// multiline if because of the multiline macro - we would get strange errors otherwise
         if (v_addr = 0) then
@@ -110,7 +110,7 @@ namespace vmm
         if ((cuint(v_addr) and &hFFF) or (cuint(physical) and &hFFF)) then return false
         
         '' do the flags try to manipulate the address?
-        if (flags and (not &h01F)) then return false
+        if (flags and PAGE_MASK) then return false
         
         '' page table not present?
         if ((*pagedir_entry_ptr and PDE_FLAGS.PRESENT) <> PDE_FLAGS.PRESENT) then
@@ -125,7 +125,7 @@ namespace vmm
         end if
         
         '' fetch page-table address from page directory
-		dim page_table as uinteger ptr = get_pagetable(cntxt, GET_PAGEDIR_INDEX(cuint(v_addr)))
+		dim page_table as uinteger ptr = get_pagetable(cntxt, GET_PAGEDIR_INDEX(v_addr))
 		
 		if (clear_pagetable) then
 			'' if the table needs to be cleared we clear it now because it is now mapped
@@ -133,10 +133,13 @@ namespace vmm
 		end if
         
         '' set address and flags
-        page_table[GET_PAGETABLE_INDEX(cuint(v_addr))] = (cuint(physical) or flags)
+        page_table[GET_PAGETABLE_INDEX(v_addr)] = (cuint(physical) or flags)
 		
         '' invalidate virtual address
-        asm invlpg [v_addr]
+        asm
+			mov eax, dword ptr [v_addr]
+			invlpg [eax]
+		end asm
         
         '' don't forget to free the pagetable
         free_pagetable(cntxt, page_table)
@@ -149,8 +152,9 @@ namespace vmm
 	end sub
     
     function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
-        dim v_dest as uinteger = cuint(v_addr)-(cuint(v_addr) mod pmm.PAGE_SIZE)
-        dim p_src as uinteger = cuint(p_start)-(cuint(p_start) mod pmm.PAGE_SIZE)
+        dim v_dest as uinteger = cuint(v_addr) and PAGE_MASK
+        dim p_src as uinteger = cuint(p_start) and PAGE_MASK
+        
         
 		'' FIXME: first check if the area is free, and map only then
         
@@ -182,10 +186,10 @@ namespace vmm
 			if (paging_activated) then
 				return cast(uinteger ptr, PAGETABLES_VIRT_START + 4096*index)
 			else
-				return cast(uinteger ptr, pdir[index] and PTE_FLAGS.FRAME)
+				return cast(uinteger ptr, pdir[index] and PAGE_MASK)
 			end if
 		else
-			return kernel_automap(cast(any ptr, (pdir[index] and PTE_FLAGS.FRAME)), pmm.PAGE_SIZE)
+			return kernel_automap(cast(any ptr, (pdir[index] and PAGE_MASK)), pmm.PAGE_SIZE)
 		end if
 	end function
 	
@@ -221,6 +225,8 @@ namespace vmm
 					end if
 					cur_page += 1
 				wend
+				
+				free_pagetable(cntxt, ptable)
 			else
 				'' the whole table is free
 				free_pages_found += 1024
@@ -241,7 +247,7 @@ namespace vmm
 		'' this maps a piece of physical memory to a free location in the kernel's address space
 		'' and returns the virtual address
 		if (size = 0) then return 0
-		dim aligned_addr as uinteger = cuint(p_start) and PTE_FLAGS.FRAME
+		dim aligned_addr as uinteger = cuint(p_start) and PAGE_MASK
 		dim aligned_bytes as uinteger = size + (cuint(p_start) - aligned_addr)
 		dim cntxt as context ptr = get_current_context()
 		
@@ -274,7 +280,7 @@ namespace vmm
 		
 		if (result and PTE_FLAGS.PRESENT) then
 			'' page present
-			result = (result and PTE_FLAGS.FRAME) or (cuint(vaddr) and &hFFF)
+			result = (result and PAGE_MASK) or (cuint(vaddr) and &hFFF)
 		else
 			'' page not present
 			result = 0

@@ -62,6 +62,7 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	'' insert the process into the list
 	process->prev_process = 0
 	process->next_process = processlist_first
+	processlist_first->prev_process = process
 	processlist_first = process
 	
 	'' create a vmm-context

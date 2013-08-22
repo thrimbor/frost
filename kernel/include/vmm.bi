@@ -34,7 +34,6 @@ namespace vmm
 		DIRTY         = &h40
 		PAT           = &h80
 		GLOBAL        = &h100
-		FRAME         = &hFFFFF000
     end enum
 	
 	'' flags for page-directory-entries
@@ -48,14 +47,14 @@ namespace vmm
 		DIRTY         = &h40
 		FOUR_MB       = &h80
 		GLOBAL        = &h100
-		FRAME         = &hFFFFF000
 	end enum
     
     '' the kernels address space is from 0-1 gb, so we put the kernels pagetables at 1gb-4mb
     const PAGETABLES_VIRT_START as uinteger = &h3FC00000
+    const PAGE_MASK as uinteger = &hFFFFF000
     
-    #define GET_PAGEDIR_INDEX(x) ((x shr 22) and &h3FF)
-    #define GET_PAGETABLE_INDEX(x) ((x shr 12) and &h3FF)
+    #define GET_PAGEDIR_INDEX(x) ((cuint(x) shr 22) and &h3FF)
+    #define GET_PAGETABLE_INDEX(x) ((cuint(x) shr 12) and &h3FF)
     
     type context
 		version as uinteger         '' important to keep the kernel section up to date

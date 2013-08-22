@@ -91,7 +91,11 @@ namespace pmm
         next
     end sub
     
-    function alloc (num_pages as uinteger = 1) as any ptr
+    function alloc (num_pages as uinteger) as any ptr
+		if (num_pages = 0) then
+			panic_error(!"kernel tried to reserve zero pages\n")
+		end if
+		
 		spinlock_acquire(@pmm_lock)
 		
 		dim pages_found as uinteger = 0
@@ -102,6 +106,10 @@ namespace pmm
 			if (pmm.bitmap(counter) = &hFFFFFFFF) then
 				'' all bits of the uinteger are marked free
 				pages_found += 32
+			elseif (pmm.bitmap(counter) = 0) then
+				'' all bits of the uinteger are marked used
+				pages_found = 0
+				pages_start = (counter+1)*32
 			else
 				'' at least one page in this block is occupied
 				for bitcounter as uinteger = 0 to 31

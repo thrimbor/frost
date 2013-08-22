@@ -50,17 +50,3 @@ type process_type
 end type
 
 declare function process_create (parent as process_type ptr = 0) as process_type ptr
-
-/'
-namespace tasks
-    
-    
-    declare function generate_pid () as uinteger
-    declare function init_task (entry as any ptr) as task_type ptr
-    
-    declare function get_current_task () as task_type ptr
-    declare function get_current_thread () as thread_type ptr
-    declare sub init_elf (image as any ptr)
-    declare sub create_tasks_from_mb (mbinfo as multiboot_info ptr)
-end namespace
-'/

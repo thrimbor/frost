@@ -37,6 +37,8 @@ namespace syscall
 				end if
             case syscall.FORTY_TWO
                 video.fout(!"The answer to life, the universe and everything is... 42\n")
+            case 43
+				video.fout(!"%z\n", isf->ebx)
         end select
     end sub
     
