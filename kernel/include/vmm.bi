@@ -70,6 +70,7 @@ namespace vmm
     declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
     declare sub kernel_unmap (v_start as any ptr, size as uinteger)
     declare function resolve (cntxt as context ptr, vaddr as any ptr) as any ptr
+    declare sub sync_context (cntxt as context ptr)
     declare sub activate_context (cntxt as context ptr)
     declare function get_current_context () as context ptr
     declare sub activate ()

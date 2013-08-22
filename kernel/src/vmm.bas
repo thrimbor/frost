@@ -32,11 +32,14 @@ namespace vmm
     dim shared current_context as context ptr
     dim shared paging_activated as byte = 0
     
+    dim shared latest_pagedir_version as uinteger = 0
+    dim shared latest_pagedir as uinteger ptr = 0
+    
     '' sets up the required structures and activates paging
     sub init ()
         '' initialize the kernel context (only used before the first task is started)
         '' the pagedir is also automatically mapped
-        kernel_context.version = 0
+        kernel_context.version = -1
         kernel_context.p_pagedir = pmm.alloc()
         memset(kernel_context.p_pagedir, 0, pmm.PAGE_SIZE)
         kernel_context.v_pagedir = kernel_context.p_pagedir
@@ -55,6 +58,8 @@ namespace vmm
         
         '' set the virtual address
         kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
+        
+        latest_pagedir = kernel_context.v_pagedir
         
         '' activate paging
         activate()
@@ -87,8 +92,7 @@ namespace vmm
         memset(cntxt->v_pagedir, 0, pmm.PAGE_SIZE)
         
         '' copy the kernel address space
-        '' FIXME: we should use the up-to-date context, not the kernel-init-context!
-        memcpy(cntxt->v_pagedir, kernel_context.v_pagedir, 256*4)
+        sync_context(cntxt)
         
         '' pagetables need to be accessible
         cntxt->v_pagedir[PAGETABLES_VIRT_START shr 22] = cuint(cntxt->p_pagedir) or PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE
@@ -140,6 +144,9 @@ namespace vmm
 			mov eax, dword ptr [v_addr]
 			invlpg [eax]
 		end asm
+		
+		cntxt->version = latest_pagedir_version+1
+		latest_pagedir = cntxt->v_pagedir
         
         '' don't forget to free the pagetable
         free_pagetable(cntxt, page_table)
@@ -291,9 +298,19 @@ namespace vmm
 		
 		return cast(any ptr, result)
 	end function
+	
+	sub sync_context (cntxt as context ptr)
+		if (cntxt->version < latest_pagedir_version) then
+			memcpy(cntxt->v_pagedir, latest_pagedir, 1020)
+			cntxt->version = latest_pagedir_version
+		end if
+		
+		latest_pagedir = cntxt->v_pagedir
+	end sub
     
     '' activates a vmm context by putting the pagedir address into cr3
     sub activate_context (cntxt as context ptr)
+        sync_context(cntxt)
         current_context = cntxt
         dim pagedir as uinteger ptr = cntxt->p_pagedir
         asm
