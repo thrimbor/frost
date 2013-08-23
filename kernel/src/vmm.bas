@@ -27,6 +27,8 @@ namespace vmm
 
 	declare function get_pagetable (cntxt as context ptr, index as uinteger) as uinteger ptr
 	declare sub free_pagetable (cntxt as context ptr, table as uinteger ptr)
+	declare sub sync_context (cntxt as context ptr)
+	declare sub activate ()
 	
     dim shared kernel_context as context
     dim shared current_context as context ptr
