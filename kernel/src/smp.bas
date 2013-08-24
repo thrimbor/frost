@@ -21,6 +21,9 @@
 #include "debug.bi"
 
 namespace smp
+	const FP_SIGNATURE as uinteger = asc("_") or (asc("M") shl 8) or (asc("P") shl 16) or (asc("_") shl 24)
+	const CT_SIGNATURE as uinteger = asc("P") or (asc("C") shl 8) or (asc("M") shl 16) or (asc("P") shl 24)
+	
 	function checksum (type_ptr as any ptr, size as uinteger) as ubyte
 		dim checksum_byte as ubyte = 0
 		dim bp as ubyte ptr = cast(ubyte ptr, type_ptr)

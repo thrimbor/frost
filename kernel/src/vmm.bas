@@ -24,7 +24,9 @@
 #include "panic.bi"
 
 namespace vmm
-
+	#define GET_PAGEDIR_INDEX(x) ((cuint(x) shr 22) and &h3FF)
+    #define GET_PAGETABLE_INDEX(x) ((cuint(x) shr 12) and &h3FF)
+	
 	declare function get_pagetable (cntxt as context ptr, index as uinteger) as uinteger ptr
 	declare sub free_pagetable (cntxt as context ptr, table as uinteger ptr)
 	declare sub sync_context (cntxt as context ptr)

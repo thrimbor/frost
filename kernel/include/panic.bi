@@ -25,8 +25,8 @@
 namespace panic
 	common shared clear_on_panic as boolean
     declare sub set_clear_on_panic (b as boolean)
-    declare sub hlt ()
     declare sub panic_exception (isf as interrupt_stack_frame ptr)
+    declare sub hlt ()
     
     #macro panic_error (msg, params...)
 		asm cli

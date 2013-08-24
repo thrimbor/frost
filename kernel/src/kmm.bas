@@ -22,6 +22,25 @@
 #include "kernel.bi"
 #include "panic.bi"
 
+type kmm_header field = 1
+    magic as uinteger             '' magic number to identify blocks
+    is_hole as ubyte              '' true if this is a hole, false if this is a block
+    size as uinteger              '' size of the "content-area" of the block
+end type
+
+type kmm_content field = 1
+    prev_entry as kmm_header ptr  '' pointer to the previous entry in the linked list
+    next_entry as kmm_header ptr  '' pointer to the next entry in the linked list
+end type
+
+type kmm_footer field = 1
+    magic as uinteger             '' magic number to identify footers
+    header as kmm_header ptr      '' pointer to the block-header
+end type
+
+const HEAP_MAGIC as uinteger = &hDEADBEEF
+const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
+
 dim shared kmm_first_block as any ptr
 dim shared kmm_minimum_size as uinteger
 dim shared kmm_maximum_size as uinteger
@@ -32,8 +51,6 @@ dim shared kmm_end_address as uinteger
 '' - heap expansion
 '' - heap should probably automatically have "minimum" as it's initial size
 '' - correctly use the vmm when contracting/expanding
-
-const OVERHEAD_TO_SPLIT as uinteger = sizeof(kmm_header) + sizeof(kmm_footer) + 4
 
 sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger, maximum as uinteger)
     '' heap has to start on a page boundary

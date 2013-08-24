@@ -21,7 +21,6 @@
 #include "video.bi"
 
 namespace panic
-
     sub set_clear_on_panic (b as boolean)
         clear_on_panic = b
     end sub

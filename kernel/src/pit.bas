@@ -19,6 +19,9 @@
 #include "pit.bi"
 
 namespace pit
+	const COMMAND_PORT as byte = &h43
+    const DATA_PORT    as byte = &h40
+    
     sub set_frequency (frequency as ushort)
         out(pit.COMMAND_PORT, &h34)
         out(pit.DATA_PORT, lobyte(1193182 / frequency))

@@ -199,15 +199,9 @@ namespace video
         video.cout(cuint(number),numerical_base,minchars)
     end sub
     
-    '' clear the whole screen
-    sub clean ()
-        memset(memory, 0, 4000)                                    '' set the complete screen to zero (and black)
-        cursor_pos = 0                                             '' reset cursor position
-    end sub
-    
     '' clear the screen with a given color
     sub clean (b_color as ubyte)
-        dim c_word as ushort = (((b_color and &h0F) shl 4) or (textColor and &h0F)) shl 8
+        dim c_word as ushort = ((b_color and &h0F) shl 12)
         
         for mem as ushort ptr = cast(ushort ptr, memory) to cast(ushort ptr, memory)+2000
 			*mem = c_word

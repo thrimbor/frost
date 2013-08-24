@@ -53,9 +53,6 @@ namespace vmm
     const PAGETABLES_VIRT_START as uinteger = &h3FC00000
     const PAGE_MASK as uinteger = &hFFFFF000
     
-    #define GET_PAGEDIR_INDEX(x) ((cuint(x) shr 22) and &h3FF)
-    #define GET_PAGETABLE_INDEX(x) ((cuint(x) shr 12) and &h3FF)
-    
     type context
 		version as uinteger         '' important to keep the kernel section up to date
 		p_pagedir as uinteger ptr   '' physical address of the pagedir, needed for the cpu

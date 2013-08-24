@@ -24,6 +24,8 @@
 #include "panic.bi"
 
 namespace pmm
+	const bitmap_size = 32768
+	
     '' our memory bitmap. bit=0 : page used; bit=1 : page free
     dim shared bitmap (0 to pmm.bitmap_size-1) as uinteger
     '' the amount of free memory
