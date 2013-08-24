@@ -62,6 +62,7 @@ namespace vmm
         kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
         
         latest_pagedir = kernel_context.v_pagedir
+        latest_pagedir_version = 1
         
         '' activate paging
         activate()
