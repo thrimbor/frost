@@ -32,7 +32,7 @@ namespace idt
         offset_high as ushort
     end type
     
-    const TABLE_SIZE = &h63
+    const TABLE_SIZE = &h100
     
     '' flags for the access-byte
     const FLAG_PRESENT           as ubyte = &h80
@@ -49,5 +49,4 @@ namespace idt
     
     declare sub prepare ()
     declare sub load ()
-    declare sub set_entry (index as ushort, offset as sub (), selector as ushort, accessbyte as ubyte)
 end namespace
