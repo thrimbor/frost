@@ -90,6 +90,10 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	return thread
 end function
 
+sub thread_destroy (thread as thread_type ptr)
+	'' TODO: implement
+end sub
+
 sub thread_activate (thread as thread_type ptr)
 	if (thread->state = THREAD_STATE_RUNNING) then
 		panic_error("Kernel tried to activate an already activated thread!")
@@ -118,9 +122,22 @@ function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 		panic_error(!"There is no active thread to run!")
 	end if
 	
+	'' TODO: only reset io bitmap if current process has changed
+	tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED
+	
 	return current_thread
 end function
 
 function get_current_thread () as thread_type ptr
 	return current_thread
 end function
+
+sub set_io_bitmap ()
+	tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_OFFSET
+	
+	if (current_thread->parent_process->io_bitmap <> nullptr) then
+		memcpy(@tss_ptr->io_bitmap(0), current_thread->parent_process->io_bitmap, &hFFFF\8)
+	else
+		memset(@tss_ptr->io_bitmap(0), &hFF, &hFFFF\8)
+	end if
+end sub

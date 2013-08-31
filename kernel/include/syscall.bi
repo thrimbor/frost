@@ -27,11 +27,18 @@ namespace syscall
         PROCESS_GET_PID
         PROCESS_GET_PARENT_PID
         PROCESS_CREATE
-        PROCESS_SUICIDE
+        PROCESS_EXIT
         PROCESS_KILL
-        PROCESS_SLEEP
-        PROCESS_REQUEST_PORT
-        PROCESS_FREE_PORT
+        
+        THREAD_GET_TID
+        THREAD_CREATE
+        THREAD_SLEEP
+        THREAD_EXIT
+        
+        PORT_REQUEST
+        PORT_RELEASE
+        
+        SET_INTERRUPT_HANDLER
         
         RPC_SET_HANDLER
         RPC_CALL
@@ -40,5 +47,5 @@ namespace syscall
         FORTY_TWO = 42
     end enum
     
-    declare sub handler (isf as interrupt_stack_frame ptr)
+    declare function handler (param1 as uinteger, param2 as uinteger, param3 as uinteger, param4 as uinteger) as uinteger
 end namespace

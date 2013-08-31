@@ -19,6 +19,41 @@
 #pragma once
 
 namespace gdt
+	type task_state_segment field=1
+		backlink as uinteger
+		esp0 as uinteger
+		ss0 as uinteger
+		esp1 as uinteger
+		ss1 as uinteger
+		esp2 as uinteger
+		ss2 as uinteger
+		cr3 as uinteger
+		eip as uinteger
+		eflags as uinteger
+		eax as uinteger
+		ecx as uinteger
+		edx as uinteger
+		ebx as uinteger
+		esp as uinteger
+		ebp as uinteger
+		esi as uinteger
+		edi as uinteger
+		es as uinteger
+		cs as uinteger
+		ss as uinteger
+		ds as uinteger
+		fs as uinteger
+		gs as uinteger
+		ldt as uinteger
+		trace_trap as ushort
+		io_bitmap_offset as ushort
+		io_bitmap(0 to 2047) as uinteger
+		io_bitmap_end as ubyte
+	end type
+	
+	const TSS_IO_BITMAP_OFFSET as ushort = cushort(@(cast(task_state_segment ptr, 0)->io_bitmap(0)))
+	const TSS_IO_BITMAP_NOT_LOADED as ushort = sizeof(task_state_segment)+&h100
+	
     declare sub prepare ()
     declare sub load ()
 end namespace

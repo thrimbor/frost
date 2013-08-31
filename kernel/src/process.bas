@@ -56,6 +56,8 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	'' set parent
 	process->parent = parent
 	
+	process->io_bitmap = nullptr
+	
 	'' set the address of the stack of the first thread
 	process->next_stack = 0
 	
@@ -70,3 +72,7 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	
 	return process
 end function
+
+sub process_destroy (process as process_type ptr)
+	'' TODO: implement
+end sub

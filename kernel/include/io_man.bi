@@ -18,23 +18,10 @@
 
 #pragma once
 
-extern kernel_start_label alias "kernel_start_label" as byte
-extern kernel_end_label   alias "kernel_end_label"   as byte
+#include "process.bi"
 
-#define kernel_start @kernel_start_label
-#define kernel_end   @kernel_end_label
-
-#include "gdt.bi"
-common shared tss_ptr as gdt.task_state_segment ptr
-
-const nullptr as any ptr = cast(any ptr, 0)
-
-type boolean as integer
-
-const true as boolean = -1
-const false as boolean = 0
-
-type paddr_t as uinteger
-type vaddr_t as uinteger
-type addr_t as uinteger
-#define caddr(cf) cuint(cf)
+declare sub init_ports ()
+declare function request_port (process as process_type ptr, port as uinteger) as boolean
+declare function release_port (process as process_type ptr, port as uinteger) as boolean
+declare function request_port_range (process as process_type ptr, start_port as uinteger, length as uinteger) as boolean
+declare function release_port_range (process as process_type ptr, start_port as uinteger, length as uinteger) as boolean

@@ -33,6 +33,7 @@
 #include "zstring.bi"
 #include "cpu.bi"
 #include "smp.bi"
+#include "io_man.bi"
 
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
@@ -95,6 +96,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
     debug_wlog(debug.INFO, !"heap initialized\n")
+    
+    init_ports()
     
     debug_wlog(debug.INFO, !"loading init module...")
     load_init_module(@mb_info)

@@ -61,14 +61,16 @@ namespace gdt
 
     dim shared descriptor as gdt.table_descriptor
     dim shared table (0 to gdt.TABLE_SIZE) as gdt.segment_descriptor
-    dim tss (0 to 31) as uinteger
+    'dim tss (0 to 31) as uinteger
+    dim tss as task_state_segment
     
     
     '' this sub initializes the GDT with Code- and Data-Segments for Ring 0 and Ring 3.
     '' it also does basic tss-setup
     sub prepare ()
-        tss_ptr = @tss(0) '' initialize the tss-pointer (used in other parts of the kernel)
-        tss(2) = &h10     '' set the ss0-entry (kernel stack segment) of the tss
+        tss_ptr = @tss     '' initialize the tss-pointer (used in other parts of the kernel)
+        tss.ss0 = &h10     '' set the kernel stack segment of the tss
+        tss.io_bitmap_offset = TSS_IO_BITMAP_NOT_LOADED
         
         '' RING-0 Code-Segment
         gdt.set_entry(1, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_0 or FLAG_SEGMENT or FLAG_EXECUTABLE or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
@@ -83,7 +85,7 @@ namespace gdt
         gdt.set_entry(4, 0, &hFFFFF, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_SEGMENT or FLAG_RW), (FLAG_GRANULARITY or FLAG_SIZE))
         
         '' TSS
-        gdt.set_entry(5, cuint(tss_ptr), 32*4, (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_TSS), 0)
+        gdt.set_entry(5, cuint(tss_ptr), sizeof(task_state_segment), (FLAG_PRESENT or FLAG_PRIVILEGE_RING_3 or FLAG_TSS), 0)
              
         gdt.descriptor.limit = (gdt.TABLE_SIZE+1)*8-1 '' calculate the size of the entries + null-entry
         gdt.descriptor.start  = cuint(@gdt.table(0))  '' set the address of the table

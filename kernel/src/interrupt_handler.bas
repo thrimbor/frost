@@ -31,9 +31,17 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
     dim new_isf as interrupt_stack_frame ptr = isf
     
     select case isf->int_nr
-        case 0 to &h13                                      '' exception
+        case 0 to &h0C                                      '' exception
             panic.panic_exception(isf)                      '' show panic screen
-            
+        case &h0D
+			if (tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED) then
+				video.fout(!"bitmap not loaded, loading it...\n")
+				set_io_bitmap()
+			else
+				panic.panic_exception(isf)
+			end if
+		case &h0E to &h13
+			panic.panic_exception(isf)
         case &h20                                           '' timer IRQ
 			dim old_process as process_type ptr = nullptr
 			if (get_current_thread() <> nullptr) then
@@ -43,7 +51,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
             dim new_thread as thread_type ptr = schedule(isf)  '' select a new thread
             
             '' set his esp0 in the tss
-            tss_ptr[1] = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
+            tss_ptr->esp0 = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
             
             '' load the new pagedir
             if (new_thread->parent_process <> old_process) then
@@ -54,7 +62,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
             new_isf = new_thread->isf
             
         case &h62                                          '' syscall interrupt
-            syscall.handler(isf)                           '' call the syscall-handler
+            isf->eax = syscall.handler(isf->eax, isf->ebx, isf->ecx, isf->edx)
             
         case else
             

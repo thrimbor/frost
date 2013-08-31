@@ -103,6 +103,10 @@ namespace vmm
         cntxt->v_pagedir[PAGETABLES_VIRT_START shr 22] = cuint(cntxt->p_pagedir) or PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE
     end sub
     
+    sub context_destroy (cntxt as context ptr)
+		'' TODO: implement
+	end sub
+    
     '' map_page maps a single page into a given context
     function map_page (cntxt as context ptr, v_addr as any ptr, physical as any ptr, flags as uinteger) as boolean
         '' memorize if the pagetable needs to be cleared (needed when we allocate a new pagetable)
