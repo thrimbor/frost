@@ -49,8 +49,8 @@ _start:
     cli
     hlt
 
-; 16KB stack for the kernel should be enough ;)
-; The label comes after the 16KB because the stack grows downwards.
+; 4KB stack for the kernel should be enough ;)
+; The label comes after the 4KB because the stack grows downwards.
 section .bss
-    resb 16384
+    resb 4096
 kernelstack:
