@@ -39,7 +39,7 @@ function generate_tid (process as process_type ptr) as uinteger
 	return tid
 end function
 	
-function thread_create (process as process_type ptr, entry as any ptr) as thread_type ptr
+function thread_create (process as process_type ptr, entry as any ptr, v_userstack_bottom as any ptr) as thread_type ptr
 	dim thread as thread_type ptr = kmalloc(sizeof(thread_type))
 	
 	'' check if we could not reserve memory
@@ -60,17 +60,9 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	
 	'' reserve space for the stacks
 	dim phys_kernel_stack as any ptr = pmm.alloc()
-	dim phys_user_stack as any ptr = pmm.alloc()
 	
 	'' map the kernel stack into the kernel's address space (unreachable from userspace)
 	thread->kernelstack_bottom = vmm.kernel_automap(phys_kernel_stack, pmm.PAGE_SIZE)
-	
-	'' set the virtual adress of the usermode stack
-	process->next_stack -= pmm.PAGE_SIZE
-	thread->userstack_bottom = cast(any ptr, process->next_stack)
-	
-	'' map the usermode stack to the context of the process
-	vmm.map_page(@process->vmm_context, thread->userstack_bottom, phys_user_stack, (vmm.PTE_FLAGS.PRESENT or vmm.PTE_FLAGS.WRITABLE or vmm.PTE_FLAGS.USERSPACE))
 	
 	'' create a pointer to the isf
 	dim isf as interrupt_stack_frame ptr = thread->kernelstack_bottom + pmm.PAGE_SIZE - sizeof(interrupt_stack_frame)
@@ -82,7 +74,7 @@ function thread_create (process as process_type ptr, entry as any ptr) as thread
 	'' initialize the isf
 	isf->eflags = &h0202
 	isf->eip = cuint(entry)
-	isf->esp = cuint(thread->userstack_bottom) + pmm.PAGE_SIZE
+	isf->esp = cuint(v_userstack_bottom) + pmm.PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
 	

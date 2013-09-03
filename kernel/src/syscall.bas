@@ -51,7 +51,6 @@ namespace syscall
 			case syscall.THREAD_EXIT
 				'' TODO: implement
 			case syscall.PORT_REQUEST
-				video.fout(!"port %I requested\n", param2)
 				request_port(cur_thread->parent_process, param2)
 				set_io_bitmap()
 			case syscall.PORT_RELEASE

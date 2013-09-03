@@ -1,4 +1,4 @@
-ENTRY(fb_ctor__init)
+ENTRY(_start)
 
 SECTIONS
 {

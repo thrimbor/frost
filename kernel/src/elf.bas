@@ -43,7 +43,7 @@ namespace elf
 		if (header_check(header) > 0) then return false
 		
 		'' create the thread
-		thread_create(process, cast(any ptr, header->e_entry))
+		thread_create(process, cast(any ptr, header->e_entry), nullptr)
 
 		'' pointer to the first program header
 		dim program_header as elf32.Elf32_Phdr ptr = cast(elf32.Elf32_Phdr ptr, cuint(header) + header->e_phoff)

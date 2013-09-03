@@ -24,7 +24,6 @@
 #include "process.bi"
 #include "syscall.bi"
 #include "panic.bi"
-#include "video.bi"
 
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
@@ -35,7 +34,6 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
             panic.panic_exception(isf)                      '' show panic screen
         case &h0D
 			if (tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED) then
-				video.fout(!"bitmap not loaded, loading it...\n")
 				set_io_bitmap()
 			else
 				panic.panic_exception(isf)

@@ -58,9 +58,6 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	
 	process->io_bitmap = nullptr
 	
-	'' set the address of the stack of the first thread
-	process->next_stack = 0
-	
 	'' insert the process into the list
 	process->prev_process = 0
 	process->next_process = processlist_first
