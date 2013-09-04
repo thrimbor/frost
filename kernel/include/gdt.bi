@@ -51,7 +51,7 @@ namespace gdt
 		io_bitmap_end as ubyte
 	end type
 	
-	const TSS_IO_BITMAP_OFFSET as ushort = cushort(@(cast(task_state_segment ptr, 0)->io_bitmap(0)))
+	const TSS_IO_BITMAP_OFFSET as ushort = cushort(cuint(@(cast(task_state_segment ptr, 0)->io_bitmap(0))))
 	const TSS_IO_BITMAP_NOT_LOADED as ushort = sizeof(task_state_segment)+&h100
 	
     declare sub prepare ()
