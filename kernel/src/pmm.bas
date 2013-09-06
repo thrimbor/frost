@@ -41,6 +41,10 @@ namespace pmm
         '' 2. free the memory marked as free in the memory-map
         '' 3. mark the whole memory used by the kernel as used
         
+        if ((mbinfo->flags and MULTIBOOT_INFO_MEM_MAP) = 0) then
+			panic_error(!"Memory map not available!\n")
+		end if
+        
         dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
         dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
         
