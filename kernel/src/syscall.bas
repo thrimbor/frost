@@ -45,7 +45,15 @@ namespace syscall
 			case syscall.THREAD_GET_TID
 				return cur_thread->id
 			case syscall.THREAD_CREATE
-				'' TODO: implement
+				'' FIXME: doesn't work yet, leads to strange crashes
+				'' these pointers come from userspace, so check them first!
+				if ((param2 < &h40000000) or (param3 < &h40000000)) then return false
+				
+				if (thread_create(cur_thread->parent_process, cast(any ptr, param2), cast(any ptr, param3)) <> nullptr) then
+					return true
+				else
+					return false
+				end if
 			case syscall.THREAD_SLEEP
 				'' TODO: implement
 			case syscall.THREAD_EXIT
