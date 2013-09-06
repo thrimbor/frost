@@ -100,7 +100,10 @@ sub thread_activate (thread as thread_type ptr)
 end sub
 
 function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
+	dim old_process as process_type ptr = nullptr
+	
 	if (cuint(current_thread) <> 0) then
+		old_process = current_thread->parent_process
 		current_thread->isf = isf
 		current_thread = current_thread->next_thread
 	end if
@@ -114,8 +117,9 @@ function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 		panic_error(!"There is no active thread to run!")
 	end if
 	
-	'' TODO: only reset io bitmap if current process has changed
-	tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED
+	if (current_thread->parent_process <> old_process) then
+		tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED
+	end if
 	
 	return current_thread
 end function
