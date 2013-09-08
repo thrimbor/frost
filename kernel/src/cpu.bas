@@ -21,7 +21,7 @@
 #include "mem.bi"
 
 function cpu.get_vendor () as zstring ptr
-	static zstr as zstring * 13
+	dim zstr as zstring * 13
 	memset(@zstr, 0, 13)
 	asm
 		mov eax, 0
@@ -34,7 +34,7 @@ function cpu.get_vendor () as zstring ptr
 	return @zstr
 end function
 
-function cpu.has_apic () as boolean
+function cpu.has_local_apic () as boolean
 	dim t_edx as uinteger
 	asm
 		mov eax, 1
@@ -42,5 +42,5 @@ function cpu.has_apic () as boolean
 		mov dword ptr [t_edx], edx
 	end asm
 	
-	return iif((t_edx and &h200), true, false)
+	return iif((t_edx and (1 shl 9)), true, false)
 end function

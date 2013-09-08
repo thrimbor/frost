@@ -21,5 +21,5 @@
 
 namespace cpu
 	declare function get_vendor () as zstring ptr
-	declare function has_apic () as boolean
+	declare function has_local_apic () as boolean
 end namespace
