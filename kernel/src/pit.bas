@@ -23,8 +23,9 @@ namespace pit
     const DATA_PORT    as byte = &h40
     
     sub set_frequency (frequency as ushort)
+        frequency = 1193182 \ frequency
         out(pit.COMMAND_PORT, &h34)
-        out(pit.DATA_PORT, lobyte(1193182 / frequency))
-        out(pit.DATA_PORT, hibyte(1193182 / frequency))
+        out(pit.DATA_PORT, lobyte(frequency))
+        out(pit.DATA_PORT, hibyte(frequency))
     end sub
 end namespace
