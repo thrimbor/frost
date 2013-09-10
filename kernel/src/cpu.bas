@@ -21,7 +21,7 @@
 #include "mem.bi"
 
 function cpu.get_vendor () as zstring ptr
-	dim zstr as zstring * 13
+	static zstr as zstring * 13
 	memset(@zstr, 0, 13)
 	asm
 		mov eax, 0
