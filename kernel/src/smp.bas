@@ -20,9 +20,11 @@
 #include "kernel.bi"
 #include "debug.bi"
 
+#define uint_sig(a,b,c,d) (asc(a) or (asc(b) shl 8) or (asc(c) shl 16) or (asc(d) shl 24))
+
 namespace smp
-	const FP_SIGNATURE as uinteger = asc("_") or (asc("M") shl 8) or (asc("P") shl 16) or (asc("_") shl 24)
-	const CT_SIGNATURE as uinteger = asc("P") or (asc("C") shl 8) or (asc("M") shl 16) or (asc("P") shl 24)
+	const FP_SIGNATURE as uinteger = uint_sig("_", "M", "P", "_")
+	const CT_SIGNATURE as uinteger = uint_sig("P", "C", "M", "P")
 	
 	function checksum (type_ptr as any ptr, size as uinteger) as ubyte
 		dim checksum_byte as ubyte = 0
@@ -108,6 +110,7 @@ namespace smp
 						entry += sizeof(cte_bus)
 					''io apic
 					case CT_ENTRY_TYPES.IO_APIC:
+						debug_wlog(debug.INFO, !"  -> I/O APIC found, ID: %hI\n", cuint(cast(cte_io_apic ptr, entry)->id))
 						entry += sizeof(cte_io_apic)
 					'' io interrupt assignment
 					case CT_ENTRY_TYPES.IO_INTERRUPT_ASSIGNMENT:
