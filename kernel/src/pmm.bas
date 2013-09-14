@@ -67,7 +67,7 @@ namespace pmm
                 wend
             end if
             '' go to the next entry of the map
-            mmap += 1
+            mmap = cast(multiboot_mmap_entry ptr, cuint(mmap)+mmap->size+sizeof(multiboot_uint32_t))
         wend
         
         '' mark the memory used by the kernel as used (this includes the mbinfo-structure and stack)
