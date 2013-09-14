@@ -30,26 +30,24 @@ namespace vmm
 	declare function get_pagetable (cntxt as context ptr, index as uinteger) as uinteger ptr
 	declare sub free_pagetable (cntxt as context ptr, table as uinteger ptr)
 	declare sub sync_context (cntxt as context ptr)
-	declare sub activate ()
 	
     dim shared kernel_context as context
     dim shared current_context as context ptr
-    dim shared paging_activated as byte = 0
+    dim shared paging_activated as boolean = false
     
-    dim shared latest_pagedir_version as uinteger = 0
-    dim shared latest_pagedir as uinteger ptr = 0
+    dim shared latest_context as context ptr = nullptr
     
     '' sets up the required structures and activates paging
     sub init ()
         '' initialize the kernel context (only used before the first task is started)
         '' the pagedir is also automatically mapped
-        kernel_context.version = -1
         kernel_context.p_pagedir = pmm.alloc()
         memset(kernel_context.p_pagedir, 0, pmm.PAGE_SIZE)
         kernel_context.v_pagedir = kernel_context.p_pagedir
         
         '' we need to activate the context early for kernel_context to be valid
-        activate_context(@kernel_context)
+        'activate_context(@kernel_context)
+        current_context = @kernel_context
         
         '' map the page tables
         kernel_context.p_pagedir[PAGETABLES_VIRT_START shr 22] = cuint(kernel_context.p_pagedir) or PTE_FLAGS.PRESENT or PTE_FLAGS.WRITABLE
@@ -63,13 +61,23 @@ namespace vmm
         '' set the virtual address
         kernel_context.v_pagedir = cast(uinteger ptr, (PAGETABLES_VIRT_START shr 22)*4096*1024 + (PAGETABLES_VIRT_START shr 22)*4096)
         
-        latest_pagedir = kernel_context.v_pagedir
-        latest_pagedir_version = 1
+        kernel_context.version = 1
+        latest_context = @kernel_context
         
-        '' activate paging
-        activate()
-        
-        paging_activated = -1
+        paging_activated = true
+    end sub
+    
+    '' loads the pagedir into cr3 and activates paging
+    sub init_local ()
+        dim pagedir as uinteger ptr = kernel_context.p_pagedir
+        asm
+            mov ebx, [pagedir]
+            mov cr3, ebx
+            
+            mov ebx, cr0
+            or ebx, &h80000000
+            mov cr0, ebx
+        end asm
     end sub
     
     '' reserve a page and map it
@@ -135,6 +143,11 @@ namespace vmm
             
             '' set the clear flag because the table is new, we cannot clear it now because it's not mapped
             clear_pagetable = true
+            
+            if (v_addr < &h40000000) then
+				cntxt->version = latest_context->version+1
+				latest_context = cntxt
+			end if
         end if
         
         '' fetch page-table address from page directory
@@ -150,12 +163,9 @@ namespace vmm
 		
         '' invalidate virtual address
         asm
-			mov eax, dword ptr [v_addr]
-			invlpg [eax]
+			mov ebx, dword ptr [v_addr]
+			invlpg [ebx]
 		end asm
-		
-		cntxt->version = latest_pagedir_version+1
-		latest_pagedir = cntxt->v_pagedir
         
         '' don't forget to free the pagetable
         free_pagetable(cntxt, page_table)
@@ -309,12 +319,12 @@ namespace vmm
 	end function
 	
 	sub sync_context (cntxt as context ptr)
-		if (cntxt->version < latest_pagedir_version) then
-			memcpy(cntxt->v_pagedir, latest_pagedir, 1020)
-			cntxt->version = latest_pagedir_version
+		if (cntxt->version < latest_context->version) then
+			memcpy(cntxt->v_pagedir, latest_context->v_pagedir, &h3FC)
+			cntxt->version = latest_context->version
 		end if
 		
-		latest_pagedir = cntxt->v_pagedir
+		latest_context = cntxt
 	end sub
     
     '' activates a vmm context by putting the pagedir address into cr3
@@ -323,21 +333,12 @@ namespace vmm
         current_context = cntxt
         dim pagedir as uinteger ptr = cntxt->p_pagedir
         asm
-            mov eax, [pagedir]
-            mov cr3, eax
+            mov ebx, [pagedir]
+            mov cr3, ebx
         end asm
     end sub
     
     function get_current_context () as context ptr
 		return current_context
 	end function
-    
-    '' activates paging by setting the paging-bit (31) in cr0
-    sub activate ()
-        asm
-            mov eax, cr0
-            or eax, &h80000000
-            mov cr0, eax
-        end asm
-    end sub
 end namespace

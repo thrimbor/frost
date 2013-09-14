@@ -85,6 +85,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     smp.init()
     
     vmm.init()
+    vmm.init_local()
     debug_wlog(debug.INFO, !"paging initialized\n")
 	
 	debug_wlog(debug.INFO, !"initializing kmm\n")

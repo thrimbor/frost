@@ -60,6 +60,7 @@ namespace vmm
 	end type
     
     declare sub init ()
+    declare sub init_local ()
     declare function alloc (v_addr as any ptr) as boolean
     declare sub context_initialize (cntxt as context ptr)
     declare function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
