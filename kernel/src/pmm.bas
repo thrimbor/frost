@@ -53,18 +53,21 @@ namespace pmm
         
         '' free the memory listed in the memory-map
         while (mmap < mmap_end)
-            total_mem += mmap->len
             '' only free regions that are marked as available
             if (mmap->type = MULTIBOOT_MEMORY_AVAILABLE) then
                 dim addr as addr_t = mmap->addr
                 dim end_addr as addr_t = (mmap->addr+mmap->len)
                 
-                '' free each block of the region
-                while (addr < end_addr)
-                    '' free one block at a time
-                    pmm.free(cast(any ptr, addr))
-                    addr += pmm.PAGE_SIZE
-                wend
+                if (cuint((mmap->addr shr 32) and &hFFFFFFFF) = 0) then
+					total_mem += mmap->len
+					
+					'' free each block of the region
+					while (addr < end_addr)
+						'' free one block at a time
+						pmm.free(cast(any ptr, cuint(addr)))
+						addr += pmm.PAGE_SIZE
+					wend
+				end if
             end if
             '' go to the next entry of the map
             mmap = cast(multiboot_mmap_entry ptr, cuint(mmap)+mmap->size+sizeof(multiboot_uint32_t))
