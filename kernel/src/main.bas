@@ -35,6 +35,26 @@
 #include "smp.bi"
 #include "io_man.bi"
 
+sub parse_cmdline (cmd_string as zstring ptr)
+	if (zstring_instr(*cmd_string, "-verbose") > 0) then
+		debug.set_loglevel(0) '' show every log-message
+	else
+		debug.set_loglevel(2) '' show only critical messages
+	end if
+	
+	if (zstring_instr(*cmd_string, "-no-clear-on-panic") > 0) then
+		panic.set_clear_on_panic(false)
+	else
+		panic.set_clear_on_panic(true)
+	end if
+	
+	#if defined (FROST_DEBUG)
+		if (zstring_instr(*cmd_string, "-serial-debugging") > 0) then
+			debug.serial_init()
+		end if
+	#endif
+end sub
+
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
 sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
@@ -46,19 +66,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     video.hide_cursor()
     
     if (mb_info.flags and MULTIBOOT_INFO_CMDLINE) then
-        dim cmd_string as zstring ptr = cast(zstring ptr, mb_info.cmdline)
-        
-        if (zstring_instr(*cmd_string, "-verbose") > 0) then
-            debug.set_loglevel(0) '' show every log-message
-        else
-            debug.set_loglevel(2) '' show only critical messages
-        end if
-        
-        if (zstring_instr(*cmd_string, "-no-clear-on-panic") > 0) then
-            panic.set_clear_on_panic(false)
-		else
-			panic.set_clear_on_panic(true)
-        end if
+        parse_cmdline(cast(zstring ptr, mb_info.cmdline))
     end if
     
     video.set_color(9,0)

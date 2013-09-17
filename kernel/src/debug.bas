@@ -17,6 +17,7 @@
  '/
 
 #include "debug.bi"
+#include "kernel.bi"
 #include "video.bi"
 
 namespace debug
@@ -25,4 +26,36 @@ namespace debug
     sub set_loglevel (level as ubyte)
         loglevel = level
     end sub
+    
+    #if defined (FROST_DEBUG)
+		dim shared com_initialized as boolean = false
+		
+		sub init_com (baseport as ushort, baud as uinteger, parity as ubyte, bits as ubyte)
+			baud = 115200\baud
+			
+			out(baseport+1, 0)
+			
+			out(baseport+3, &h80)
+			
+			out(baseport, lobyte(baud))
+			out(baseport+1, hibyte(baud))
+			
+			out(baseport+3, ((parity and &h07) shl 3) or ((bits-5) and &h03))
+			
+			out(baseport+2, &hC7)
+			out(baseport+4, &h0B)
+		end sub
+		
+		sub serial_init ()
+			init_com(&h3F8, 19200, 0, 8)
+			com_initialized = true
+		end sub
+		
+		sub serial_putc (char as ubyte)
+			if (com_initialized) then
+				while((inp(&h3F8+5) and &h20) = 0) : wend
+				out(&h3F8, char)
+			end if
+		end sub
+	#endif
 end namespace

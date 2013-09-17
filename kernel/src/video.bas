@@ -19,6 +19,7 @@
 #include "kernel.bi"
 #include "video.bi"
 #include "mem.bi"
+#include "debug.bi"
 
 namespace video
     dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)  '' pointer to video-memory
@@ -39,6 +40,10 @@ namespace video
     
     '' print one char
     sub putc (char as ubyte)
+        #if defined (FROST_DEBUG)
+			debug.serial_putc(char)
+		#endif
+        
         select case (char)
 			'' backspace
 			case &h08

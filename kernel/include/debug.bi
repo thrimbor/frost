@@ -31,4 +31,9 @@ namespace debug
     #macro debug_wlog(level, fstr, args...)
 		if (level>debug.loglevel) then video.fout(fstr, args)
 	#endmacro
+	
+	#if defined (FROST_DEBUG)
+		declare sub serial_init ()
+		declare sub serial_putc (char as ubyte)
+	#endif
 end namespace
