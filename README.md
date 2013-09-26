@@ -25,8 +25,8 @@ contact its maintainers.
 
 #### Directory layout ####
 
-./kernel/src/              The source of the kernel
-./kernel/include/          The headers of the kernel
-./build/                   Contains the build-scripts and the grub.cfg
-./doc/                     Contains documentation for FROST
-./init/                    Contains the source of the init-process
+- ./kernel/src/              The source of the kernel
+- ./kernel/include/          The headers of the kernel
+- ./build/                   Contains the build-scripts and the grub.cfg
+- ./doc/                     Contains documentation for FROST
+- ./init/                    Contains the source of the init-process
