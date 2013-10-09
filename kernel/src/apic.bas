@@ -15,18 +15,43 @@
  ' You should have received a copy of the GNU General Public License
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
+ 
+const IO_APIC_MMREG_IOREGSEL = &h00
+const IO_APIC_MMREG_IOWIN    = &h10
+
+const LOCAL_APIC_REG_SPIV        = &h00F0
+const LOCAL_APIC_REG_ICR_LOW     = &h0300
+const LOCAL_APIC_REG_ICR_HIGH    = &h0310
+const LOCAL_APIC_REG_DIV_CONFIG  = &h03E0
+const LOCAL_APIC_REG_LVT_TIMER   = &h0320
+const LOCAL_APIC_REG_LVT_THERM   = &h0330
+const LOCAL_APIC_REG_LVT_PERFMON = &h0340
+const LOCAL_APIC_REG_LVT_LINT0   = &h0350
+const LOCAL_APIC_REG_LVT_LINT1   = &h0360
+const LOCAL_APIC_REG_LVT_ERROR   = &h0370
+
+dim shared lapic_base_virt as uinteger = 0
 
 
 sub ioapic_write_register (apic_base as uinteger, register_offset as uinteger, value as uinteger)
-	'' tell the IOREGSEL which register we want to write to
-	*(cast(uinteger ptr, apic_base)) = register_offset
-	'' write the value to IOWIN
-	*(cast(uinteger ptr, (apic_base+&h10))) = value
+	*(cast(uinteger ptr, apic_base+IO_APIC_MMREG_IOREGSEL)) = register_offset
+	*(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOWIN))) = value
 end sub
 
 function ioapic_read_register (apic_base as uinteger, register_offset as uinteger) as uinteger
-	'' tell the IOREGSEL which register we want to read from
-	*(cast(uinteger ptr, apic_base)) = register_offset
-	'' read the value from IOWIN
-	return *(cast(uinteger ptr, (apic_base+&h10)))
+	*(cast(uinteger ptr, apic_base+IO_APIC_MMREG_IOREGSEL)) = register_offset
+	return *(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOWIN)))
 end function
+
+sub lapic_write_register (register_offset as uinteger, value as uinteger)
+	*(cast(uinteger ptr, lapic_base_virt+register_offset)) = value
+end sub
+
+function lapic_read_register (register_offset as uinteger) as uinteger
+	return *(cast(uinteger ptr, lapic_base_virt+register_offset))
+end function
+
+sub lapic_startup_ipi (trampoline_addr as any ptr)
+	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 0)
+	lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (((cuint(trampoline_addr) \ &h1000) and &hFF) or &hC4600))
+end sub
