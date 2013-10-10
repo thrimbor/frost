@@ -90,10 +90,10 @@
     
     #ifndef ASM_FILE
     
-    type multiboot_uint8_t as ubyte
-    type multiboot_uint16_t as ushort
-    type multiboot_uint32_t as uinteger
-    type multiboot_uint64_t as ulongint
+    type multiboot_uint8_t as uinteger<8>
+    type multiboot_uint16_t as uinteger<16>
+    type multiboot_uint32_t as uinteger<32>
+    type multiboot_uint64_t as uinteger<64>
     
     type multiboot_header
       /' Must be MULTIBOOT_MAGIC - see above.  '/
