@@ -16,6 +16,9 @@ frost.krn: $(OBJS)
 obj/%.o: src/%.bas
 	$(COMPILER) $(CFLAGS) $^ -o $@
 
+obj/%.o: src/arch/x86/%.bas
+	$(COMPILER) $(CFLAGS) $^ -o $@
+
 obj/%.o: src/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
 
