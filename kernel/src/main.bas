@@ -77,8 +77,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu.get_vendor())
     
-    gdt.prepare()
-    gdt.load()
+    gdt_prepare()
+    gdt_load()
     idt.prepare()
     idt.load()
     

@@ -25,7 +25,7 @@ extern kernel_end_label   alias "kernel_end_label"   as byte
 #define kernel_end   @kernel_end_label
 
 #include "gdt.bi"
-common shared tss_ptr as gdt.task_state_segment ptr
+common shared tss_ptr as task_state_segment ptr
 
 const nullptr as any ptr = cast(any ptr, 0)
 

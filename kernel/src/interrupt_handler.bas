@@ -33,7 +33,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
         case 0 to &h0C                                      '' exception
             panic.panic_exception(isf)                      '' show panic screen
         case &h0D
-			if (tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED) then
+			if (tss_ptr->io_bitmap_offset = TSS_IO_BITMAP_NOT_LOADED) then
 				set_io_bitmap()
 			else
 				panic.panic_exception(isf)

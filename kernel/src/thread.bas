@@ -118,7 +118,7 @@ function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 	end if
 	
 	if (current_thread->parent_process <> old_process) then
-		tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_NOT_LOADED
+		tss_ptr->io_bitmap_offset = TSS_IO_BITMAP_NOT_LOADED
 	end if
 	
 	return current_thread
@@ -129,7 +129,7 @@ function get_current_thread () as thread_type ptr
 end function
 
 sub set_io_bitmap ()
-	tss_ptr->io_bitmap_offset = gdt.TSS_IO_BITMAP_OFFSET
+	tss_ptr->io_bitmap_offset = TSS_IO_BITMAP_OFFSET
 	
 	if (current_thread->parent_process->io_bitmap <> nullptr) then
 		memcpy(@tss_ptr->io_bitmap(0), current_thread->parent_process->io_bitmap, &hFFFF\8)
