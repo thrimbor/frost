@@ -22,6 +22,9 @@ obj/%.o: src/arch/x86/%.bas
 obj/%.o: src/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
 
+obj/%.o: src/arch/x86/%.asm
+	$(ASSEMBLER) $(AFLAGS) $^ -o $@
+
 clean:
 	rm $(OBJS) frost.krn
 
