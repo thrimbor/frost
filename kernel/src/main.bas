@@ -79,8 +79,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     gdt_prepare()
     gdt_load()
-    idt.prepare()
-    idt.load()
+    idt_prepare()
+    idt_load()
     
     pic.init()
     

@@ -18,7 +18,5 @@
 
 #pragma once
 
-namespace idt
-    declare sub prepare ()
-    declare sub load ()
-end namespace
+declare sub idt_prepare ()
+declare sub idt_load ()
