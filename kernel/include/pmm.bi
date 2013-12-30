@@ -21,13 +21,10 @@
 #include "kernel.bi"
 #include "multiboot.bi"
 
-namespace pmm
-    const PAGE_SIZE = 4096
-    
-    declare sub init (mbinfo as multiboot_info ptr)
-    declare function alloc (num_pages as uinteger = 1) as any ptr
-    declare sub free (page as any ptr, num_pages as uinteger = 1)
-    declare sub mark_used (page as any ptr)
-    declare function get_total () as uinteger
-    declare function get_free () as uinteger
-end namespace
+const PAGE_SIZE = 4096
+
+declare sub pmm_init (mbinfo as multiboot_info ptr)
+declare function pmm_alloc (num_pages as uinteger = 1) as any ptr
+declare sub pmm_free (page as any ptr, num_pages as uinteger = 1)
+declare function pmm_get_total () as uinteger
+declare function pmm_get_free () as uinteger

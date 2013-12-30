@@ -31,7 +31,7 @@ type process_type
 	
 	parent as process_type ptr
 	
-	vmm_context as vmm.context
+	context as vmm_context
 	
 	state as UBYTE
 	

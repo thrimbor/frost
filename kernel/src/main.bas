@@ -82,18 +82,18 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     idt_prepare()
     idt_load()
     
-    pic.init()
+    pic_init()
     
-    pit.set_frequency(100)
+    pit_set_frequency(100)
     
-    pmm.init(@mb_info)
-    debug_wlog(debug.INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm.get_total()\1048576), cuint(pmm.get_free()\1048576))
+    pmm_init(@mb_info)
+    debug_wlog(debug.INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     
     debug_wlog(debug.INFO, !"initializing SMP\n")
-    smp.init()
+    smp_init()
     
-    vmm.init()
-    vmm.init_local()
+    vmm_init()
+    vmm_init_local()
     debug_wlog(debug.INFO, !"paging initialized\n")
 	
 	debug_wlog(debug.INFO, !"initializing kmm\n")

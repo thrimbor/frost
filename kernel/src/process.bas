@@ -65,7 +65,7 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	processlist_first = process
 	
 	'' create a vmm-context
-	vmm.context_initialize(@process->vmm_context)
+	vmm_context_initialize(@process->context)
 	
 	return process
 end function

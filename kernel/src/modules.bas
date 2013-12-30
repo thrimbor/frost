@@ -44,14 +44,14 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	dim v_multiboot_module as multiboot_module_t ptr
 
 	'' map the module structure
-	v_multiboot_module = vmm.kernel_automap(multiboot_module, sizeof(multiboot_module_t))
+	v_multiboot_module = vmm_kernel_automap(multiboot_module, sizeof(multiboot_module_t))
 	if (v_multiboot_module = 0) then
 		panic_error(!"Could not map the module-structure of the module\n")
 	end if
 	
 	'' map the image
 	dim size as uinteger = v_multiboot_module->mod_end - v_multiboot_module->mod_start
-	dim v_image as uinteger = cuint(vmm.kernel_automap(cast(any ptr, v_multiboot_module->mod_start), size))
+	dim v_image as uinteger = cuint(vmm_kernel_automap(cast(any ptr, v_multiboot_module->mod_start), size))
 	
 	dim process as process_type ptr
 	process = process_create(nullptr)
@@ -67,9 +67,9 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	thread_activate(process->threads)
 	
 	'' unmap the image, we don't need it any longer
-	vmm.kernel_unmap(cast(any ptr, v_image), size)
+	vmm_kernel_unmap(cast(any ptr, v_image), size)
 	'' physically free the space occupied by the image
-	pmm.free(cast(any ptr, v_multiboot_module->mod_start), num_pages(size))
+	pmm_free(cast(any ptr, v_multiboot_module->mod_start), num_pages(size))
 	'' unmap the module struct
-	vmm.kernel_unmap(v_multiboot_module, sizeof(multiboot_module_t))
+	vmm_kernel_unmap(v_multiboot_module, sizeof(multiboot_module_t))
 end sub

@@ -18,6 +18,4 @@
 
 #pragma once
 
-namespace pit
-    declare sub set_frequency (frequency as ushort)
-end namespace
+declare sub pit_set_frequency (frequency as ushort)

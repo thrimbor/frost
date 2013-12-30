@@ -53,7 +53,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
             
             '' load the new pagedir
             if (new_thread->parent_process <> old_process) then
-				vmm.activate_context(@new_thread->parent_process->vmm_context)
+				vmm_activate_context(@new_thread->parent_process->context)
 			end if
 			
             '' load the new stack frame
@@ -68,7 +68,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
     
     '' important: if the int is an IRQ, send the EOI
     if ((isf->int_nr > &h1F) and (isf->int_nr < &h30)) then
-        pic.send_eoi(isf->int_nr - &h20)
+        pic_send_eoi(isf->int_nr - &h20)
     end if
     
     return new_isf

@@ -18,36 +18,34 @@
 
 #include "pic.bi"
 
-namespace pic
-	const MASTER_COMMAND as ubyte = &h20
-    const MASTER_DATA    as ubyte = &h21
-    const SLAVE_COMMAND  as ubyte = &hA0
-    const SLAVE_DATA     as ubyte = &hA1
-    
-    '' the end-of-interrupt command:
-    const COMMAND_EOI as ubyte = &h20
+const MASTER_COMMAND as ubyte = &h20
+const MASTER_DATA    as ubyte = &h21
+const SLAVE_COMMAND  as ubyte = &hA0
+const SLAVE_DATA     as ubyte = &hA1
+
+'' the end-of-interrupt command:
+const COMMAND_EOI as ubyte = &h20
+
+sub pic_init ()
+	'' send ICW1 to both pics
+	out(MASTER_COMMAND, &h11)
+	out(SLAVE_COMMAND, &h11)
 	
-    sub init ()
-        '' send ICW1 to both pics
-        out(pic.MASTER_COMMAND, &h11)
-        out(pic.SLAVE_COMMAND, &h11)
-        
-        '' ICW2 is where we want to map the interrupts
-        '' we map them directly after the exceptions
-        out(pic.MASTER_DATA, &h20)
-        out(pic.SLAVE_DATA, &h28)
-        
-        '' ICW3: tell the PICs that they're connected through IRQ 2
-        out(pic.MASTER_DATA, &h04)
-        out(pic.SLAVE_DATA, &h02)
-        
-        '' ICW4: tell the PICs we're in 8086-mode
-        out(pic.MASTER_DATA, &h01)
-        out(pic.SLAVE_DATA, &h01)
-    end sub
-    
-    sub send_eoi (irq as ubyte)
-        out(pic.MASTER_COMMAND, pic.COMMAND_EOI)                '' send the EOI-command to the first PIC
-        if (irq>7) then out(pic.SLAVE_COMMAND, pic.COMMAND_EOI) '' if the irq was above 7, the second PIC needs to be informed also
-    end sub
-end namespace
+	'' ICW2 is where we want to map the interrupts
+	'' we map them directly after the exceptions
+	out(MASTER_DATA, &h20)
+	out(SLAVE_DATA, &h28)
+	
+	'' ICW3: tell the PICs that they're connected through IRQ 2
+	out(MASTER_DATA, &h04)
+	out(SLAVE_DATA, &h02)
+	
+	'' ICW4: tell the PICs we're in 8086-mode
+	out(MASTER_DATA, &h01)
+	out(SLAVE_DATA, &h01)
+end sub
+
+sub pic_send_eoi (irq as ubyte)
+	out(MASTER_COMMAND, COMMAND_EOI)                '' send the EOI-command to the first PIC
+	if (irq>7) then out(SLAVE_COMMAND, COMMAND_EOI) '' if the irq was above 7, the second PIC needs to be informed also
+end sub

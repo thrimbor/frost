@@ -18,7 +18,5 @@
 
 #pragma once
 
-namespace pic
-    declare sub init ()
-    declare sub send_eoi (irq as ubyte)
-end namespace
+declare sub pic_init ()
+declare sub pic_send_eoi (irq as ubyte)

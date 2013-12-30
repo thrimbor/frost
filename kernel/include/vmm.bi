@@ -22,52 +22,51 @@
 
 #define num_pages(n) (((n + &hFFF) and (&hFFFFF000)) shr 12)
 
-namespace vmm
-    '' flags for page-table-entries
-    enum PTE_FLAGS explicit
-		PRESENT       = &h1
-		WRITABLE      = &h2
-		USERSPACE     = &h4
-		WRITETHROUGH  = &h8
-		NOT_CACHEABLE = &h10
-		ACCESSED      = &h20
-		DIRTY         = &h40
-		PAT           = &h80
-		GLOBAL        = &h100
-    end enum
-	
-	'' flags for page-directory-entries
-	enum PDE_FLAGS explicit
-		PRESENT       = &h1
-		WRITABLE      = &h2
-		USERSPACE     = &h4
-		WRITETHROUGH  = &h8
-		NOT_CACHEABLE = &h10
-		ACCESSED      = &h20
-		DIRTY         = &h40
-		FOUR_MB       = &h80
-		GLOBAL        = &h100
-	end enum
-    
-    '' the kernels address space is from 0-1 gb, so we put the kernels pagetables at 1gb-4mb
-    const PAGETABLES_VIRT_START as uinteger = &h3FC00000
-    const PAGE_MASK as uinteger = &hFFFFF000
-    
-    type context
-		version as uinteger         '' important to keep the kernel section up to date
-		p_pagedir as uinteger ptr   '' physical address of the pagedir, needed for the cpu
-		v_pagedir as uinteger ptr   '' virtual address of the pagedir, needed to access the pagedir later
-	end type
-    
-    declare sub init ()
-    declare sub init_local ()
-    declare function alloc (v_addr as any ptr) as boolean
-    declare sub context_initialize (cntxt as context ptr)
-    declare function map_page (cntxt as context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
-    declare function map_range (cntxt as context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
-    declare function kernel_automap (p_start as any ptr, size as uinteger) as any ptr
-    declare sub kernel_unmap (v_start as any ptr, size as uinteger)
-    declare function resolve (cntxt as context ptr, vaddr as any ptr) as any ptr
-    declare sub activate_context (cntxt as context ptr)
-    declare function get_current_context () as context ptr
-end namespace
+'' flags for page-table-entries
+enum VMM_PTE_FLAGS explicit
+	PRESENT       = &h1
+	WRITABLE      = &h2
+	USERSPACE     = &h4
+	WRITETHROUGH  = &h8
+	NOT_CACHEABLE = &h10
+	ACCESSED      = &h20
+	DIRTY         = &h40
+	PAT           = &h80
+	GLOBAL        = &h100
+end enum
+
+'' flags for page-directory-entries
+enum VMM_PDE_FLAGS explicit
+	PRESENT       = &h1
+	WRITABLE      = &h2
+	USERSPACE     = &h4
+	WRITETHROUGH  = &h8
+	NOT_CACHEABLE = &h10
+	ACCESSED      = &h20
+	DIRTY         = &h40
+	FOUR_MB       = &h80
+	GLOBAL        = &h100
+end enum
+
+'' the kernels address space is from 0-1 gb, so we put the kernels pagetables at 1gb-4mb
+const VMM_PAGETABLES_VIRT_START as uinteger = &h3FC00000
+const VMM_PAGE_MASK as uinteger = &hFFFFF000
+
+type vmm_context
+	version as uinteger         '' important to keep the kernel section up to date
+	p_pagedir as uinteger ptr   '' physical address of the pagedir, needed for the cpu
+	v_pagedir as uinteger ptr   '' virtual address of the pagedir, needed to access the pagedir later
+end type
+
+declare sub vmm_init ()
+declare sub vmm_init_local ()
+declare function vmm_alloc (v_addr as any ptr) as boolean
+declare sub vmm_context_initialize (cntxt as vmm_context ptr)
+declare function vmm_map_page (cntxt as vmm_context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
+declare function vmm_map_range (cntxt as vmm_context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
+declare sub vmm_unmap_range (cntxt as vmm_context ptr, v_addr as any ptr, pages as uinteger)
+declare function vmm_kernel_automap (p_start as any ptr, size as uinteger) as any ptr
+declare sub vmm_kernel_unmap (v_start as any ptr, size as uinteger)
+declare function vmm_resolve (cntxt as vmm_context ptr, vaddr as any ptr) as any ptr
+declare sub vmm_activate_context (cntxt as vmm_context ptr)
+declare function vmm_get_current_context () as vmm_context ptr

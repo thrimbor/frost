@@ -58,9 +58,9 @@ sub kmm_init (start_addr as uinteger, end_addr as uinteger, minimum as uinteger,
     '' first map memory
     dim addr as uinteger = start_addr
     while (addr < end_addr)
-		if (not(vmm.alloc(cast(any ptr, addr)))) then
+		if (not(vmm_alloc(cast(any ptr, addr)))) then
 		end if
-		addr += pmm.PAGE_SIZE
+		addr += PAGE_SIZE
 	wend
     
     kmm_start_address = start_addr

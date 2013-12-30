@@ -59,13 +59,13 @@ function thread_create (process as process_type ptr, entry as any ptr, v_usersta
 	process->threads = thread
 	
 	'' reserve space for the stacks
-	dim phys_kernel_stack as any ptr = pmm.alloc()
+	dim phys_kernel_stack as any ptr = pmm_alloc()
 	
 	'' map the kernel stack into the kernel's address space (unreachable from userspace)
-	thread->kernelstack_bottom = vmm.kernel_automap(phys_kernel_stack, pmm.PAGE_SIZE)
+	thread->kernelstack_bottom = vmm_kernel_automap(phys_kernel_stack, PAGE_SIZE)
 	
 	'' create a pointer to the isf
-	dim isf as interrupt_stack_frame ptr = thread->kernelstack_bottom + pmm.PAGE_SIZE - sizeof(interrupt_stack_frame)
+	dim isf as interrupt_stack_frame ptr = thread->kernelstack_bottom + PAGE_SIZE - sizeof(interrupt_stack_frame)
 	thread->isf = isf
 	
 	'' clear the whole structure
@@ -74,7 +74,7 @@ function thread_create (process as process_type ptr, entry as any ptr, v_usersta
 	'' initialize the isf
 	isf->eflags = &h0202
 	isf->eip = cuint(entry)
-	isf->esp = cuint(v_userstack_bottom) + pmm.PAGE_SIZE
+	isf->esp = cuint(v_userstack_bottom) + PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
 	
