@@ -44,3 +44,32 @@ function cpu_has_local_apic () as boolean
 	
 	return iif((t_edx and (1 shl 9)), true, false)
 end function
+
+function read_msr (msr as uinteger) as ulongint
+	dim a as uinteger
+	dim d as uinteger
+	
+	asm
+		mov ecx, [msr]
+		
+		rdmsr
+		
+		mov [a], eax
+		mov [d], edx
+	end asm
+	
+	return (cast(ulongint, d) shl 32) or a
+end function
+
+sub write_msr (msr as uinteger, value as ulongint)
+	dim a as uinteger = cuint(value)
+	dim d as uinteger = cuint(value shr 32)
+	
+	asm
+		mov ecx, [msr]
+		mov eax, [a]
+		mov edx, [d]
+		
+		wrmsr
+	end asm
+end sub
