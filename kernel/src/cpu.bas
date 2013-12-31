@@ -20,7 +20,7 @@
 #include "kernel.bi"
 #include "mem.bi"
 
-function cpu.get_vendor () as zstring ptr
+function cpu_get_vendor () as zstring ptr
 	static zstr as zstring * 13
 	memset(@zstr, 0, 13)
 	asm
@@ -34,7 +34,7 @@ function cpu.get_vendor () as zstring ptr
 	return @zstr
 end function
 
-function cpu.has_local_apic () as boolean
+function cpu_has_local_apic () as boolean
 	dim t_edx as uinteger
 	asm
 		mov eax, 1

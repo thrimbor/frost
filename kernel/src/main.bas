@@ -75,7 +75,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     debug_wlog(debug.INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
     debug_wlog(debug.INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     
-    debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu.get_vendor())
+    debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu_get_vendor())
     
     gdt_prepare()
     gdt_load()

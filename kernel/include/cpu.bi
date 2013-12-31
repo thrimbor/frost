@@ -19,7 +19,5 @@
 #pragma once
 #include "kernel.bi"
 
-namespace cpu
-	declare function get_vendor () as zstring ptr
-	declare function has_local_apic () as boolean
-end namespace
+declare function cpu_get_vendor () as zstring ptr
+declare function cpu_has_local_apic () as boolean
