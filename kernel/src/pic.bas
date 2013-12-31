@@ -49,3 +49,34 @@ sub pic_send_eoi (irq as ubyte)
 	out(MASTER_COMMAND, COMMAND_EOI)                '' send the EOI-command to the first PIC
 	if (irq>7) then out(SLAVE_COMMAND, COMMAND_EOI) '' if the irq was above 7, the second PIC needs to be informed also
 end sub
+
+sub pic_mask (irq as ubyte)
+	dim port as ushort
+	
+	if (irq < 8) then
+		port = MASTER_DATA
+	else
+		port = SLAVE_DATA
+		irq -= 8
+	end if
+	
+	out(port, (inp(port) or (1 shl irq)))
+end sub
+
+sub pic_mask_all ()
+	out(MASTER_DATA, &hFF)
+	out(SLAVE_DATA, &hFF)
+end sub
+
+sub pic_unmask (irq as ubyte)
+	dim port as ushort
+	
+	if (irq < 8) then
+		port = MASTER_DATA
+	else
+		port = SLAVE_DATA
+		irq -= 8
+	end if
+	
+	out(port, (inp(port) and not(1 shl irq)))
+end sub
