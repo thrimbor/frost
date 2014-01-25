@@ -15,9 +15,17 @@
  ' You should have received a copy of the GNU General Public License
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
+
+#include "debug.bi"
+#include "cpu.bi"
+#include "vmm.bi"
+#include "pmm.bi"
+#include "pic.bi"
  
 const IO_APIC_MMREG_IOREGSEL = &h00
 const IO_APIC_MMREG_IOWIN    = &h10
+
+const LOCAL_APIC_BASE_MSR = &h1B
 
 const LOCAL_APIC_REG_SPIV        = &h00F0
 const LOCAL_APIC_REG_ICR_LOW     = &h0300
@@ -50,6 +58,23 @@ end sub
 function lapic_read_register (register_offset as uinteger) as uinteger
 	return *(cast(uinteger ptr, lapic_base_virt+register_offset))
 end function
+
+sub apic_init ()
+	'' TODO:
+	'' - configure I/O APIC
+	dim lapic_base_phys as uinteger = cuint(read_msr(LOCAL_APIC_BASE_MSR))
+	write_msr(&h1B, lapic_base_phys)
+	
+	debug_wlog(debug.INFO, !"APIC base addr: %hI\n", cuint(read_msr(LOCAL_APIC_BASE_MSR)))
+	
+	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE))
+		
+	lapic_write_register(&hF0, lapic_read_register(&hF0) or &h100)
+	
+	debug_wlog(debug.INFO, !"local APIC enabled\n")
+	
+	pic_mask_all()
+end sub
 
 sub lapic_startup_ipi (trampoline_addr as any ptr)
 	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 0)

@@ -18,3 +18,4 @@
 
 #pragma once
 
+declare sub apic_init ()

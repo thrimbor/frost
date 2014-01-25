@@ -19,6 +19,7 @@
 #include "multiboot.bi"
 #include "gdt.bi"
 #include "idt.bi"
+#include "apic.bi"
 #include "pic.bi"
 #include "pit.bi"
 #include "pmm.bi"
@@ -105,6 +106,11 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
     debug_wlog(debug.INFO, !"heap initialized\n")
+    
+    if (cpu_has_local_apic()) then
+		debug_wlog(debug.INFO, !"CPU has local APIC\n")
+		apic_init()
+	end if
     
     init_ports()
     

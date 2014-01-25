@@ -21,6 +21,9 @@
 type vfs_node
 	name as zstring ptr
 	
+	flags as integer
+	permissions as integer
+	
 	uid as integer
 	gid as integer
 	
