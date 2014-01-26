@@ -18,4 +18,5 @@
 
 #pragma once
 
-declare sub apic_init ()
+declare sub lapic_init ()
+declare sub ioapic_init ()

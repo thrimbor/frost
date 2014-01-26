@@ -26,6 +26,7 @@ const IO_APIC_MMREG_IOREGSEL = &h00
 const IO_APIC_MMREG_IOWIN    = &h10
 
 const LOCAL_APIC_BASE_MSR = &h1B
+const LOCAL_APIC_BASE_ADDR_MASK = &hFFFFFF000
 
 const LOCAL_APIC_REG_SPIV        = &h00F0
 const LOCAL_APIC_REG_ICR_LOW     = &h0300
@@ -37,6 +38,8 @@ const LOCAL_APIC_REG_LVT_PERFMON = &h0340
 const LOCAL_APIC_REG_LVT_LINT0   = &h0350
 const LOCAL_APIC_REG_LVT_LINT1   = &h0360
 const LOCAL_APIC_REG_LVT_ERROR   = &h0370
+
+const LOCAL_APIC_SPIV_SOFT_ENABLE = &h100
 
 dim shared lapic_base_virt as uinteger = 0
 
@@ -59,24 +62,28 @@ function lapic_read_register (register_offset as uinteger) as uinteger
 	return *(cast(uinteger ptr, lapic_base_virt+register_offset))
 end function
 
-sub apic_init ()
-	'' TODO:
-	'' - configure I/O APIC
-	dim lapic_base_phys as uinteger = cuint(read_msr(LOCAL_APIC_BASE_MSR))
-	write_msr(&h1B, lapic_base_phys)
+sub lapic_init ()
+	pic_mask_all()
 	
-	debug_wlog(debug.INFO, !"APIC base addr: %hI\n", cuint(read_msr(LOCAL_APIC_BASE_MSR)))
+	dim lapic_base_phys as uinteger = cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK)
+	write_msr(LOCAL_APIC_BASE_MSR, read_msr(LOCAL_APIC_BASE_MSR))
+	
+	debug_wlog(debug.INFO, !"APIC base addr: %hI\n", cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK))
 	
 	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE))
 		
-	lapic_write_register(&hF0, lapic_read_register(&hF0) or &h100)
+	'' set the APIC Software Enable/Disable flag in the Spurious-Interrupt Vector Register
+	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
 	
 	debug_wlog(debug.INFO, !"local APIC enabled\n")
-	
-	pic_mask_all()
 end sub
 
 sub lapic_startup_ipi (trampoline_addr as any ptr)
 	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 0)
 	lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (((cuint(trampoline_addr) \ &h1000) and &hFF) or &hC4600))
+end sub
+
+sub ioapic_init ()
+	'' TODO:
+	'' - configure I/O APIC
 end sub

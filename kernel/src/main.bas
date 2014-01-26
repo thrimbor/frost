@@ -109,7 +109,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     if (cpu_has_local_apic()) then
 		debug_wlog(debug.INFO, !"CPU has local APIC\n")
-		apic_init()
+		lapic_init()
 	end if
     
     init_ports()
