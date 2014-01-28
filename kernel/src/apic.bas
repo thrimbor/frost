@@ -16,11 +16,14 @@
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
 
+#include "apic.bi"
 #include "debug.bi"
 #include "cpu.bi"
 #include "vmm.bi"
 #include "pmm.bi"
 #include "pic.bi"
+
+dim apic_enabled as boolean = false
  
 const IO_APIC_MMREG_IOREGSEL = &h00
 const IO_APIC_MMREG_IOWIN    = &h10
@@ -28,6 +31,7 @@ const IO_APIC_MMREG_IOWIN    = &h10
 const LOCAL_APIC_BASE_MSR = &h1B
 const LOCAL_APIC_BASE_ADDR_MASK = &hFFFFFF000
 
+const LOCAL_APIC_REG_EOI         = &h00B0
 const LOCAL_APIC_REG_SPIV        = &h00F0
 const LOCAL_APIC_REG_ICR_LOW     = &h0300
 const LOCAL_APIC_REG_ICR_HIGH    = &h0310
@@ -76,9 +80,19 @@ sub lapic_init ()
 	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
 	
 	debug_wlog(debug.INFO, !"local APIC enabled\n")
+	apic_enabled = true
+end sub
+
+sub lapic_eoi ()
+	assert(apic_enabled = true)
+	
+	'' writing to the EOI register signals completion of the handler routine
+	lapic_write_register(LOCAL_APIC_REG_EOI, 0)
 end sub
 
 sub lapic_startup_ipi (trampoline_addr as any ptr)
+	assert(apic_enabled = true)
+	
 	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 0)
 	lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (((cuint(trampoline_addr) \ &h1000) and &hFF) or &hC4600))
 end sub

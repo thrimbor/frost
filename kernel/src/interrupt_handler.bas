@@ -21,6 +21,7 @@
 #include "isf.bi"
 #include "thread.bi"
 #include "pic.bi"
+#include "apic.bi"
 #include "process.bi"
 #include "syscall.bi"
 #include "panic.bi"
@@ -67,9 +68,13 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
     end select
     
     '' important: if the int is an IRQ, send the EOI
-    if ((isf->int_nr > &h1F) and (isf->int_nr < &h30)) then
-        pic_send_eoi(isf->int_nr - &h20)
-    end if
+    if (apic_enabled) then
+		lapic_eoi()
+	else
+		if ((isf->int_nr > &h1F) and (isf->int_nr < &h30)) then
+			pic_send_eoi(isf->int_nr - &h20)
+		end if
+	end if
     
     return new_isf
 end function

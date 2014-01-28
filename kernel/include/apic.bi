@@ -18,5 +18,10 @@
 
 #pragma once
 
+#include "kernel.bi"
+
+extern apic_enabled as boolean
+
 declare sub lapic_init ()
+declare sub lapic_eoi ()
 declare sub ioapic_init ()
