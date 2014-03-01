@@ -58,4 +58,22 @@ namespace debug
 			end if
 		end sub
 	#endif
+	
+	sub stacktrace (maxFrames as uinteger)
+		dim ebp as uinteger ptr = @maxFrames -2
+		
+		ebp = cast(uinteger ptr, ebp)
+		
+		video.fout(!"stacktrace\n")
+		for frame as uinteger = 0 to maxFrames
+			dim eip as uinteger = ebp[1]
+			
+			if (eip = 0) or (ebp = nullptr) then
+				exit for
+			end if
+			
+			ebp = cast(uinteger ptr, ebp[0])
+			video.fout(!" 0x%h########I\n", eip)
+		next
+	end sub
 end namespace

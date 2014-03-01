@@ -36,4 +36,6 @@ namespace debug
 		declare sub serial_init ()
 		declare sub serial_putc (char as ubyte)
 	#endif
+	
+	declare sub stacktrace (maxFrames as uinteger)
 end namespace
