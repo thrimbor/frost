@@ -20,22 +20,20 @@
 
 #include "video.bi"
 
-namespace debug
-    const INFO as ubyte = 1
-    const ERROR as ubyte = 3
-    
-    common shared loglevel as ubyte
-    
-    declare sub set_loglevel (level as ubyte)
+const DEBUG_INFO as ubyte = 1
+const DEBUG_ERROR as ubyte = 3
 
-    #macro debug_wlog(level, fstr, args...)
-		if (level>debug.loglevel) then video.fout(fstr, args)
-	#endmacro
-	
-	#if defined (FROST_DEBUG)
-		declare sub serial_init ()
-		declare sub serial_putc (char as ubyte)
-	#endif
-	
-	declare sub stacktrace (maxFrames as uinteger)
-end namespace
+common shared debug_loglevel as ubyte
+
+declare sub debug_set_loglevel (level as ubyte)
+
+#macro debug_wlog(level, fstr, args...)
+	if (level>debug_loglevel) then video.fout(fstr, args)
+#endmacro
+
+#if defined (FROST_DEBUG)
+	declare sub debug_serial_init ()
+	declare sub debug_serial_putc (char as ubyte)
+#endif
+
+declare sub debug_stacktrace (maxFrames as uinteger)

@@ -41,7 +41,7 @@ namespace video
     '' print one char
     sub putc (char as ubyte)
         #if defined (FROST_DEBUG)
-			debug.serial_putc(char)
+			debug_serial_putc(char)
 		#endif
         
         select case (char)

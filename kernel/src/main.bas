@@ -38,9 +38,9 @@
 
 sub parse_cmdline (cmd_string as zstring ptr)
 	if (zstring_instr(*cmd_string, "-verbose") > 0) then
-		debug.set_loglevel(0) '' show every log-message
+		debug_set_loglevel(0) '' show every log-message
 	else
-		debug.set_loglevel(2) '' show only critical messages
+		debug_set_loglevel(2) '' show only critical messages
 	end if
 	
 	if (zstring_instr(*cmd_string, "-no-clear-on-panic") > 0) then
@@ -51,7 +51,7 @@ sub parse_cmdline (cmd_string as zstring ptr)
 	
 	#if defined (FROST_DEBUG)
 		if (zstring_instr(*cmd_string, "-serial-debugging") > 0) then
-			debug.serial_init()
+			debug_serial_init()
 		end if
 	#endif
 end sub
@@ -71,12 +71,12 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     end if
     
     video.set_color(9,0)
-    debug_wlog(debug.INFO, !"FROST V2 alpha\n")
+    debug_wlog(debug_INFO, !"FROST V2 alpha\n")
     video.set_color(7,0)
-    debug_wlog(debug.INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
-    debug_wlog(debug.INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
+    debug_wlog(debug_INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
+    debug_wlog(debug_INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     
-    debug_wlog(debug.INFO, !"CPU vendor: %z\n", cpu_get_vendor())
+    debug_wlog(debug_INFO, !"CPU vendor: %z\n", cpu_get_vendor())
     
     gdt_prepare()
     gdt_load()
@@ -88,16 +88,16 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     pit_set_frequency(100)
     
     pmm_init(@mb_info)
-    debug_wlog(debug.INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
+    debug_wlog(debug_INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     
-    debug_wlog(debug.INFO, !"initializing SMP\n")
+    debug_wlog(debug_INFO, !"initializing SMP\n")
     smp_init()
     
     vmm_init()
     vmm_init_local()
-    debug_wlog(debug.INFO, !"paging initialized\n")
+    debug_wlog(debug_INFO, !"paging initialized\n")
 	
-	debug_wlog(debug.INFO, !"initializing kmm\n")
+	debug_wlog(debug_INFO, !"initializing kmm\n")
     
     '' initialize the heap:
     '' starts at 256MB
@@ -105,18 +105,18 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' minimum size 1MB
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
-    debug_wlog(debug.INFO, !"heap initialized\n")
+    debug_wlog(debug_INFO, !"heap initialized\n")
     
     if (cpu_has_local_apic()) then
-		debug_wlog(debug.INFO, !"CPU has local APIC\n")
+		debug_wlog(debug_INFO, !"CPU has local APIC\n")
 		lapic_init()
 	end if
     
     init_ports()
     
-    debug_wlog(debug.INFO, !"loading init module...")
+    debug_wlog(debug_INFO, !"loading init module...")
     load_init_module(@mb_info)
-    debug_wlog(debug.INFO, !"done.\n")
+    debug_wlog(debug_INFO, !"done.\n")
 
     '' the scheduler takes over here
     asm sti

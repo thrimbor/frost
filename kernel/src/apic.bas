@@ -72,14 +72,14 @@ sub lapic_init ()
 	dim lapic_base_phys as uinteger = cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK)
 	write_msr(LOCAL_APIC_BASE_MSR, read_msr(LOCAL_APIC_BASE_MSR))
 	
-	debug_wlog(debug.INFO, !"APIC base addr: %hI\n", cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK))
+	debug_wlog(debug_INFO, !"APIC base addr: %hI\n", cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK))
 	
 	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE))
 		
 	'' set the APIC Software Enable/Disable flag in the Spurious-Interrupt Vector Register
 	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
 	
-	debug_wlog(debug.INFO, !"local APIC enabled\n")
+	debug_wlog(debug_INFO, !"local APIC enabled\n")
 	apic_enabled = true
 end sub
 
