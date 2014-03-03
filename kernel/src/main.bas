@@ -76,7 +76,11 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     debug_wlog(debug_INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
     debug_wlog(debug_INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     
-    debug_wlog(debug_INFO, !"CPU vendor: %z\n", cpu_get_vendor())
+    scope
+		dim zstr as zstring*13
+		cpu_get_vendor(@zstr)
+		debug_wlog(debug_INFO, !"CPU vendor: %z\n", @zstr)
+	end scope
     
     gdt_prepare()
     gdt_load()

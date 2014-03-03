@@ -20,19 +20,20 @@
 #include "kernel.bi"
 #include "mem.bi"
 
-function cpu_get_vendor () as zstring ptr
-	static zstr as zstring * 13
-	memset(@zstr, 0, 13)
+sub cpu_get_vendor (zstr as zstring ptr)
+	'' TODO: get rid of the static variable
+	static tstr as zstring * 13
+	memset(@tstr, 0, 13)
 	asm
 		mov eax, 0
 		cpuid
-		mov dword ptr [zstr], ebx
-		mov dword ptr [zstr+4], edx
-		mov dword ptr [zstr+8], ecx
+		mov dword ptr [tstr], ebx
+		mov dword ptr [tstr+4], edx
+		mov dword ptr [tstr+8], ecx
 	end asm
 	
-	return @zstr
-end function
+	memcpy(zstr, @tstr, 13)
+end sub
 
 function cpu_has_local_apic () as boolean
 	dim t_edx as uinteger

@@ -19,7 +19,7 @@
 #pragma once
 #include "kernel.bi"
 
-declare function cpu_get_vendor () as zstring ptr
+declare sub cpu_get_vendor (zstr as zstring ptr)
 declare function cpu_has_local_apic () as boolean
 declare function read_msr (msr as uinteger) as ulongint
 declare sub write_msr (msr as uinteger, value as ulongint)
