@@ -60,7 +60,7 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 		panic_error(!"Could not create init-process!\n")
 	end if
 	
-	if (not(elf.load_image(process, v_image, size))) then
+	if (not(elf_load_image(process, v_image, size))) then
 		panic_error(!"Could not load the init-module!")
 	end if
 	

@@ -18,13 +18,11 @@
 
 #pragma once
 
-namespace video
-    declare sub fout (fstr as zstring, ...)
-    declare sub cout overload (number as uinteger, base as ubyte = 10, minchars as ubyte = 0)
-    declare sub cout overload (number as integer, base as ubyte = 10, minchars as ubyte = 0)
-    declare sub clean (b_color as ubyte = 0)
-    declare sub set_color (fc as ubyte, bc as ubyte)
-    declare sub hide_cursor ()
-    declare sub show_cursor ()
-    declare sub move_cursor (x as ubyte, y as ubyte)
-end namespace
+declare sub video_fout (fstr as zstring, ...)
+declare sub video_cout overload (number as uinteger, base as ubyte = 10, minchars as ubyte = 0)
+declare sub video_cout overload (number as integer, base as ubyte = 10, minchars as ubyte = 0)
+declare sub video_clean (b_color as ubyte = 0)
+declare sub video_set_color (fc as ubyte, bc as ubyte)
+declare sub video_hide_cursor ()
+declare sub video_show_cursor ()
+declare sub video_move_cursor (x as ubyte, y as ubyte)

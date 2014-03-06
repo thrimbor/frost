@@ -44,9 +44,9 @@ sub parse_cmdline (cmd_string as zstring ptr)
 	end if
 	
 	if (zstring_instr(*cmd_string, "-no-clear-on-panic") > 0) then
-		panic.set_clear_on_panic(false)
+		panic_set_clear_on_panic(false)
 	else
-		panic.set_clear_on_panic(true)
+		panic_set_clear_on_panic(true)
 	end if
 	
 	#if defined (FROST_DEBUG)
@@ -63,16 +63,16 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     dim mb_info as multiboot_info
     memcpy(@mb_info, t_mbinfo, sizeof(multiboot_info))
     
-    video.clean()
-    video.hide_cursor()
+    video_clean()
+    video_hide_cursor()
     
     if (mb_info.flags and MULTIBOOT_INFO_CMDLINE) then
         parse_cmdline(cast(zstring ptr, mb_info.cmdline))
     end if
     
-    video.set_color(9,0)
+    video_set_color(9,0)
     debug_wlog(debug_INFO, !"FROST V2 alpha\n")
-    video.set_color(7,0)
+    video_set_color(7,0)
     debug_wlog(debug_INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
     debug_wlog(debug_INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
     

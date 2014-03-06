@@ -28,7 +28,7 @@ common shared debug_loglevel as ubyte
 declare sub debug_set_loglevel (level as ubyte)
 
 #macro debug_wlog(level, fstr, args...)
-	if (level>debug_loglevel) then video.fout(fstr, args)
+	if (level>debug_loglevel) then video_fout(fstr, args)
 #endmacro
 
 #if defined (FROST_DEBUG)

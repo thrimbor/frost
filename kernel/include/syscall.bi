@@ -20,32 +20,30 @@
 
 #include "isf.bi"
 
-namespace syscall
-    enum syscalls
-        KERNEL_REQUEST_FAST_SYSCALL_INTERFACE
-        
-        PROCESS_GET_PID
-        PROCESS_GET_PARENT_PID
-        PROCESS_CREATE
-        PROCESS_EXIT
-        PROCESS_KILL
-        
-        THREAD_GET_TID
-        THREAD_CREATE
-        THREAD_SLEEP
-        THREAD_EXIT
-        
-        PORT_REQUEST
-        PORT_RELEASE
-        
-        SET_INTERRUPT_HANDLER
-        
-        RPC_SET_HANDLER
-        RPC_CALL
-        RPC_WAIT_FOR_CALL
-        
-        FORTY_TWO = 42
-    end enum
-    
-    declare function handler (param1 as uinteger, param2 as uinteger, param3 as uinteger, param4 as uinteger) as uinteger
-end namespace
+enum syscalls
+	SYSCALL_KERNEL_REQUEST_FAST_SYSCALL_INTERFACE
+	
+	SYSCALL_PROCESS_GET_PID
+	SYSCALL_PROCESS_GET_PARENT_PID
+	SYSCALL_PROCESS_CREATE
+	SYSCALL_PROCESS_EXIT
+	SYSCALL_PROCESS_KILL
+	
+	SYSCALL_THREAD_GET_TID
+	SYSCALL_THREAD_CREATE
+	SYSCALL_THREAD_SLEEP
+	SYSCALL_THREAD_EXIT
+	
+	SYSCALL_PORT_REQUEST
+	SYSCALL_PORT_RELEASE
+	
+	SYSCALL_SET_INTERRUPT_HANDLER
+	
+	SYSCALL_RPC_SET_HANDLER
+	SYSCALL_RPC_CALL
+	SYSCALL_RPC_WAIT_FOR_CALL
+	
+	SYSCALL_FORTY_TWO = 42
+end enum
+
+declare function syscall_handler (param1 as uinteger, param2 as uinteger, param3 as uinteger, param4 as uinteger) as uinteger

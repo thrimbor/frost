@@ -22,21 +22,19 @@
 #include "isf.bi"
 #include "video.bi"
 
-namespace panic
-	common shared clear_on_panic as boolean
-    declare sub set_clear_on_panic (b as boolean)
-    declare sub panic_exception (isf as interrupt_stack_frame ptr)
-    declare sub hlt ()
-    
-    #macro panic_error (msg, params...)
-		asm cli
-		video.set_color(0,3)
-		if (panic.clear_on_panic) then video.clean(3)
-		video.fout(!"\nKERNEL PANIC\n")
-		video.fout(!"file: %z, function: %z, line: %I\n\n", @__FILE__, @__FUNCTION__, cuint(__LINE__))
-		video.fout(!"reason: ")
-		video.fout(msg, params)
-		
-		panic.hlt()
-	#endmacro
-end namespace
+common shared panic_clear_on_panic as boolean
+declare sub panic_set_clear_on_panic (b as boolean)
+declare sub panic_exception (isf as interrupt_stack_frame ptr)
+declare sub panic_hlt ()
+
+#macro panic_error (msg, params...)
+	asm cli
+	video_set_color(0,3)
+	if (panic_clear_on_panic) then video_clean(3)
+	video_fout(!"\nKERNEL PANIC\n")
+	video_fout(!"file: %z, function: %z, line: %I\n\n", @__FILE__, @__FUNCTION__, cuint(__LINE__))
+	video_fout(!"reason: ")
+	video_fout(msg, params)
+	
+	panic_hlt()
+#endmacro
