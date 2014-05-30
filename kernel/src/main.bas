@@ -111,10 +111,10 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
     debug_wlog(debug_INFO, !"heap initialized\n")
     
-    if (cpu_has_local_apic()) then
-		debug_wlog(debug_INFO, !"CPU has local APIC\n")
-		lapic_init()
-	end if
+    ''if (cpu_has_local_apic()) then
+	''	debug_wlog(debug_INFO, !"CPU has local APIC\n")
+	''	lapic_init()
+	''end if
     
     init_ports()
     
