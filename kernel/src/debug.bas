@@ -28,32 +28,51 @@ end sub
 
 #if defined (FROST_DEBUG)
 	dim shared debug_com_initialized as boolean = false
+	dim shared COM1_PORT as ushort = &h3F8
 	
-	sub debug_init_com (baseport as ushort, baud as uinteger, parity as ubyte, bits as ubyte)
-		baud = 115200\baud
+	const REG_IER as ushort = 1 '' [RW] Interrupt Enable Register
+	const REG_IIR as ushort = 2 '' [R ] Interrupt Identification Register
+	const REG_FCR as ushort = 2 '' [ W] FIFO Control Register
+	const REG_LCR as ushort = 3 '' [RW] Line Control Register
+	const REG_MCR as ushort = 4 '' [RW] Modem Control Register
+	const REG_LSR as ushort = 5 '' [R ] Line Status Register
+	const REG_MSR as ushort = 6 '' [R ] Modem Status Register
+	const REG_SCR as ushort = 7 '' [RW] Scratch Register
+	
+	sub debug_init_com (baud as uinteger, parity as ubyte, bits as ubyte)
+		dim divisor as ushort = 115200\baud
 		
-		out(baseport+1, 0)
+		'' DLAB=1
+		out(COM1_PORT+REG_LCR, &h80)
 		
-		out(baseport+3, &h80)
+		'' set baud rate divisor
+		out(COM1_PORT, lobyte(divisor))
+		out(COM1_PORT+REG_IER, hibyte(divisor))
 		
-		out(baseport, lobyte(baud))
-		out(baseport+1, hibyte(baud))
+		'' set parity, bits-per-byte and DLAB=0
+		out(COM1_PORT+REG_LCR, ((parity and &h07) shl 3) or ((bits-5) and &h03))
 		
-		out(baseport+3, ((parity and &h07) shl 3) or ((bits-5) and &h03))
+		'' no interrupts
+		out(COM1_PORT+REG_IER, 0)
 		
-		out(baseport+2, &hC7)
-		out(baseport+4, &h0B)
+		'' disable FIFOs
+		out(COM1_PORT+REG_FCR, &h00)
+		
+		'' disable AUX & loopback
+		out(COM1_PORT+REG_MCR, &h00)
 	end sub
 	
 	sub debug_serial_init ()
-		debug_init_com(&h3F8, 19200, 0, 8)
+		debug_init_com(19200, 0, 8)
 		debug_com_initialized = true
 	end sub
 	
 	sub debug_serial_putc (char as ubyte)
 		if (debug_com_initialized) then
-			while((inp(&h3F8+5) and &h20) = 0) : wend
-			out(&h3F8, char)
+			'' wait until we can write
+			while((inp(COM1_PORT+REG_LSR) and &h20) = 0) : wend
+			'' write byte
+			out(COM1_PORT, char)
 		end if
 	end sub
 #endif
