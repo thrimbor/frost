@@ -84,11 +84,13 @@ end sub
 
 
 '' if the list would be ordered, the runtime could be reduced _heavily_
+
+'' 'size' includes the size of header and footer
 function find_hole (size as uinteger) as kmm_header ptr
     dim current_block       as kmm_header ptr = kmm_first_block
     dim best_block_till_now as kmm_header ptr = 0
     
-    '' loop through the list of blocks
+    '' walk through the list of blocks
     do until (current_block = 0)
         if (current_block->size = size) then
             '' best block possible, so return it
@@ -116,6 +118,7 @@ function find_hole (size as uinteger) as kmm_header ptr
     return best_block_till_now
 end function
 
+'' removes a hole from the list by manipulating pointers in kmm_content
 sub remove_hole (hole as kmm_header ptr)
     '' get the next and previous elements from the list
     dim prev_entry as kmm_header ptr = cast(kmm_content ptr, hole+1)->prev_entry
@@ -140,6 +143,15 @@ sub remove_hole (hole as kmm_header ptr)
 end sub
 
 sub insert_hole (hole as kmm_header ptr)
+	'' we need to take special care if the list is empty (can happen temporarily when kfree does a unify-right)
+	if (kmm_first_block = 0) then
+		kmm_first_block = hole
+		dim content as kmm_content ptr = cast(kmm_content ptr, hole+1)
+		content->prev_entry = 0
+		content->next_entry = 0
+		return
+	end if
+	
     '' adjust the first block in the list
     dim first_block_content as kmm_content ptr = cast(kmm_content ptr, cast(kmm_header ptr, kmm_first_block)+1)
     first_block_content->prev_entry = hole
@@ -215,19 +227,19 @@ sub kfree (addr as any ptr)
     
     dim header as kmm_header ptr = addr - sizeof(kmm_header)
     '' only free if it's occupied
-    if (header->is_hole = 1) then return
+    assert(header->is_hole <> 1)
     dim footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(header) + header->size - sizeof(kmm_footer))
     
     '' check the magic fields only when debugging
     assert(header->magic = HEAP_MAGIC)
     assert(footer->magic = HEAP_MAGIC)
-    assert(footer->header = footer)
+    assert(footer->header = header)
     
     '' the block is now a hole again
     header->is_hole = 1
     
     '' we want to add the header to the free holes
-    dim do_add as byte = true
+    dim do_add as boolean = true
     
     '' unify left
     dim test_footer as kmm_footer ptr = cast(kmm_footer ptr, cuint(header)-sizeof(kmm_footer))

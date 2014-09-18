@@ -19,6 +19,10 @@
 #pragma once
 
 #include "isf.bi"
+#include "process.bi"
+#include "kernel.bi"
 
+declare function register_irq_handler (process as process_type ptr, irq as integer) as boolean
 '' the global interrupt-handler
 declare function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
+declare function irq_is_handler (process as process_type ptr, irq as uinteger) as boolean

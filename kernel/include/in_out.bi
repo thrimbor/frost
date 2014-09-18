@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2014  Stefan Schmidt
+ ' Copyright (C) 2010-2013  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -18,7 +18,5 @@
 
 #pragma once
 
-declare function zstring_len (zstr as zstring) as uinteger
-declare function zstring_instr (zstr as zstring, substr as zstring) as uinteger
-declare function zstring_cmp (zstr1 as zstring, zstr2 as zstring) as integer
-declare function zstring_ncmp (zstr1 as zstring, zstr2 as zstring, n as uinteger) as integer
+declare sub outb (port as ushort, value as ubyte)
+declare function inb (port as ushort) as ubyte 

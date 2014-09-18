@@ -35,12 +35,12 @@ dim shared pmm_lock as spinlock = 0
 
 declare sub pmm_mark_used (page as any ptr)
 
-'' TODO: the cmdline of the modules should be reserved also
 sub pmm_init (mbinfo as multiboot_info ptr)
-	'' this sub will take 3 steps:
 	'' 1. mark the whole memory as used
 	'' 2. free the memory marked as free in the memory-map
 	'' 3. mark the whole memory used by the kernel as used
+	'' 4. mark the video memory as used
+	'' 5. mark the modules and their cmdline as used
 	
 	if ((mbinfo->flags and MULTIBOOT_INFO_MEM_MAP) = 0) then
 		panic_error(!"Memory map not available!\n")
@@ -90,13 +90,21 @@ sub pmm_init (mbinfo as multiboot_info ptr)
 	dim module_addr as addr_t
 	dim module_end_addr as addr_t
 	dim module_ptr as multiboot_mod_list ptr = cast(any ptr, mbinfo->mods_addr)
+	
+	'' iterate over the module list
 	for counter as uinteger = 1 to mbinfo->mods_count
 		module_addr = module_ptr->mod_start
 		module_end_addr = module_ptr->mod_end
+		
+		'' mark the image
 		while (module_addr < module_end_addr)
 			pmm_mark_used(cast(any ptr, module_addr))
 			module_addr += PAGE_SIZE
 		wend
+		
+		'' mark the cmdline
+		pmm_mark_used(cast(any ptr, mbinfo->cmdline))
+		
 		module_ptr += 1
 	next
 end sub

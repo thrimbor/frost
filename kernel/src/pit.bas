@@ -17,13 +17,14 @@
  '/
 
 #include "pit.bi"
+#include "in_out.bi"
 
 const COMMAND_PORT as byte = &h43
 const DATA_PORT    as byte = &h40
 
 sub pit_set_frequency (frequency as ushort)
 	frequency = 1193182 \ frequency
-	out(COMMAND_PORT, &h34)
-	out(DATA_PORT, lobyte(frequency))
-	out(DATA_PORT, hibyte(frequency))
+	outb(COMMAND_PORT, &h34)
+	outb(DATA_PORT, lobyte(frequency))
+	outb(DATA_PORT, hibyte(frequency))
 end sub

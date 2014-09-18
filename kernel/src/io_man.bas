@@ -42,7 +42,6 @@ function request_port (process as process_type ptr, port as uinteger) as boolean
 	
 	'' port out of range?
 	if (port >= &hFFFF) then
-		video_fout(!"port out of range\n")
 		return false
 	end if
 	
@@ -50,30 +49,21 @@ function request_port (process as process_type ptr, port as uinteger) as boolean
 	if (global_port_bitmap(index) and mask) then
 		'' port not reserved for this process?
 		if ((process->io_bitmap <> nullptr) and process->io_bitmap[index] and mask) then
-			video_fout(!"port already occupied\n")
 			return false
 		else
-			video_fout(!"port already occupied by this process\n")
 			return true
 		end if
 	end if
 	
 	'' if there is no bitmap yet, reserve one
 	if (process->io_bitmap = nullptr) then
-		video_fout(!"no bitmap existing, creating one...\n")
 		process->io_bitmap = kmalloc(&hFFFF \ 8)
-		video_fout(!"bitmap address: %h########I\n", cuint(process->io_bitmap))
 		memset(process->io_bitmap, &hFF, &hFFFF \ 8)
 	end if
-	
-	video_fout(!"index: %I\n", index)
-	video_fout(!"mask: %I\n", mask)
 	
 	'' reserve the port
 	global_port_bitmap(index) or= mask
 	process->io_bitmap[index] and= not mask
-	
-	video_fout(!"done\n")
 	
 	return true
 end function

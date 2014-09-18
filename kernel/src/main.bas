@@ -121,6 +121,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     debug_wlog(debug_INFO, !"loading init module...")
     load_init_module(@mb_info)
     debug_wlog(debug_INFO, !"done.\n")
+    
+    thread_create_idle_thread()
 
     '' the scheduler takes over here
     asm sti

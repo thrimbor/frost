@@ -20,6 +20,7 @@
 #include "video.bi"
 #include "mem.bi"
 #include "debug.bi"
+#include "in_out.bi"
 
 dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)  '' pointer to video-memory
 dim shared cursor_pos as addr_t = 0                        '' the position of the cursor
@@ -221,19 +222,19 @@ end sub
 
 sub video_update_cursor ()
 	if (not cursor_hidden) then
-		out(&h3D4, 14)
-		out(&h3D5, cubyte(((cursor_pos shr 1) + 1) shr 8))
-		out(&h3D4, 15)
-		out(&h3D5, cubyte(((cursor_pos shr 1) + 1)))
+		outb(&h3D4, 14)
+		outb(&h3D5, cubyte(((cursor_pos shr 1) + 1) shr 8))
+		outb(&h3D4, 15)
+		outb(&h3D5, cubyte(((cursor_pos shr 1) + 1)))
 	end if
 end sub
 
 sub video_hide_cursor ()
 	cursor_hidden = true
-	out(&h3D4, 14)
-	out(&h3D5, &h07)
-	out(&h3D4, 15)
-	out(&h3D5, &hD0)
+	outb(&h3D4, 14)
+	outb(&h3D5, &h07)
+	outb(&h3D4, 15)
+	outb(&h3D5, &hD0)
 end sub
 
 sub video_show_cursor ()

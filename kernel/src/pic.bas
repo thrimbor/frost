@@ -17,6 +17,8 @@
  '/
 
 #include "pic.bi"
+#include "in_out.bi"
+#include "kernel.bi"
 
 const MASTER_COMMAND as ubyte = &h20
 const MASTER_DATA    as ubyte = &h21
@@ -28,27 +30,43 @@ const COMMAND_EOI as ubyte = &h20
 
 sub pic_init ()
 	'' send ICW1 to both pics
-	out(MASTER_COMMAND, &h11)
-	out(SLAVE_COMMAND, &h11)
+	outb(MASTER_COMMAND, &h11)
+	outb(SLAVE_COMMAND, &h11)
 	
 	'' ICW2 is where we want to map the interrupts
 	'' we map them directly after the exceptions
-	out(MASTER_DATA, &h20)
-	out(SLAVE_DATA, &h28)
+	outb(MASTER_DATA, &h20)
+	outb(SLAVE_DATA, &h28)
 	
 	'' ICW3: tell the PICs that they're connected through IRQ 2
-	out(MASTER_DATA, &h04)
-	out(SLAVE_DATA, &h02)
+	outb(MASTER_DATA, &h04)
+	outb(SLAVE_DATA, &h02)
 	
 	'' ICW4: tell the PICs we're in 8086-mode
-	out(MASTER_DATA, &h01)
-	out(SLAVE_DATA, &h01)
+	outb(MASTER_DATA, &h01)
+	outb(SLAVE_DATA, &h01)
+	
+	'' select ISR
+	outb(MASTER_COMMAND, &h0B)
+	outb(SLAVE_COMMAND, &h0B)
 end sub
 
 sub pic_send_eoi (irq as ubyte)
-	out(MASTER_COMMAND, COMMAND_EOI)                '' send the EOI-command to the first PIC
-	if (irq>7) then out(SLAVE_COMMAND, COMMAND_EOI) '' if the irq was above 7, the second PIC needs to be informed also
+	outb(MASTER_COMMAND, COMMAND_EOI)                '' send the EOI-command to the first PIC
+	if (irq>7) then outb(SLAVE_COMMAND, COMMAND_EOI) '' if the irq was above 7, the second PIC needs to be informed also
 end sub
+
+function pic_is_spurious (irq as ubyte) as boolean
+	if (irq = 7) then
+		'' check ISR of the first pic
+		if ((inb(MASTER_COMMAND) and &b10000000) = 0) then return true
+	elseif (irq = 15) then
+		'' check ISR of the second pic
+		if ((inb(SLAVE_COMMAND) and &b10000000) = 0) then return true
+	end if
+	
+	return false
+end function
 
 sub pic_mask (irq as ubyte)
 	dim port as ushort
@@ -60,12 +78,12 @@ sub pic_mask (irq as ubyte)
 		irq -= 8
 	end if
 	
-	out(port, (inp(port) or (1 shl irq)))
+	outb(port, (inb(port) or (1 shl irq)))
 end sub
 
 sub pic_mask_all ()
-	out(MASTER_DATA, &hFF)
-	out(SLAVE_DATA, &hFF)
+	outb(MASTER_DATA, &hFF)
+	outb(SLAVE_DATA, &hFF)
 end sub
 
 sub pic_unmask (irq as ubyte)
@@ -78,5 +96,5 @@ sub pic_unmask (irq as ubyte)
 		irq -= 8
 	end if
 	
-	out(port, (inp(port) and not(1 shl irq)))
+	outb(port, (inb(port) and not(1 shl irq)))
 end sub

@@ -33,12 +33,14 @@ type process_type
 	
 	context as vmm_context
 	
-	state as UBYTE
+	state as ubyte
 	
-	rpc_handler as any ptr
+	ipc_handler as any ptr
+	interrupt_handler as any ptr
 	
 	io_bitmap as uinteger ptr
 	
+	popup_stack_mask as uinteger<32>
 	threads as thread_type ptr
 	next_tid as uinteger
 	tid_lock as spinlock
@@ -48,3 +50,5 @@ type process_type
 end type
 
 declare function process_create (parent as process_type ptr = 0) as process_type ptr
+declare sub process_remove_thread (thread as thread_type ptr)
+declare sub process_destroy (process as process_type ptr)

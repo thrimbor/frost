@@ -25,6 +25,22 @@
 #include "process.bi"
 #include "syscall.bi"
 #include "panic.bi"
+#include "pmm.bi"
+
+dim shared irq_handlers(0 to 15, 0 to 4) as process_type ptr
+
+function register_irq_handler (process as process_type ptr, irq as integer) as boolean
+	if ((irq < lbound(irq_handlers,1)) or (irq > ubound(irq_handlers,1))) then return false
+	
+	for counter as integer = lbound(irq_handlers,2) to ubound(irq_handlers,2)
+		if (irq_handlers(irq, counter) = nullptr) then
+			irq_handlers(irq, counter) = process
+			return true
+		end if
+	next
+	
+	return false
+end function
 
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
@@ -33,14 +49,45 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
     select case isf->int_nr
         case 0 to &h0C                                      '' exception
 			panic_exception(isf)                      '' show panic screen
+		
         case &h0D
 			if (tss_ptr->io_bitmap_offset = TSS_IO_BITMAP_NOT_LOADED) then
 				set_io_bitmap()
 			else
 				panic_exception(isf)
 			end if
+		
 		case &h0E to &h13
 			panic_exception(isf)
+		
+		case &h21 to &h2F
+			'' spurious IRQ?
+			if (pic_is_spurious(isf->int_nr)) then
+				'' did it come from the slave PIC? then send eoi to the master
+				if (isf->int_nr = 15) then pic_send_eoi(&h01)
+				
+				return new_isf
+			end if
+			
+			'' mask the IRQ to prevent it from firing again (gets unmasked when the thread is done)
+			pic_mask(isf->int_nr - &h20)
+		
+			'' IRQ
+			for counter as integer = lbound(irq_handlers,2) to ubound(irq_handlers,2)
+				dim process as process_type ptr = irq_handlers(isf->int_nr-&h20, counter)
+				if (process <> nullptr) then
+					if (process->interrupt_handler <> nullptr) then
+						dim thread as thread_type ptr = spawn_popup_thread(process, process->interrupt_handler)
+						
+						dim x as uinteger ptr = vmm_kernel_automap(thread->userstack_p, PAGE_SIZE)
+						x[PAGE_SIZE\4-1] = isf->int_nr-&h20
+						x[PAGE_SIZE\4-2] = 0  '' return address, needed because of cdecl!
+						vmm_kernel_unmap(x, PAGE_SIZE)
+						thread->isf->esp -= 8
+					end if
+				end if
+			next
+		
         case &h20                                           '' timer IRQ
 			dim old_process as process_type ptr = nullptr
 			if (get_current_thread() <> nullptr) then
@@ -77,4 +124,16 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 	end if
     
     return new_isf
+end function
+
+function irq_is_handler (process as process_type ptr, irq as uinteger) as boolean
+	if ((irq < lbound(irq_handlers,1)) or (irq > ubound(irq_handlers,1))) then return false
+	
+	for counter as integer = lbound(irq_handlers,2) to ubound(irq_handlers,2)
+		if (irq_handlers(irq, counter) = process) then
+			return true
+		end if
+	next
+	
+	return false
 end function

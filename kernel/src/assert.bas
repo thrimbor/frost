@@ -17,10 +17,12 @@
  '/
 
 #include "video.bi"
+#include "debug.bi"
 
 #if defined (FROST_DEBUG)
 	sub _fb_Assert alias "fb_Assert" (byval fname as zstring ptr, byval linenum as integer, byval funcname as zstring ptr, byval expression as zstring ptr)
 		video_fout(!"%z(%i): assertion failed at %z: %z\n", fname, linenum, funcname, expression)
+		debug_stacktrace(10)
 		asm cli
 		asm hlt
 	end sub

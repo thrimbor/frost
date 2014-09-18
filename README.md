@@ -21,7 +21,8 @@ On some Linux distributions the script will fail because they contain
 genisoimage from cdrkit instead of mkisofs from cdrtools. You can create
 a link on genisoimage named mkisofs, but I strongly recommend installing
 cdrtools instead of cdrkit. If cdrtools is not available on your distribution,
-contact its maintainers.
+please contact its maintainers (I don't want to get into a debate here, but
+cdrkit received it's last commit three years ago).
 
 #### Directory layout ####
 

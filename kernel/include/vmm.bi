@@ -48,6 +48,11 @@ enum VMM_PDE_FLAGS explicit
 	GLOBAL        = &h100
 end enum
 
+enum VMM_FLAGS explicit
+	USER_DATA     = VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.USERSPACE
+	KERNEL_DATA   = VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE
+end enum
+
 '' the kernels address space is from 0-1 gb, so we put the kernels pagetables at 1gb-4mb
 const VMM_PAGETABLES_VIRT_START as uinteger = &h3FC00000
 const VMM_PAGE_MASK as uinteger = &hFFFFF000
@@ -65,6 +70,7 @@ declare sub vmm_context_initialize (cntxt as vmm_context ptr)
 declare function vmm_map_page (cntxt as vmm_context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
 declare function vmm_map_range (cntxt as vmm_context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
 declare sub vmm_unmap_range (cntxt as vmm_context ptr, v_addr as any ptr, pages as uinteger)
+declare function vmm_automap (context as vmm_context ptr, p_start as any ptr, size as uinteger, lowerLimit as uinteger, upperLimit as uinteger, flags as uinteger) as any ptr
 declare function vmm_kernel_automap (p_start as any ptr, size as uinteger) as any ptr
 declare sub vmm_kernel_unmap (v_start as any ptr, size as uinteger)
 declare function vmm_resolve (cntxt as vmm_context ptr, vaddr as any ptr) as any ptr

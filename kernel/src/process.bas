@@ -56,7 +56,10 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	'' set parent
 	process->parent = parent
 	
+	process->ipc_handler = nullptr
+	process->interrupt_handler = nullptr
 	process->io_bitmap = nullptr
+	process->popup_stack_mask = 0
 	
 	'' insert the process into the list
 	process->prev_process = 0
@@ -69,6 +72,28 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	
 	return process
 end function
+
+sub process_remove_thread (thread as thread_type ptr)
+	dim process as process_type ptr = thread->parent_process
+	
+	dim t as thread_type ptr = process->threads
+	
+	if (t = nullptr) then return '' maybe panic instead?
+	
+	if (t = thread) then
+		process->threads = t->next_thread
+		return
+	end if
+	
+	while (t->next_thread <> nullptr)
+		if (t->next_thread = thread) then
+			t->next_thread = t->next_thread->next_thread
+			return
+		end if
+		
+		t = t->next_thread
+	wend
+end sub
 
 sub process_destroy (process as process_type ptr)
 	'' TODO: implement

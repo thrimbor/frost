@@ -19,6 +19,7 @@
 #include "debug.bi"
 #include "kernel.bi"
 #include "video.bi"
+#include "in_out.bi"
 
     
 '' this function allows a loglevel to be set which is used by a wrapper for the video-code
@@ -43,23 +44,23 @@ end sub
 		dim divisor as ushort = 115200\baud
 		
 		'' DLAB=1
-		out(COM1_PORT+REG_LCR, &h80)
+		outb(COM1_PORT+REG_LCR, &h80)
 		
 		'' set baud rate divisor
-		out(COM1_PORT, lobyte(divisor))
-		out(COM1_PORT+REG_IER, hibyte(divisor))
+		outb(COM1_PORT, lobyte(divisor))
+		outb(COM1_PORT+REG_IER, hibyte(divisor))
 		
 		'' set parity, bits-per-byte and DLAB=0
-		out(COM1_PORT+REG_LCR, ((parity and &h07) shl 3) or ((bits-5) and &h03))
+		outb(COM1_PORT+REG_LCR, ((parity and &h07) shl 3) or ((bits-5) and &h03))
 		
 		'' no interrupts
-		out(COM1_PORT+REG_IER, 0)
+		outb(COM1_PORT+REG_IER, 0)
 		
 		'' disable FIFOs
-		out(COM1_PORT+REG_FCR, &h00)
+		outb(COM1_PORT+REG_FCR, &h00)
 		
 		'' disable AUX & loopback
-		out(COM1_PORT+REG_MCR, &h00)
+		outb(COM1_PORT+REG_MCR, &h00)
 	end sub
 	
 	sub debug_serial_init ()
@@ -70,9 +71,9 @@ end sub
 	sub debug_serial_putc (char as ubyte)
 		if (debug_com_initialized) then
 			'' wait until we can write
-			while((inp(COM1_PORT+REG_LSR) and &h20) = 0) : wend
+			while((inb(COM1_PORT+REG_LSR) and &h20) = 0) : wend
 			'' write byte
-			out(COM1_PORT, char)
+			outb(COM1_PORT, char)
 		end if
 	end sub
 #endif

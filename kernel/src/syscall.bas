@@ -21,59 +21,110 @@
 #include "process.bi"
 #include "video.bi"
 #include "io_man.bi"
+#include "panic.bi"
+#include "interrupt_handler.bi"
+#include "pic.bi"
 
 
-function syscall_handler (param1 as uinteger, param2 as uinteger, param3 as uinteger, param4 as uinteger) as uinteger
+function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as uinteger, param3 as uinteger) as uinteger
 	dim cur_thread as thread_type ptr = get_current_thread()
 	
-	select case (param1)
+	select case (funcNumber)
 		case SYSCALL_PROCESS_GET_PID
 			return cur_thread->parent_process->id
+		
 		case SYSCALL_PROCESS_GET_PARENT_PID
 			if (cur_thread->parent_process->parent <> nullptr) then
 				return cur_thread->parent_process->parent->id
 			else
 				return 0
 			end if
+		
 		case SYSCALL_PROCESS_CREATE
 			'' TODO: implement
+		
 		case SYSCALL_PROCESS_EXIT
 			'' TODO: implement
+		
 		case SYSCALL_PROCESS_KILL
 			'' TODO: implement
+		
 		case SYSCALL_THREAD_GET_TID
 			return cur_thread->id
+		
 		case SYSCALL_THREAD_CREATE
-			'' FIXME: doesn't work yet, leads to strange crashes
-			'' these pointers come from userspace, so check them first!
-			if ((param2 < &h40000000) or (param3 < &h40000000)) then return false
+			'' param1 = entrypoint for the thread
+			'' param2 = usermode stack for the thread
+			if ((param1 < &h40000000) or (param2 < &h40000000)) then return false
 			
-			if (thread_create(cur_thread->parent_process, cast(any ptr, param2), cast(any ptr, param3)) <> nullptr) then
+			dim thread as thread_type ptr = thread_create(cur_thread->parent_process, cast(any ptr, param1), cast(any ptr, param2))
+			if (thread <> nullptr) then
+				thread_activate(thread)
 				return true
 			else
 				return false
 			end if
+		
 		case SYSCALL_THREAD_SLEEP
 			'' TODO: implement
+		
 		case SYSCALL_THREAD_EXIT
-			'' TODO: implement
+			thread_destroy(cur_thread)
+		
+		case SYSCALL_MEMORY_ALLOCATE_PHYSICAL:
+			'' bytes, addr, flags
+			'' FIXME: not entirely correct, remember page alignment!
+			'asm hlt
+			return cuint(vmm_automap(@cur_thread->parent_process->context, cast(any ptr, param2), param1, &h40000000, &hFFFFFFFF, VMM_FLAGS.USER_DATA))
+		
 		case SYSCALL_PORT_REQUEST
-			request_port(cur_thread->parent_process, param2)
-			set_io_bitmap()
+			if (request_port(cur_thread->parent_process, param1)) then
+				set_io_bitmap()
+				return true
+			end if
+			
+			return false
+		
 		case SYSCALL_PORT_RELEASE
-			release_port(cur_thread->parent_process, param2)
-			set_io_bitmap()
-		case SYSCALL_SET_INTERRUPT_HANDLER
+			if (release_port(cur_thread->parent_process, param1)) then
+				set_io_bitmap()
+				return true
+			end if
+			
+			return false
+		
+		case SYSCALL_IRQ_HANDLER_SET
+			cur_thread->parent_process->interrupt_handler = cast(any ptr, param1)
+		
+		case SYSCALL_IRQ_HANDLER_REGISTER
+			return register_irq_handler(cur_thread->parent_process, param1)
+		
+		case SYSCALL_IRQ_HANDLER_EXIT
+			if (irq_is_handler(cur_thread->parent_process, param1)) then
+				pic_unmask(param1)
+			end if
+			
+			thread_destroy(cur_thread)
+		
+		case SYSCALL_IPC_HANDLER_CALL
 			'' TODO: implement
-		case SYSCALL_RPC_SET_HANDLER
+			'' param1 = target pid
+			
+		
+		case SYSCALL_IPC_HANDLER_SET
+			cur_thread->parent_process->ipc_handler = cast(any ptr, param1)
+		
+		case SYSCALL_IPC_HANDLER_EXIT
+			'' IPC popup threads need to be cleaned up with this syscall
 			'' TODO: implement
-		case SYSCALL_RPC_CALL
-			'' TODO: implement
-		case SYSCALL_RPC_WAIT_FOR_CALL
-			'' TODO: implement
+		
 		case SYSCALL_FORTY_TWO
 			video_fout(!"The answer to life, the universe and everything is... 42\n")
+			
 		case 43
-			video_fout(!"%z\n", param2)
+			video_fout(!"%z\n", param1)
+		
+		case else:
+			panic_error("Undefined syscall called!")
 	end select
 end function

@@ -17,9 +17,11 @@
  '/
 
 #pragma once
+#include "kernel.bi"
 
 declare sub pic_init ()
 declare sub pic_send_eoi (irq as ubyte)
+declare function pic_is_spurious (irq as ubyte) as boolean
 declare sub pic_mask (irq as ubyte)
 declare sub pic_mask_all ()
 declare sub pic_unmask (irq as ubyte)

@@ -23,8 +23,9 @@
 const THREAD_STATE_DISABLED = 0
 const THREAD_STATE_RUNNING = 1
 const THREAD_STATE_BLOCKED = 2
+const THREAD_STATE_KILL_ON_SCHEDULE = 3
 
-const THREAD_MAX_TICKS = 50
+const THREAD_FLAG_POPUP = 1
 
 type process_type_ as process_type
 
@@ -32,23 +33,28 @@ type thread_type
 	parent_process as process_type_ ptr
 	
 	id as uinteger
+	flags as ubyte
 	state as ubyte
 	
+	kernelstack_p as any ptr
 	kernelstack_bottom as any ptr
+	userstack_p as any ptr
+	userstack_bottom as any ptr
 	isf as interrupt_stack_frame ptr
-	
-	ticks_left as uinteger
-	ticks_max as uinteger
 	
 	'prev_thread as thread_type ptr
 	next_thread as thread_type ptr
 	
-	prev_active_thread as thread_type ptr
+	'prev_active_thread as thread_type ptr
 	next_active_thread as thread_type ptr
 end type
 
-declare function thread_create (process as process_type_ ptr, entry as any ptr, v_userstack_bottom as any ptr) as thread_type ptr
+declare function thread_create (process as process_type_ ptr, entry as any ptr, v_userstack_bottom as any ptr, flags as ubyte = 0) as thread_type ptr
 declare sub thread_activate (thread as thread_type ptr)
+declare sub thread_destroy (thread as thread_type ptr)
+declare sub thread_deactivate (thread as thread_type ptr)
+declare function spawn_popup_thread (process as process_type_ ptr, entrypoint as any ptr) as thread_type ptr
 declare function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 declare function get_current_thread () as thread_type ptr
+declare sub thread_create_idle_thread ()
 declare sub set_io_bitmap ()

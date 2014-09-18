@@ -26,6 +26,17 @@
 #include "pmm.bi"
 #include "video.bi"
 
+
+type module_list
+	start as any ptr
+	size as uinteger
+	cmdline as any ptr
+end type
+	
+
+
+'dim shared init_process as process_type ptr
+
 sub load_init_module (mbinfo as multiboot_info ptr)
 	'' if no modules are available, we have a problem
 	if (mbinfo->mods_count = 0) then
@@ -39,7 +50,7 @@ sub load_init_module (mbinfo as multiboot_info ptr)
 	mbinfo->mods_count -= 1
 end sub
 
-'' TODO: the cmdline should be given to the module somehow
+'' TODO: the cmdline should be given to the module somehow (e.g. do it like linux - /proc/pid/cmdline - we need vfs for this)
 sub load_module (multiboot_module as multiboot_module_t ptr)
 	dim v_multiboot_module as multiboot_module_t ptr
 
@@ -53,18 +64,17 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	dim size as uinteger = v_multiboot_module->mod_end - v_multiboot_module->mod_start
 	dim v_image as uinteger = cuint(vmm_kernel_automap(cast(any ptr, v_multiboot_module->mod_start), size))
 	
-	dim process as process_type ptr
-	process = process_create(nullptr)
+	init_process = process_create(nullptr)
 	
-	if (process = nullptr) then
+	if (init_process = nullptr) then
 		panic_error(!"Could not create init-process!\n")
 	end if
 	
-	if (not(elf_load_image(process, v_image, size))) then
+	if (not(elf_load_image(init_process, v_image, size))) then
 		panic_error(!"Could not load the init-module!")
 	end if
-	
-	thread_activate(process->threads)
+
+	thread_activate(init_process->threads)
 	
 	'' unmap the image, we don't need it any longer
 	vmm_kernel_unmap(cast(any ptr, v_image), size)
@@ -72,4 +82,11 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	pmm_free(cast(any ptr, v_multiboot_module->mod_start), num_pages(size))
 	'' unmap the module struct
 	vmm_kernel_unmap(v_multiboot_module, sizeof(multiboot_module_t))
+end sub
+
+sub pass_modules_to_init (mbinfo as multiboot_info ptr)
+	'' TODO:
+	'' - map the multiboot-modules into init
+	'' - create a list of modules in init
+	'' - pass the address to init via the stack
 end sub

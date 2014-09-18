@@ -20,6 +20,13 @@ make clean
 make
 cd ..
 
+cd drivers
+cd vgaconsole
+make clean
+make
+cd ..
+cd ..
+
 
 cd build
 
@@ -28,6 +35,8 @@ cp ../kernel/frost.krn iso_tmp/system/
 
 # copy the init-process
 cp ../init/init.elf iso_tmp/system/
+
+cp ../drivers/vgaconsole/vgaconsole.elf iso_tmp/system/
 
 # now prepare grub 2
 cd iso_tmp

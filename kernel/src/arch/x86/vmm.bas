@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2014  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -45,7 +45,6 @@ sub vmm_init ()
 	kernel_context.v_pagedir = kernel_context.p_pagedir
 	
 	'' we need to activate the context early for kernel_context to be valid
-	'activate_context(@kernel_context)
 	current_context = @kernel_context
 	
 	'' map the page tables
@@ -195,7 +194,7 @@ function vmm_map_range (cntxt as vmm_context ptr, v_addr as any ptr, p_start as 
 end function
 
 sub vmm_unmap_range (cntxt as vmm_context ptr, v_addr as any ptr, pages as uinteger)
-	for counter as uinteger = 0 to pages
+	for counter as uinteger = 0 to pages-1
 		vmm_unmap_page(cntxt, v_addr+counter*PAGE_SIZE)
 	next
 end sub
@@ -224,11 +223,9 @@ sub free_pagetable (cntxt as vmm_context ptr, table as uinteger ptr)
 	end if
 end sub
 
-function find_free_pages (cntxt as vmm_context ptr, pages as uinteger) as uinteger
+function find_free_pages (cntxt as vmm_context ptr, pages as uinteger, lower_limit as uinteger, upper_limit as uinteger) as uinteger
 	dim pdir as uinteger ptr = cntxt->v_pagedir
 	dim free_pages_found as uinteger = 0
-	dim lower_limit as uinteger = PAGE_SIZE
-	dim upper_limit as uinteger = &h40000000
 	
 	dim cur_page_table as uinteger = lower_limit shr 22
 	dim cur_page as uinteger = (lower_limit shr 12) mod 1024
@@ -268,22 +265,27 @@ function find_free_pages (cntxt as vmm_context ptr, pages as uinteger) as uinteg
 	end if
 end function
 
-function vmm_kernel_automap (p_start as any ptr, size as uinteger) as any ptr
-	'' this maps a piece of physical memory to a free location in the kernel's address space
-	'' and returns the virtual address
-	if (size = 0) then return 0
+function vmm_automap (context as vmm_context ptr, p_start as any ptr, size as uinteger, lowerLimit as uinteger, upperLimit as uinteger, flags as uinteger) as any ptr
+	if (size=0) then return 0
+	
 	dim aligned_addr as uinteger = cuint(p_start) and VMM_PAGE_MASK
 	dim aligned_bytes as uinteger = size + (cuint(p_start) - aligned_addr)
-	dim cntxt as vmm_context ptr = vmm_get_current_context()
 	
-	dim vaddr as uinteger = find_free_pages(cntxt, num_pages(aligned_bytes))
-	if (vaddr = 0) then
-		'' we have a problem, we could not find enough space
-		return 0
-	end if
+	'' search for free pages
+	dim vaddr as uinteger = find_free_pages(context, num_pages(aligned_bytes), lowerLimit, upperLimit)
 	
-	vmm_map_range(cntxt, cast(any ptr, vaddr), cast(any ptr, aligned_addr), cast(any ptr, aligned_addr+aligned_bytes), VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE)
+	'' not enough free pages found?
+	if (vaddr = 0) then return 0
+	
+	'' map the pages
+	vmm_map_range(context, cast(any ptr, vaddr), cast(any ptr, aligned_addr), cast(any ptr, aligned_addr+aligned_bytes), flags)
+	
+	'' return the virtual address
 	return vaddr + (p_start - aligned_addr)
+end function
+
+function vmm_kernel_automap (p_start as any ptr, size as uinteger) as any ptr
+	return vmm_automap(vmm_get_current_context(), p_start, size, PAGE_SIZE, &h40000000, VMM_FLAGS.KERNEL_DATA)
 end function
 
 sub vmm_kernel_unmap (v_start as any ptr, size as uinteger)
@@ -330,6 +332,7 @@ end sub
 sub vmm_activate_context (cntxt as vmm_context ptr)
 	sync_context(cntxt)
 	current_context = cntxt
+	
 	dim pagedir as uinteger ptr = cntxt->p_pagedir
 	asm
 		mov ebx, [pagedir]

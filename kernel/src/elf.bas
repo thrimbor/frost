@@ -25,7 +25,12 @@
 #include "panic.bi"
 
 function elf_header_check (header as Elf32_Ehdr ptr) as integer
-	if (header->e_ident.EI_MAGIC <> ELF_MAGIC) then return 1
+	'' check for the magic value (&h7F, 'E', 'L', 'F')
+	if ((header->e_ident.EI_MAGIC(0) <> &h7F) or _
+		(header->e_ident.EI_MAGIC(1) <> &h45) or _
+		(header->e_ident.EI_MAGIC(2) <> &h4C) or _
+		(header->e_ident.EI_MAGIC(3) <> &h46)) then return 1
+			
 	if (header->e_type <> ELF_ET_EXEC) then return 2
 	if (header->e_machine <> ELF_EM_386) then return 3
 	if (header->e_ident.EI_CLASS <> ELF_CLASS_32) then return 4
@@ -41,8 +46,12 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 	
 	if (elf_header_check(header) > 0) then return false
 	
+	'' the only module loaded by this code is init, so we reserve a stack here
+	'' every other program has to get it's stack from somewhere else
+	dim module_stack as any ptr = pmm_alloc(1)
+	vmm_map_page(@process->context, cast(any ptr, &hFFFFF000), module_stack, VMM_FLAGS.USER_DATA)
 	'' create the thread
-	thread_create(process, cast(any ptr, header->e_entry), nullptr)
+	thread_create(process, cast(any ptr, header->e_entry), cast(any ptr, &hFFFFF000))
 
 	'' pointer to the first program header
 	dim program_header as Elf32_Phdr ptr = cast(Elf32_Phdr ptr, cuint(header) + header->e_phoff)

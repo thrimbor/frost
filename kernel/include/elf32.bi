@@ -36,7 +36,7 @@ const ELF_DATA_2LSB as ubyte = &h01
 const ELF_DATA_2MSB as ubyte = &h02
 
 type ELF_IDENT_HEADER field=1
-	EI_MAGIC as uinteger
+	EI_MAGIC(0 to 3) as ubyte
 	EI_CLASS as ubyte                          '' 32 or 64 bit?
 	EI_DATA as ubyte                           '' Little or Big Endian?
 	EI_VERSION as ubyte                        '' same as e_version

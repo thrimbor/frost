@@ -1,5 +1,5 @@
 ; FROST x86 microkernel
-; Copyright (C) 2010-2013  Stefan Schmidt
+; Copyright (C) 2010-2014  Stefan Schmidt
 ; 
 ; This program is free software: you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
