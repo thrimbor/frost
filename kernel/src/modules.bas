@@ -26,13 +26,14 @@
 #include "pmm.bi"
 #include "video.bi"
 
+declare sub load_module (multiboot_module as multiboot_module_t ptr, process as process_type ptr ptr)
 
 type module_list
 	start as any ptr
 	size as uinteger
 	cmdline as any ptr
 end type
-	
+
 
 
 'dim shared init_process as process_type ptr
@@ -43,15 +44,29 @@ sub load_init_module (mbinfo as multiboot_info ptr)
 		panic_error(!"No init-module available.\n")
 	end if
 	
-	load_module(cast(multiboot_module_t ptr, mbinfo->mods_addr))
+	load_module(cast(multiboot_module_t ptr, mbinfo->mods_addr), @init_process)
 
 	'' we loaded the module, so remove it from the list
 	mbinfo->mods_addr += sizeof(multiboot_module_t)
 	mbinfo->mods_count -= 1
 end sub
 
+sub load_modules (mbinfo as multiboot_info ptr)
+	if (mbinfo->mods_count) = 0 then return
+	
+	dim mod_addr as multiboot_module_t ptr = cast(multiboot_module_t ptr, mbinfo->mods_addr)
+	
+	for index as uinteger = 0 to mbinfo->mods_count-1
+		dim process as process_type ptr = nullptr
+		load_module(mod_addr, @process)
+		
+		mod_addr += 1
+	next
+end sub
+		
+
 '' TODO: the cmdline should be given to the module somehow (e.g. do it like linux - /proc/pid/cmdline - we need vfs for this)
-sub load_module (multiboot_module as multiboot_module_t ptr)
+sub load_module (multiboot_module as multiboot_module_t ptr, process as process_type ptr ptr)
 	dim v_multiboot_module as multiboot_module_t ptr
 
 	'' map the module structure
@@ -64,17 +79,17 @@ sub load_module (multiboot_module as multiboot_module_t ptr)
 	dim size as uinteger = v_multiboot_module->mod_end - v_multiboot_module->mod_start
 	dim v_image as uinteger = cuint(vmm_kernel_automap(cast(any ptr, v_multiboot_module->mod_start), size))
 	
-	init_process = process_create(nullptr)
+	*process = process_create(nullptr)
 	
-	if (init_process = nullptr) then
+	if (*process = nullptr) then
 		panic_error(!"Could not create init-process!\n")
 	end if
 	
-	if (not(elf_load_image(init_process, v_image, size))) then
+	if (not(elf_load_image(*process, v_image, size))) then
 		panic_error(!"Could not load the init-module!")
 	end if
 
-	thread_activate(init_process->threads)
+	thread_activate((*process)->threads)
 	
 	'' unmap the image, we don't need it any longer
 	vmm_kernel_unmap(cast(any ptr, v_image), size)

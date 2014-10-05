@@ -418,7 +418,7 @@ sub idt_prepare ()
 	idt_set_entry (&h5F, @int_stub_95, &h08, FLAGS_KERNEL)
 	idt_set_entry (&h60, @int_stub_96, &h08, FLAGS_KERNEL)
 	idt_set_entry (&h61, @int_stub_97, &h08, FLAGS_KERNEL)
-	idt_set_entry (&h62, @int_stub_98, &h08, FLAGS_USER)  '' syscall
+	idt_set_entry (&h62, @int_stub_98, &h08, FLAGS_KERNEL)  '' syscall
 	idt_set_entry (&h63, @int_stub_99, &h08, FLAGS_KERNEL)
 	idt_set_entry (&h64, @int_stub_100, &h08, FLAGS_KERNEL)
 	idt_set_entry (&h65, @int_stub_101, &h08, FLAGS_KERNEL)
@@ -575,7 +575,7 @@ sub idt_prepare ()
 	idt_set_entry (&hFC, @int_stub_252, &h08, FLAGS_KERNEL)
 	idt_set_entry (&hFD, @int_stub_253, &h08, FLAGS_KERNEL)
 	idt_set_entry (&hFE, @int_stub_254, &h08, FLAGS_KERNEL)
-	idt_set_entry (&hFF, @int_stub_255, &h08, FLAGS_KERNEL)
+	idt_set_entry (&hFF, @int_stub_255, &h08, FLAGS_USER)
 	
 	idtr.limit = TABLE_SIZE*8-1     '' calculate the size of the entries + null-entry
 	idtr.base  = cuint(@idt(0))     '' set the address of the table

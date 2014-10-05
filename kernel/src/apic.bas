@@ -26,7 +26,12 @@
 dim apic_enabled as boolean = false
  
 const IO_APIC_MMREG_IOREGSEL = &h00
-const IO_APIC_MMREG_IOWIN    = &h10
+const IO_APIC_MMREG_IOREGWIN = &h10
+
+const IO_APIC_REG_IOAPICID  = &h00
+const IO_APIC_REG_IOAPICVER = &h01
+const IO_APIC_REG_IOAPICARB = &h02
+const IO_APIC_REG_IOREDTBL  = &h10
 
 const LOCAL_APIC_BASE_MSR = &h1B
 const LOCAL_APIC_BASE_ADDR_MASK = &hFFFFFF000
@@ -50,12 +55,12 @@ dim shared lapic_base_virt as uinteger = 0
 
 sub ioapic_write_register (apic_base as uinteger, register_offset as uinteger, value as uinteger)
 	*(cast(uinteger ptr, apic_base+IO_APIC_MMREG_IOREGSEL)) = register_offset
-	*(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOWIN))) = value
+	*(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOREGWIN))) = value
 end sub
 
 function ioapic_read_register (apic_base as uinteger, register_offset as uinteger) as uinteger
 	*(cast(uinteger ptr, apic_base+IO_APIC_MMREG_IOREGSEL)) = register_offset
-	return *(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOWIN)))
+	return *(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOREGWIN)))
 end function
 
 sub lapic_write_register (register_offset as uinteger, value as uinteger)
@@ -66,6 +71,7 @@ function lapic_read_register (register_offset as uinteger) as uinteger
 	return *(cast(uinteger ptr, lapic_base_virt+register_offset))
 end function
 
+'' TODO: set spurious interrupt vector
 sub lapic_init ()
 	pic_mask_all()
 	
@@ -100,4 +106,9 @@ end sub
 sub ioapic_init ()
 	'' TODO:
 	'' - configure I/O APIC
+	dim ioapic_base_v as uinteger = cuint(vmm_kernel_automap(cast(any ptr, ioapic_base), PAGE_SIZE))
+	debug_wlog(debug_INFO, !"I/O APIC id: %hI\n", ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICID))
+	debug_wlog(debug_INFO, !"I/O APIC version: %hI\n", lobyte(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER)))
+	debug_wlog(debug_INFO, !"I/O APIC max redirection entry: %I\n", lobyte(hiword(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER))))
+	
 end sub

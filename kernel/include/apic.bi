@@ -22,6 +22,8 @@
 
 extern apic_enabled as boolean
 
+common shared ioapic_base as uinteger
+
 declare sub lapic_init ()
 declare sub lapic_eoi ()
 declare sub ioapic_init ()

@@ -107,7 +107,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
             '' load the new stack frame
             new_isf = new_thread->isf
             
-        case &h62                                          '' syscall interrupt
+        case &hFF                                          '' syscall interrupt
             isf->eax = syscall_handler(isf->eax, isf->ebx, isf->ecx, isf->edx)
             
         case else

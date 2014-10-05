@@ -23,4 +23,4 @@
 common shared init_process as process_type ptr
 
 declare sub load_init_module (mbinfo as multiboot_info ptr)
-declare sub load_module (multiboot_module as multiboot_module_t ptr)
+declare sub load_modules (mbinfo as multiboot_info ptr)

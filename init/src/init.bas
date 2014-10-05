@@ -28,40 +28,43 @@ sub handler (number as uinteger)
 	asm
 		mov eax, 43
 		mov ebx, [y]
-		int &h62
+		int &hFF
 		inb &h60
 		
 		mov eax, SYSCALL_IRQ_HANDLER_EXIT
 		mov ebx, [number]
-		int &h62
+		int &hFF
 		
 		jmp $
 	end asm
 end sub
 
 sub main ()
+	#if 0
 	asm
 		mov eax, SYSCALL_PORT_REQUEST
 		mov ebx, &h60
-		int &h62
+		int &hFF
 	end asm
 
-	dim z as any ptr = @handler
+	''dim z as any ptr = @handler
 	asm
 		mov eax, SYSCALL_IRQ_HANDLER_SET
-		mov ebx, [z]
-		int &h62
+		'mov ebx, [handler]
+		lea ebx, [handler]
+		int &hFF
 		
 		mov eax, SYSCALL_IRQ_HANDLER_REGISTER
 		mov ebx, 1
-		int &h62
+		int &hFF
 	end asm
+	#endif
 
 	dim x as byte ptr = strptr("this is a test")
 	asm
 		mov eax, 43
 		mov ebx, [x]
-		int &h62
+		int &hFF
 		jmp $
 	end asm
 end sub
@@ -73,9 +76,9 @@ sub threadfunc ()
 	asm
 		mov eax, 43
 		mov ebx, [y]
-		int &h62
+		int &hFF
 		mov eax, SYSCALL_THREAD_EXIT
-		int &h62
+		int &hFF
 		jmp $ '' <- shouldn't be necessary, but the kernel doesn't reschedule atm
 	end asm
 end sub
@@ -85,7 +88,7 @@ sub main ()
 	asm
 		mov eax, 43
 		mov ebx, [x]
-		int &h62
+		int &hFF
 		jmp $
 	end asm
 end sub

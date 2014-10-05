@@ -14,17 +14,17 @@ asm
 	mov eax, syscalls.SYSCALL_MEMORY_ALLOCATE_PHYSICAL
 	mov ebx, 4096
 	mov ecx, &hb8000
-	int &h62
+	int &hFF
 	mov [buffer], eax
 end asm
 
 asm
 	mov eax, syscalls.SYSCALL_PORT_REQUEST
 	mov ebx, &h3D4
-	int &h62
+	int &hFF
 	mov eax, syscalls.SYSCALL_PORT_REQUEST
 	mov ebx, &h3D5
-	int &h62
+	int &hFF
 end asm
 
 out(&h3D4, 14)
@@ -32,9 +32,9 @@ out(&h3D5, &h07)
 out(&h3D4, 15)
 out(&h3D5, &hD0)
 
-for x as uinteger = 0 to 4000
-	buffer[x] = 0
-next
+'for x as uinteger = 0 to 4000
+'	buffer[x] = 0
+'next
 
 dim r as uinteger = 0
 

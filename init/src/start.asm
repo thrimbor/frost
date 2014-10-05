@@ -16,7 +16,7 @@ _start:
 	;mov eax, 666
 	;mov ebx, THREADFUNC
 	;mov ecx, stack
-	;int 0x62
+	;int 0xFF
 	call MAIN
 	jmp $
 	

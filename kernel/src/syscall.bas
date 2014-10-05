@@ -55,6 +55,7 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		case SYSCALL_THREAD_CREATE
 			'' param1 = entrypoint for the thread
 			'' param2 = usermode stack for the thread
+			'' FIXME: don't hardcode these values!
 			if ((param1 < &h40000000) or (param2 < &h40000000)) then return false
 			
 			dim thread as thread_type ptr = thread_create(cur_thread->parent_process, cast(any ptr, param1), cast(any ptr, param2))
@@ -74,6 +75,7 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		case SYSCALL_MEMORY_ALLOCATE_PHYSICAL:
 			'' bytes, addr, flags
 			'' FIXME: not entirely correct, remember page alignment!
+			''       - also, don't just allow userspace to map everything!
 			'asm hlt
 			return cuint(vmm_automap(@cur_thread->parent_process->context, cast(any ptr, param2), param1, &h40000000, &hFFFFFFFF, VMM_FLAGS.USER_DATA))
 		
@@ -116,7 +118,8 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		
 		case SYSCALL_IPC_HANDLER_EXIT
 			'' IPC popup threads need to be cleaned up with this syscall
-			'' TODO: implement
+			'' FIXME: what if this wasn't an IPC-thread?
+			thread_destroy(cur_thread)
 		
 		case SYSCALL_FORTY_TWO
 			video_fout(!"The answer to life, the universe and everything is... 42\n")

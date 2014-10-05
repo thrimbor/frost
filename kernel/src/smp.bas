@@ -19,6 +19,7 @@
 #include "smp.bi"
 #include "kernel.bi"
 #include "debug.bi"
+#include "apic.bi"
 
 #define uint_sig(a,b,c,d) (asc(a) or (asc(b) shl 8) or (asc(c) shl 16) or (asc(d) shl 24))
 
@@ -109,7 +110,11 @@ sub smp_init ()
 					entry += sizeof(cte_bus)
 				''io apic
 				case CT_ENTRY_TYPES.IO_APIC:
-					debug_wlog(debug_INFO, !"  -> I/O APIC found, ID: %hI\n", cuint(cast(cte_io_apic ptr, entry)->id))
+					'' TODO: put all the APIC's in an array
+					dim ioapic as cte_io_apic ptr = cast(cte_io_apic ptr, entry)
+					debug_wlog(debug_INFO, !"  -> I/O APIC found, ID: %hI", cuint(ioapic->id))
+					debug_wlog(debug_INFO, !", %hI\n", cuint(ioapic->version))
+					ioapic_base = ioapic->address
 					entry += sizeof(cte_io_apic)
 				'' io interrupt assignment
 				case CT_ENTRY_TYPES.IO_INTERRUPT_ASSIGNMENT:
