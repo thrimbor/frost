@@ -4,7 +4,7 @@
 - enumerate PCI devices (!)
 - VFS
 
-
+- the PMM's bitmap scales incredibly bad - replace it with a stack-based implementation
 
 
 
@@ -20,9 +20,9 @@
 
 - Syscall ideas:
 	1:
-		- syscalls are normally done via int 0x62
+		- syscalls are normally done via int 0xFF
 		- a usermode application can query for an optimized syscall interface
-		- if there is none, a zero is returned (or we just map standard int 0x62 code)
+		- if there is none, a zero is returned (or we just map standard int 0xFF code)
 		- if there is an optimized method (sysenter, syscall) the kernel maps a read-only page to the userspace containing code to do a syscall
 		- the usermode application just uses this code from now on
 	2:
