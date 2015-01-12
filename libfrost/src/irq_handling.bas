@@ -1,25 +1,14 @@
 #include "../../kernel/include/syscall_defs.bi"
+#include "libfrost_internal.bi"
 
 sub frost_syscall_irq_handler_set (function_pointer as any ptr)
-	asm
-		mov eax, SYSCALL_IRQ_HANDLER_SET
-		mov ebx, [function_pointer]
-		int &hFF
-	end asm
+	syscall_param1(SYSCALL_IRQ_HANDLER_SET, function_pointer)
 end sub
 
 sub frost_syscall_irq_handler_register (irq as uinteger)
-	asm
-		mov eax, SYSCALL_IRQ_HANDLER_REGISTER
-		mov ebx, 1
-		int &hFF
-	end asm
+	syscall_param1(SYSCALL_IRQ_HANDLER_REGISTER, irq)
 end sub
 
 sub frost_syscall_irq_handler_exit (irq as uinteger)
-	asm
-		mov eax, SYSCALL_IRQ_HANDLER_EXIT
-		mov ebx, [irq]
-		int &hFF
-	end asm
+	syscall_param1(SYSCALL_IRQ_HANDLER_EXIT, irq)
 end sub

@@ -1,8 +1,5 @@
+#include "libfrost_internal.bi"
 
 sub frost_syscall_43 (str_ptr as byte ptr)
-	asm
-		mov eax, 43
-		mov ebx, [str_ptr]
-		int &hFF
-	end asm
+	syscall_param1(43, str_ptr)
 end sub
