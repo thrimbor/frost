@@ -176,7 +176,7 @@ function spawn_popup_thread (process as process_type ptr, entrypoint as any ptr)
 		end if
 	next
 	
-	dim stack_p as any ptr = pmm_alloc(1)
+	dim stack_p as any ptr = pmm_alloc()
 	
 	vmm_map_page(@process->context, stack_v, stack_p, VMM_FLAGS.USER_DATA)
 	
