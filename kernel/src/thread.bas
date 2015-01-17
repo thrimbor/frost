@@ -93,6 +93,7 @@ end function
 sub thread_destroy (thread as thread_type ptr)
 	if (current_thread = thread) then
 		thread->state = THREAD_STATE_KILL_ON_SCHEDULE
+		thread->flags or= THREAD_FLAG_RESCHEDULE
 		return
 	end if
 	
@@ -256,6 +257,7 @@ sub thread_idle ()
 end sub
 
 sub thread_create_idle_thread ()
+	'' FIXME: the idle thread requires switching the page directory at the moment because it runs in the init-context
 	idle_thread = thread_create(init_process, @thread_idle, 0)
 	idle_thread->isf->cs = &h08
 	idle_thread->isf->ss = &h10

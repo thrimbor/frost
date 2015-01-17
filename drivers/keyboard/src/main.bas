@@ -126,8 +126,6 @@ sub irq_handler (irq_number as uinteger)
 	l:
 	
 	frost_syscall_irq_handler_exit(irq_number)
-	
-	asm jmp $
 end sub
 
 sub kbc_send_command (cmd as ubyte)

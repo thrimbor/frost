@@ -45,6 +45,7 @@ end function
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
     dim new_isf as interrupt_stack_frame ptr = isf
+    dim reschedule as uinteger = false
     
     select case isf->int_nr
         case 0 to &h0C                                      '' exception
@@ -89,30 +90,41 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 			next
 		
         case &h20                                           '' timer IRQ
-			dim old_process as process_type ptr = nullptr
-			if (get_current_thread() <> nullptr) then
-				old_process = get_current_thread()->parent_process
-			end if
+			reschedule = true
 			
-            dim new_thread as thread_type ptr = schedule(isf)  '' select a new thread
-            
-            '' set his esp0 in the tss
-            tss_ptr->esp0 = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
-            
-            '' load the new pagedir
-            if (new_thread->parent_process <> old_process) then
-				vmm_activate_context(@new_thread->parent_process->context)
-			end if
-			
-            '' load the new stack frame
-            new_isf = new_thread->isf
-            
         case &hFF                                          '' syscall interrupt
             isf->eax = syscall_handler(isf->eax, isf->ebx, isf->ecx, isf->edx)
             
         case else
             
     end select
+    
+    if (get_current_thread() <> nullptr) then
+		if (get_current_thread()->flags and THREAD_FLAG_RESCHEDULE) then
+			reschedule = true
+			get_current_thread()->flags and= not THREAD_FLAG_RESCHEDULE
+		end if
+	end if
+	
+	if (reschedule) then
+		dim old_process as process_type ptr = nullptr
+		if (get_current_thread() <> nullptr) then
+			old_process = get_current_thread()->parent_process
+		end if
+		
+		dim new_thread as thread_type ptr = schedule(isf)  '' select a new thread
+		
+		'' set his esp0 in the tss
+		tss_ptr->esp0 = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
+		
+		'' load the new pagedir
+		if (new_thread->parent_process <> old_process) then
+			vmm_activate_context(@new_thread->parent_process->context)
+		end if
+		
+		'' load the new stack frame
+		new_isf = new_thread->isf
+	end if
     
     '' important: if the int is an IRQ, send the EOI
     if (apic_enabled) then

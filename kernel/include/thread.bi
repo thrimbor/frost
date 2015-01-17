@@ -26,6 +26,7 @@ const THREAD_STATE_BLOCKED = 2
 const THREAD_STATE_KILL_ON_SCHEDULE = 3
 
 const THREAD_FLAG_POPUP = 1
+const THREAD_FLAG_RESCHEDULE = 2
 
 type process_type_ as process_type
 
@@ -33,8 +34,8 @@ type thread_type
 	parent_process as process_type_ ptr
 	
 	id as uinteger
-	flags as ubyte
-	state as ubyte
+	flags as uinteger
+	state as uinteger
 	
 	kernelstack_p as any ptr
 	kernelstack_bottom as any ptr
