@@ -61,6 +61,8 @@ function process_create (parent as process_type ptr = 0) as process_type ptr
 	process->io_bitmap = nullptr
 	process->popup_stack_mask = 0
 	
+	process->tid_lock = 0
+	
 	'' insert the process into the list
 	process->prev_process = 0
 	process->next_process = processlist_first
