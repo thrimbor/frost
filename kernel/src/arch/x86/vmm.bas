@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2014  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ declare sub sync_context (cntxt as vmm_context ptr)
 dim shared kernel_context as vmm_context
 dim shared current_context as vmm_context ptr
 dim shared paging_activated as boolean = false
+dim shared paging_ready as boolean = false
 
 dim shared latest_context as vmm_context ptr = nullptr
 
@@ -62,7 +63,7 @@ sub vmm_init ()
 	kernel_context.version = 1
 	latest_context = @kernel_context
 	
-	paging_activated = true
+	paging_ready = true
 end sub
 
 '' loads the pagedir into cr3 and activates paging
@@ -76,6 +77,8 @@ sub vmm_init_local ()
 		or ebx, &h80000000
 		mov cr0, ebx
 	end asm
+	
+	paging_activated = true
 end sub
 
 '' reserve a page and map it
@@ -119,6 +122,7 @@ function vmm_map_page (cntxt as vmm_context ptr, v_addr as any ptr, physical as 
 	dim clear_pagetable as boolean = false
 	'' the entry in the pagedir
 	dim pagedir_entry_ptr as uinteger ptr = @(cntxt->v_pagedir[GET_PAGEDIR_INDEX(v_addr)])
+	if (not(paging_activated)) then pagedir_entry_ptr = @(cntxt->p_pagedir[GET_PAGEDIR_INDEX(v_addr)])
 	
 	'// multiline if because of the multiline macro - we would get strange errors otherwise
 	if (v_addr = 0) then
@@ -200,7 +204,7 @@ sub vmm_unmap_range (cntxt as vmm_context ptr, v_addr as any ptr, pages as uinte
 end sub
 
 function get_pagetable (cntxt as vmm_context ptr, index as uinteger) as uinteger ptr
-	dim pdir as uinteger ptr = cntxt->v_pagedir
+	dim pdir as uinteger ptr = iif(paging_activated, cntxt->v_pagedir, cntxt->p_pagedir)
 	
 	'' is there no pagetable?
 	if ((pdir[index] and VMM_PTE_FLAGS.PRESENT) = 0) then return nullptr
@@ -342,4 +346,12 @@ end sub
 
 function vmm_get_current_context () as vmm_context ptr
 	return current_context
+end function
+
+function vmm_is_paging_activated () as boolean
+	return paging_activated
+end function
+
+function vmm_is_paging_ready () as boolean
+	return paging_ready
 end function

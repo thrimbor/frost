@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -17,25 +17,45 @@
  '/
 
 #include "pmm.bi"
+#include "vmm.bi"
 #include "mem.bi"
 #include "kernel.bi"
 #include "multiboot.bi"
 #include "spinlock.bi"
 #include "panic.bi"
 
-const bitmap_size = 32768
-
-'' our memory bitmap. bit=0 : page used; bit=1 : page free
-dim shared bitmap (0 to bitmap_size-1) as uinteger
 '' the amount of free memory
 dim shared free_mem as uinteger = 0
 dim shared total_mem as uinteger = 0
 
 dim shared pmm_lock as spinlock = 0
 
-declare sub pmm_mark_used (page as any ptr)
+function pmm_get_total () as uinteger
+	return total_mem
+end function
 
-sub pmm_init (mbinfo as multiboot_info ptr)
+function pmm_get_free () as uinteger
+	return free_mem
+end function
+
+function pmm_intersect (page_addr as addr_t, area_start as addr_t, area_end as addr_t) as boolean
+	if ((area_start >= page_addr) and (area_start <= page_addr+PAGE_SIZE)) then return true
+	if ((area_end >= page_addr) and (area_end <= page_addr+PAGE_SIZE)) then return true
+	if ((area_start <= page_addr) and (area_end >= page_addr+PAGE_SIZE)) then return true
+	
+	return false
+end function
+
+sub pmm_init (mbinfo as multiboot_info ptr, zone as uinteger)
+	'' 1. all memory is used by default
+	'' 2. all free areas are put on the stack, but checked against reserved areas
+	'' 3. reserved are:
+	''    - memory used by the kernel code
+	''    - video memory
+	''    - modules and their cmdlines
+	'' done
+	
+	'' initialization is slow, usage is fast (with a bitmap it's exactly the opposite)
 	'' 1. mark the whole memory as used
 	'' 2. free the memory marked as free in the memory-map
 	'' 3. mark the whole memory used by the kernel as used
@@ -46,166 +66,89 @@ sub pmm_init (mbinfo as multiboot_info ptr)
 		panic_error(!"Memory map not available!\n")
 	end if
 	
+	assert((vmm_is_paging_ready() and zone = PMM_ZONE_NORMAL) or ((not vmm_is_paging_ready()) and zone = PMM_ZONE_DMA24))
+	
+	if (zone = PMM_ZONE_DMA24) then pmm_init_dma24()
+	
 	dim mmap as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, mbinfo->mmap_addr)
 	dim mmap_end as multiboot_mmap_entry ptr = cast(multiboot_mmap_entry ptr, (mbinfo->mmap_addr + mbinfo->mmap_length))
-	
-	'' mark the whole memory as occupied
-	memset(@bitmap(0), 0, bitmap_size)
 	
 	'' free the memory listed in the memory-map
 	while (mmap < mmap_end)
 		'' only free regions that are marked as available
 		if (mmap->type = MULTIBOOT_MEMORY_AVAILABLE) then
-			dim addr as addr_t = mmap->addr
-			dim end_addr as addr_t = (mmap->addr+mmap->len)
-			
+			'' don't free memory over 4GB, needs to be fixed to properly work on 64bit
 			if (cuint((mmap->addr shr 32) and &hFFFFFFFF) = 0) then
-				total_mem += mmap->len
-				
 				'' free each block of the region
-				while (addr < end_addr)
+				for addr as addr_t = mmap->addr to (mmap->addr+mmap->len-1) step PAGE_SIZE
+					
+					if (zone = PMM_ZONE_DMA24) and (addr >= 16*1024*1024) then exit for
+					
+					if (zone = PMM_ZONE_NORMAL) and (addr < 16*1024*1024) then continue for
+					
+					total_mem += PAGE_SIZE
+					
+					'' check if the block contains used memory
+					'' does the block contain kernel memory?
+					if (pmm_intersect(addr, caddr(kernel_start), caddr(kernel_end))) then continue for
+					
+					if (pmm_intersect(addr, mbinfo->cmdline, mbinfo->cmdline+PAGE_SIZE)) then continue for
+					
+					'' does the block contain video memory?
+					if (pmm_intersect(addr, &hB8000, &hB8000+PAGE_SIZE)) then continue for
+					
+					'' iterate over the module list
+					dim module_ptr as multiboot_mod_list ptr = cast(any ptr, mbinfo->mods_addr)
+					
+					for counter as uinteger = 1 to mbinfo->mods_count
+						if (pmm_intersect(addr, module_ptr[counter-1].mod_start, module_ptr[counter-1].mod_end)) then
+							continue for, for
+						end if
+						'' FIXME: the modules cmdline needs to be reserved, too
+					next
+					
 					'' free one block at a time
-					pmm_free(cast(any ptr, cuint(addr)))
-					addr += PAGE_SIZE
-				wend
+					if (zone = PMM_ZONE_NORMAL) then
+						pmm_free_normal(cast(any ptr, cuint(addr)))
+						free_mem += PAGE_SIZE
+					elseif (zone = PMM_ZONE_DMA24) then
+						pmm_free_dma24(cast(any ptr, cuint(addr)))
+						free_mem += PAGE_SIZE
+					end if
+				next
 			end if
 		end if
 		'' go to the next entry of the map
 		mmap = cast(multiboot_mmap_entry ptr, cuint(mmap)+mmap->size+sizeof(multiboot_uint32_t))
 	wend
-	
-	'' mark the memory used by the kernel as used (this includes the mbinfo-structure and stack)
-	dim kernel_addr as addr_t = caddr(kernel_start)
-	dim kernel_end_addr as addr_t = caddr(kernel_end)
-	while (kernel_addr < kernel_end_addr)
-		pmm_mark_used(cast(any ptr, kernel_addr))
-		kernel_addr += PAGE_SIZE
-	wend
-	
-	'' mark the video-memory as used
-	pmm_mark_used(cast(any ptr, &hB8000))
-	
-	'' reserve the memory of the multiboot modules
-	if (mbinfo->mods_count = 0) then return
-	dim module_addr as addr_t
-	dim module_end_addr as addr_t
-	dim module_ptr as multiboot_mod_list ptr = cast(any ptr, mbinfo->mods_addr)
-	
-	'' iterate over the module list
-	for counter as uinteger = 1 to mbinfo->mods_count
-		module_addr = module_ptr->mod_start
-		module_end_addr = module_ptr->mod_end
-		
-		'' mark the image
-		while (module_addr < module_end_addr)
-			pmm_mark_used(cast(any ptr, module_addr))
-			module_addr += PAGE_SIZE
-		wend
-		
-		'' mark the cmdline
-		pmm_mark_used(cast(any ptr, mbinfo->cmdline))
-		
-		module_ptr += 1
-	next
 end sub
 
-function pmm_alloc (num_pages as uinteger) as any ptr
-	if (num_pages = 0) then
-		panic_error(!"kernel tried to reserve zero pages\n")
-	end if
+function pmm_alloc (zone as uinteger = PMM_ZONE_NORMAL) as any ptr
+	dim ret as any ptr = nullptr
 	
-	spinlock_acquire(@pmm_lock)
+	select case (zone)
+		case PMM_ZONE_NORMAL:
+			'' try to satisfy the request from the normal-zone
+			ret = pmm_alloc_normal()
+			if (ret = nullptr) then
+				'' if it didn't work, fall through to the DMA24-zone
+				ret = pmm_alloc(PMM_ZONE_DMA24)
+			end if
+		case PMM_ZONE_DMA24:
+			ret = pmm_alloc_dma24()
+		case else:
+			panic_error(!"PMM: Invalid zone specification!\n")
+	end select
 	
-	dim pages_found as uinteger = 0
-	dim pages_start as uinteger = 0
-	
-	'' find some free pages
-	for counter as uinteger = 0 to bitmap_size-1
-		if (bitmap(counter) = &hFFFFFFFF) then
-			'' all bits of the uinteger are marked free
-			pages_found += 32
-		elseif (bitmap(counter) = 0) then
-			'' all bits of the uinteger are marked used
-			pages_found = 0
-			pages_start = (counter+1)*32
-		else
-			'' at least one page in this block is occupied
-			for bitcounter as uinteger = 0 to 31
-				if (bitmap(counter) and (1 shl bitcounter)) then
-					'' this page is free
-					pages_found += 1
-				else
-					'' this page is occupied, reset our found-counter and remember the next position
-					pages_found = 0
-					pages_start = counter*32 + bitcounter + 1
-				end if
-				
-				'' enough free pages found?
-				if (pages_found >= num_pages) then exit for
-			next
-		end if
-		
-		'' enough free pages found?
-		if (pages_found >= num_pages) then exit for
-	next
-	
-	'' if the loop didn't find enough pages, return a null-pointer
-	if (pages_found >= num_pages) then
-		'' only reserve needed blocks, not all available
-		for counter as uinteger = 0 to num_pages-1
-			pmm_mark_used(cast(any ptr, (pages_start+counter)*PAGE_SIZE))
-		next
-		
-		'' return the address
-		function = cast(any ptr, pages_start * PAGE_SIZE)
+	if (ret <> nullptr) then free_mem -= PAGE_SIZE
+	return ret
+end function
+
+sub pmm_free (addr as any ptr)
+	if (cuint(addr) < 16*1024*1024) then
+		pmm_free_dma24(addr)
 	else
-		function = nullptr
+		pmm_free_normal(addr)
 	end if
-	
-	'' never forget to release the lock
-	spinlock_release(@pmm_lock)
-end function
-
-sub pmm_free (page as any ptr, num_pages as uinteger)
-	spinlock_acquire(@pmm_lock)
-	
-	dim blocks_start as uinteger = cuint(page) \ PAGE_SIZE
-	
-	for counter as uinteger = 0 to num_pages-1
-		dim index as uinteger = (blocks_start+counter) shr 5
-		dim modifier as uinteger = (1 shl ((blocks_start+counter) mod 32))
-		
-		'' if the page wasn't occupied before, we panic
-		if ((bitmap(index) and modifier) <> 0) then
-			panic_error("Tried to free already free physical memory area!")
-		end if
-		
-		'' increase the free memory variable
-		free_mem += PAGE_SIZE
-		
-		'' set the bit
-		bitmap(index) or= modifier
-	next
-	
-	spinlock_release(@pmm_lock)
+	free_mem += PAGE_SIZE
 end sub
-
-sub pmm_mark_used (page as any ptr)
-	dim index as uinteger = cuint(page) \ PAGE_SIZE
-	dim modifier as uinteger  = (1 shl (index mod 32))
-	index shr= 5 '' faster version of "index \= 32"
-	
-	'' if the page wasn't occupied before, the free memory variable is reduced
-	if (bitmap(index) and modifier) then free_mem -= PAGE_SIZE
-	
-	'' set the bit
-	bitmap(index) and= (not(modifier))
-end sub
-
-function pmm_get_total () as uinteger
-	return total_mem
-end function
-
-function pmm_get_free () as uinteger
-	return free_mem
-end function

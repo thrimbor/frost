@@ -1,0 +1,9 @@
+virtual address space layout:
+
+0x00000000 - 0x000FFFFF - undefined stuff
+0x00100000 - kernel_end_label - kernel code
+0x10000000 - 0x10100000 - kernel heap
+0x3F800000 - 0x3FBFFFFF - page stack (grows downwards)
+0x3FC00000 - 0x3FFFFFFF - page tables of the current process
+
+0x40000000 - 0xFFFFFFFF - userspace

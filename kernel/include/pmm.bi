@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -22,9 +22,20 @@
 #include "multiboot.bi"
 
 const PAGE_SIZE = 4096
+const PMM_STACK_TOP = &h3FC00000
+const PMM_STACK_ENTRIES_PER_PAGE = 1024
 
-declare sub pmm_init (mbinfo as multiboot_info ptr)
-declare function pmm_alloc (num_pages as uinteger = 1) as any ptr
-declare sub pmm_free (page as any ptr, num_pages as uinteger = 1)
+const PMM_ZONE_DMA24 as uinteger = 1
+const PMM_ZONE_NORMAL as uinteger = 2
+
+declare sub pmm_init (mbinfo as multiboot_info ptr, zone as uinteger)
+declare function pmm_alloc (zone as uinteger = PMM_ZONE_NORMAL) as any ptr
+declare sub pmm_free (page as any ptr)
 declare function pmm_get_total () as uinteger
 declare function pmm_get_free () as uinteger
+
+declare sub pmm_init_dma24 ()
+declare function pmm_alloc_dma24 () as any ptr
+declare sub pmm_free_dma24 (page as any ptr)
+declare function pmm_alloc_normal () as any ptr
+declare sub pmm_free_normal (addr as any ptr)

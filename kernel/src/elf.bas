@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -39,6 +39,9 @@ function elf_header_check (header as Elf32_Ehdr ptr) as integer
 	return 0
 end function
 
+
+'' FIXME:
+'' segments can be larger in memory than in the file. we need to memset these bytes!
 function elf_load_image (process as process_type ptr, image as uinteger, size as uinteger) as boolean
 	dim header as Elf32_Ehdr ptr = cast(Elf32_Ehdr ptr, image)
 	
@@ -48,7 +51,7 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 	
 	'' the only module loaded by this code is init, so we reserve a stack here
 	'' every other program has to get it's stack from somewhere else
-	dim module_stack as any ptr = pmm_alloc(1)
+	dim module_stack as any ptr = pmm_alloc()
 	vmm_map_page(@process->context, cast(any ptr, &hFFFFF000), module_stack, VMM_FLAGS.USER_DATA)
 	'' create the thread
 	thread_create(process, cast(any ptr, header->e_entry), cast(any ptr, &hFFFFF000))
@@ -56,56 +59,37 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 	'' pointer to the first program header
 	dim program_header as Elf32_Phdr ptr = cast(Elf32_Phdr ptr, cuint(header) + header->e_phoff)
 	
-	dim min_addr as uinteger = &hFFFFFFFF
-	dim max_addr as uinteger = 0
-	
-	'' determine the size of the needed memory area
+	'' iterate over all segments
 	for counter as uinteger = 0 to header->e_phnum-1
-		'' skip entries that are not loadable
+		'' skip segments that are not loadable
 		if (program_header[counter].p_type <> ELF_PT_LOAD) then continue for
 		
-		if (program_header[counter].p_vaddr < min_addr) then
-			min_addr = program_header[counter].p_vaddr
-		end if
+		'' align the start on page-boundaries
+		dim start as uinteger = program_header[counter].p_vaddr and VMM_PAGE_MASK
+		dim real_size as uinteger = program_header[counter].p_filesz + (program_header[counter].p_vaddr - start)
 		
-		if (program_header[counter].p_vaddr + program_header[counter].p_memsz > max_addr) then
-			max_addr = program_header[counter].p_vaddr + program_header[counter].p_memsz
-		end if
+		'' start and end of the segment
+		dim addr as uinteger = start
+		dim end_addr as uinteger = start + real_size
+		
+		while (addr < end_addr)
+			dim remaining as uinteger = end_addr - addr
+			dim chunk_size as uinteger = iif(remaining > PAGE_SIZE, PAGE_SIZE, remaining)
+			
+			dim phys_mem as any ptr = pmm_alloc()
+			dim mem as any ptr = vmm_kernel_automap(phys_mem, PAGE_SIZE)
+			
+			memcpy(mem,_
+				   cast(any ptr, image + program_header[counter].p_offset + (addr-start)), _
+				   chunk_size)
+			
+			vmm_kernel_unmap(mem, PAGE_SIZE)
+			
+			vmm_map_page(@process->context, cast(any ptr, addr), cast(any ptr, phys_mem), VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.USERSPACE)
+			
+			addr += chunk_size
+		wend
 	next
-	
-	'' calculate memory requirements
-	dim pages as uinteger = (max_addr shr 12) - (min_addr shr 12) + 1
-	min_addr and= VMM_PAGE_MASK
-	
-	'' reserve enough space for the program
-	dim phys_mem as any ptr = pmm_alloc(pages)
-	dim mem as any ptr = vmm_kernel_automap(phys_mem, pages*PAGE_SIZE)
-	
-	'' copy the program into the reserved space
-	for counter as uinteger = 0 to header->e_phnum-1
-		if (program_header[counter].p_type = ELF_PT_LOAD) then
-			'' copy the segment
-			memcpy(cast(any ptr, cuint(mem)+program_header[counter].p_vaddr - min_addr), _
-				   cast(any ptr, cuint(image)+program_header[counter].p_offset), _
-				   program_header[counter].p_filesz)
-			'' fill the rest of the segment with zeroes (this is more efficient than using memset to clear ALL the memory)
-			memset(cast(any ptr, cuint(mem)+program_header[counter].p_vaddr - min_addr + program_header[counter].p_filesz), _
-				   0, _
-				   program_header[counter].p_memsz - program_header[counter].p_filesz)
-		end if
-	next
-	
-	'' map the pages into the context of the process
-	for counter as uinteger = 0 to pages-1
-		if (not (vmm_map_page(@process->context, cast(any ptr, min_addr + counter*PAGE_SIZE), _
-							  phys_mem+(counter*PAGE_SIZE), _
-							  (VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.USERSPACE)))) then
-			panic_error("Could not assign memory to the process")
-		end if
-	next
-	
-	'' unmap the target-memory from the kernel context
-	vmm_kernel_unmap(mem, pages*PAGE_SIZE)
 	
 	return true
 end function

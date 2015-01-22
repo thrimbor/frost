@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -68,6 +68,7 @@ declare sub vmm_init_local ()
 declare function vmm_alloc (v_addr as any ptr) as boolean
 declare sub vmm_context_initialize (cntxt as vmm_context ptr)
 declare function vmm_map_page (cntxt as vmm_context ptr, virtual as any ptr, physical as any ptr, flags as uinteger) as boolean
+declare sub vmm_unmap_page (cntxt as vmm_context ptr, v_addr as any ptr)
 declare function vmm_map_range (cntxt as vmm_context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
 declare sub vmm_unmap_range (cntxt as vmm_context ptr, v_addr as any ptr, pages as uinteger)
 declare function vmm_automap (context as vmm_context ptr, p_start as any ptr, size as uinteger, lowerLimit as uinteger, upperLimit as uinteger, flags as uinteger) as any ptr
@@ -76,3 +77,5 @@ declare sub vmm_kernel_unmap (v_start as any ptr, size as uinteger)
 declare function vmm_resolve (cntxt as vmm_context ptr, vaddr as any ptr) as any ptr
 declare sub vmm_activate_context (cntxt as vmm_context ptr)
 declare function vmm_get_current_context () as vmm_context ptr
+declare function vmm_is_paging_activated () as boolean
+declare function vmm_is_paging_ready () as boolean

@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -93,8 +93,12 @@ sub load_module (multiboot_module as multiboot_module_t ptr, process as process_
 	
 	'' unmap the image, we don't need it any longer
 	vmm_kernel_unmap(cast(any ptr, v_image), size)
+	
 	'' physically free the space occupied by the image
-	pmm_free(cast(any ptr, v_multiboot_module->mod_start), num_pages(size))
+	for c as uinteger = 0 to num_pages(size)-1
+		pmm_free(cast(any ptr, v_multiboot_module->mod_start + c*PAGE_SIZE))
+	next
+	
 	'' unmap the module struct
 	vmm_kernel_unmap(v_multiboot_module, sizeof(multiboot_module_t))
 end sub

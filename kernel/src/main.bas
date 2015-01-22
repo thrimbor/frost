@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -91,13 +91,16 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     
     pit_set_frequency(100)
     
-    pmm_init(@mb_info)
-    debug_wlog(debug_INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
-    
     debug_wlog(debug_INFO, !"initializing SMP\n")
     smp_init()
     
+    '' two-step initialization of the PMM
+    '' (the normal-allocator needs paging)
+    pmm_init(@mb_info, PMM_ZONE_DMA24)
+    debug_wlog(debug_INFO, !"DMA24-pmm initialized\n")
     vmm_init()
+    pmm_init(@mb_info, PMM_ZONE_NORMAL)
+    debug_wlog(debug_INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     vmm_init_local()
     debug_wlog(debug_INFO, !"paging initialized\n")
 	
