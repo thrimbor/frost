@@ -20,6 +20,13 @@ SECTIONS
 		*(.text)
 	}
 	.data ALIGN(4096) : {
+		start_ctors = .;
+		*(.ctor*)
+		end_ctors = .;
+		start_dtors = .;
+		*(.dtor*)
+		end_dtors = .;
+		
 		*(.data)
 	}
 	.rodata ALIGN(4096) : {

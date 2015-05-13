@@ -14,6 +14,7 @@
 ; You should have received a copy of the GNU General Public License
 ; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 extern MAIN
+extern KINIT
 global _start
 
 
@@ -44,6 +45,7 @@ _start:
     mov esp, kernelstack ;; set up the stack
     push ebx             ;; pointer to the multiboot structure
     push eax             ;; push the multiboot magic number
+    call KINIT
     call MAIN
     
     cli

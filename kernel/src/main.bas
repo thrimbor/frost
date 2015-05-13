@@ -136,3 +136,19 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     asm sti
     do : loop
 end sub
+
+extern start_ctors alias "start_ctors" as byte
+extern end_ctors alias "end_ctors" as byte
+extern start_dtors alias "start_dtors" as byte
+extern end_dtors alias "end_dtors" as byte
+
+sub kinit ()
+	dim ctor as uinteger ptr = @start_ctors
+	
+	while ctor < @end_ctors
+		dim ictor as sub () = *ctor
+		ictor()
+		
+		ctor += 1
+	wend
+end sub
