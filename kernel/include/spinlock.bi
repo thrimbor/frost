@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -20,9 +20,14 @@
 
 #include once "kernel.bi"
 
-type spinlock as integer
-
-declare sub spinlock_acquire (slock as spinlock ptr)
-declare function spinlock_trylock (slock as spinlock ptr) as boolean
-declare sub spinlock_release (slock as spinlock ptr)
-declare function spinlock_locked (slock as spinlock ptr) as boolean
+type spinlock
+	public:
+		declare constructor ()
+		declare sub acquire ()
+		declare function trylock () as boolean
+		declare sub release ()
+		declare function locked () as boolean
+		
+	private:
+		lockvar as integer
+end type

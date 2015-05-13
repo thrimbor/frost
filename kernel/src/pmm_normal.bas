@@ -22,7 +22,7 @@
 #include "vmm.bi"
 #include "panic.bi"
 
-dim shared pmm_normal_lock as spinlock = 0
+dim shared pmm_normal_lock as spinlock
 
 dim shared pmm_stack_min as uinteger ptr = cast(uinteger ptr, PMM_STACK_TOP)
 dim shared pmm_stack_ptr as uinteger ptr = cast(uinteger ptr, PMM_STACK_TOP)
@@ -33,7 +33,7 @@ function pmm_alloc_normal () as any ptr
 	
 	if (pmm_stack_ptr = PMM_STACK_TOP) then return nullptr
 	
-	spinlock_acquire(@pmm_normal_lock)
+	pmm_normal_lock.acquire()
 	
 	if (pmm_stack_ptr = (pmm_stack_min + PMM_STACK_ENTRIES_PER_PAGE)) then
 		'' resolve page address
@@ -54,14 +54,14 @@ function pmm_alloc_normal () as any ptr
 		pmm_stack_ptr += 1
 	end if
 	
-	spinlock_release(@pmm_normal_lock)
+	pmm_normal_lock.release()
 end function
 
 sub pmm_free_normal (addr as any ptr)
 	'' make sure the address is page-aligned
 	addr = cast(any ptr, cuint(addr) and VMM_PAGE_MASK)
 	
-	spinlock_acquire(@pmm_normal_lock)
+	pmm_normal_lock.acquire()
 	
 	'' stack full?
 	if (pmm_stack_ptr = pmm_stack_min) then
@@ -83,5 +83,5 @@ sub pmm_free_normal (addr as any ptr)
 	
 	pmm_ready = true
 	
-	spinlock_release(@pmm_normal_lock)
+	pmm_normal_lock.release()
 end sub

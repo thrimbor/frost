@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -58,9 +58,9 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 			'' FIXME: don't hardcode these values!
 			if ((param1 < &h40000000) or (param2 < &h40000000)) then return false
 			
-			dim thread as thread_type ptr = thread_create(cur_thread->parent_process, cast(any ptr, param1), cast(any ptr, param2))
+			dim thread as thread_type ptr = new thread_type(cur_thread->parent_process, cast(any ptr, param1), cast(any ptr, param2))
 			if (thread <> nullptr) then
-				thread_activate(thread)
+				thread->activate()
 				return true
 			else
 				return false
@@ -70,7 +70,7 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 			'' TODO: implement
 		
 		case SYSCALL_THREAD_EXIT
-			thread_destroy(cur_thread)
+			cur_thread->destroy()
 		
 		case SYSCALL_MEMORY_ALLOCATE_PHYSICAL:
 			'' bytes, addr, flags
@@ -106,7 +106,7 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 				pic_unmask(param1)
 			end if
 			
-			thread_destroy(cur_thread)
+			cur_thread->destroy()
 		
 		case SYSCALL_IPC_HANDLER_CALL
 			'' TODO: implement
@@ -119,7 +119,7 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		case SYSCALL_IPC_HANDLER_EXIT
 			'' IPC popup threads need to be cleaned up with this syscall
 			'' FIXME: what if this wasn't an IPC-thread?
-			thread_destroy(cur_thread)
+			cur_thread->destroy()
 		
 		case SYSCALL_FORTY_TWO
 			video_fout(!"The answer to life, the universe and everything is... 42\n")

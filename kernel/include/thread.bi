@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #pragma once
 
 #include "isf.bi"
+#include "intrusive_list.bi"
 
 const THREAD_STATE_DISABLED = 0
 const THREAD_STATE_RUNNING = 1
@@ -42,18 +43,24 @@ type thread_type
 	userstack_p as any ptr
 	userstack_bottom as any ptr
 	isf as interrupt_stack_frame ptr
+
+	'' list of threads of a process
+	process_threads as list_head
 	
-	'prev_thread as thread_type ptr
-	next_thread as thread_type ptr
+	'' list of active threads
+	active_threads as list_head
 	
-	'prev_active_thread as thread_type ptr
-	next_active_thread as thread_type ptr
+	declare operator new (size as uinteger) as any ptr
+	declare operator new[] (size as uinteger) as any ptr
+	declare operator delete (buffer as any ptr)
+	
+	declare constructor (process as process_type_ ptr, entry as any ptr, v_userstack_bottom as any ptr, flags as ubyte=0)
+	declare sub activate ()
+	declare sub deactivate ()
+	declare sub destroy ()
+	
 end type
 
-declare function thread_create (process as process_type_ ptr, entry as any ptr, v_userstack_bottom as any ptr, flags as ubyte = 0) as thread_type ptr
-declare sub thread_activate (thread as thread_type ptr)
-declare sub thread_destroy (thread as thread_type ptr)
-declare sub thread_deactivate (thread as thread_type ptr)
 declare function spawn_popup_thread (process as process_type_ ptr, entrypoint as any ptr) as thread_type ptr
 declare function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 declare function get_current_thread () as thread_type ptr

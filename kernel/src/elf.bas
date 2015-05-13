@@ -54,7 +54,7 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 	dim module_stack as any ptr = pmm_alloc()
 	vmm_map_page(@process->context, cast(any ptr, &hFFFFF000), module_stack, VMM_FLAGS.USER_DATA)
 	'' create the thread
-	thread_create(process, cast(any ptr, header->e_entry), cast(any ptr, &hFFFFF000))
+	dim t as thread_type ptr = new thread_type(process, cast(any ptr, header->e_entry), cast(any ptr, &hFFFFF000))
 
 	'' pointer to the first program header
 	dim program_header as Elf32_Phdr ptr = cast(Elf32_Phdr ptr, cuint(header) + header->e_phoff)

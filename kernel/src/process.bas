@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -30,73 +30,58 @@
 
 function generate_pid () as uinteger
     static next_pid as uinteger = 0  '' next process id to assign
-    static pid_lock as spinlock = 0  '' spinlock to protect concurrent access
+    static pid_lock as spinlock		 '' spinlock to protect concurrent access
     
     dim pid as uinteger              '' the generated pid
     
-    spinlock_acquire(@pid_lock)      '' acquire lock
+    pid_lock.acquire()  		     '' acquire lock
     pid = next_pid                   '' save pid
     next_pid += 1                    '' increase pid counter
-    spinlock_release(@pid_lock)      '' release lock
+    pid_lock.release() 			     '' release lock
     
     return pid                       '' return generated pid
 end function
 
-dim shared processlist_first as process_type ptr
+dim shared processlist as list_head
 
+operator process_type.new (size as uinteger) as any ptr
+	return kmalloc(size)
+	'' constructor is called automatically
+end operator
 
-function process_create (parent as process_type ptr = 0) as process_type ptr
-	dim process as process_type ptr = kmalloc(sizeof(process_type))
-	
-	if (process = 0) then return 0
-	
+operator process_type.delete (buffer as any ptr)
+	kfree(buffer)
+	'' destructor is called automatically
+end operator
+
+constructor process_type (parent as process_type ptr = 0)
 	'' assign a process-ID
-	process->id = generate_pid()
+	this.id = generate_pid()
 	
 	'' set parent
-	process->parent = parent
+	this.parent = parent
 	
-	process->ipc_handler = nullptr
-	process->interrupt_handler = nullptr
-	process->io_bitmap = nullptr
-	process->popup_stack_mask = 0
-	
-	process->tid_lock = 0
+	this.ipc_handler = nullptr
+	this.interrupt_handler = nullptr
+	this.io_bitmap = nullptr
+	this.popup_stack_mask = 0
 	
 	'' insert the process into the list
-	process->prev_process = 0
-	process->next_process = processlist_first
-	if (processlist_first <> nullptr) then processlist_first->prev_process = process
-	processlist_first = process
+	processlist.insert_before(@this.process_list)
 	
 	'' create a vmm-context
-	vmm_context_initialize(@process->context)
+	vmm_context_initialize(@this.context)
+end constructor
+
+function process_type.get_tid () as uinteger
+	this.tid_lock.acquire()
 	
-	return process
+	function = this.next_tid
+	this.next_tid += 1
+	
+	this.tid_lock.release()
 end function
 
 sub process_remove_thread (thread as thread_type ptr)
-	dim process as process_type ptr = thread->parent_process
-	
-	dim t as thread_type ptr = process->threads
-	
-	if (t = nullptr) then return '' maybe panic instead?
-	
-	if (t = thread) then
-		process->threads = t->next_thread
-		return
-	end if
-	
-	while (t->next_thread <> nullptr)
-		if (t->next_thread = thread) then
-			t->next_thread = t->next_thread->next_thread
-			return
-		end if
-		
-		t = t->next_thread
-	wend
-end sub
-
-sub process_destroy (process as process_type ptr)
-	'' TODO: implement
+	thread->process_threads.remove()
 end sub

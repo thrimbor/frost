@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -41,14 +41,19 @@ type process_type
 	io_bitmap as uinteger ptr
 	
 	popup_stack_mask as uinteger<32>
-	threads as thread_type ptr
+	thread_list as list_head
 	next_tid as uinteger
 	tid_lock as spinlock
 	
-	prev_process as process_type ptr
-	next_process as process_type ptr
+	process_list as list_head
+	
+	declare operator new (size as uinteger) as any ptr
+	declare operator new[] (size as uinteger) as any ptr
+	declare operator delete (buffer as any ptr)
+	
+	declare constructor (parent as process_type ptr = 0)
+	declare function get_tid () as uinteger
 end type
 
-declare function process_create (parent as process_type ptr = 0) as process_type ptr
 declare sub process_remove_thread (thread as thread_type ptr)
 declare sub process_destroy (process as process_type ptr)

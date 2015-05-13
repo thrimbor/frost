@@ -79,7 +79,7 @@ sub load_module (multiboot_module as multiboot_module_t ptr, process as process_
 	dim size as uinteger = v_multiboot_module->mod_end - v_multiboot_module->mod_start
 	dim v_image as uinteger = cuint(vmm_kernel_automap(cast(any ptr, v_multiboot_module->mod_start), size))
 	
-	*process = process_create(nullptr)
+	*process = new process_type()
 	
 	if (*process = nullptr) then
 		panic_error(!"Could not create init-process!\n")
@@ -89,7 +89,8 @@ sub load_module (multiboot_module as multiboot_module_t ptr, process as process_
 		panic_error(!"Could not load the init-module!")
 	end if
 
-	thread_activate((*process)->threads)
+	'' FIXME: this is shit. It works, but it's shit.
+	LIST_GET_ENTRY((*process)->thread_list.get_prev(), thread_type, process_threads)->activate()
 	
 	'' unmap the image, we don't need it any longer
 	vmm_kernel_unmap(cast(any ptr, v_image), size)

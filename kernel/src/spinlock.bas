@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -19,7 +19,12 @@
 #include "spinlock.bi"
 #include "kernel.bi"
 
-sub spinlock_acquire (slock as spinlock ptr)
+constructor spinlock ()
+	this.lockvar = 0
+end constructor
+
+sub spinlock.acquire ()
+	dim slock as integer ptr = @this.lockvar
 	asm
 		mov ecx, [slock]
         .acquire:
@@ -36,7 +41,8 @@ sub spinlock_acquire (slock as spinlock ptr)
 	end asm
 end sub
 
-function spinlock_trylock (slock as spinlock ptr) as boolean
+function spinlock.trylock () as boolean
+	dim slock as integer ptr = @this.lockvar
 	asm
 		mov ecx, [slock]
 		lock bts dword ptr [ecx], 0
@@ -49,10 +55,10 @@ function spinlock_trylock (slock as spinlock ptr) as boolean
 	end asm
 end function
 
-sub spinlock_release (slock as spinlock ptr)
-	*slock = 0
+sub spinlock.release ()
+	this.lockvar = 0
 end sub
 
-function spinlock_locked (slock as spinlock ptr) as boolean
-	return (*slock <> 0)
+function spinlock.locked () as boolean
+	return (this.lockvar <> 0)
 end function	

@@ -30,7 +30,7 @@
 const bitmap_size = 128
 '' memory bitmap for 0-16MB. 0=used, 1=free
 dim shared bitmap (0 to bitmap_size-1) as uinteger<32>
-dim shared pmm_dma24_lock as spinlock = 0
+dim shared pmm_dma24_lock as spinlock
 
 
 sub pmm_init_dma24 ()
@@ -39,7 +39,7 @@ sub pmm_init_dma24 ()
 end sub
 
 function pmm_alloc_dma24 () as any ptr
-	spinlock_acquire(@pmm_dma24_lock)
+	pmm_dma24_lock.acquire()
 	
 	for counter as uinteger = lbound(bitmap) to ubound(bitmap)
 		if (bitmap(counter) = 0) then continue for
@@ -50,20 +50,20 @@ function pmm_alloc_dma24 () as any ptr
 				'' mark used
 				bitmap(counter) and= (not(1 shl bitcounter))
 				'' return page address
-				spinlock_release(@pmm_dma24_lock)
+				pmm_dma24_lock.release()
 				return cast(any ptr, (counter*32 + bitcounter)*PAGE_SIZE)
 			end if
 		next
 	next
 	
 	'' no free page found?
-	spinlock_release(@pmm_dma24_lock)
+	pmm_dma24_lock.release()
 	panic_error("PMM_DMA24: Out of memory!\n")
 	return nullptr
 end function
 
 sub pmm_free_dma24 (page as any ptr)
-	spinlock_acquire(@pmm_dma24_lock)
+	pmm_dma24_lock.acquire()
 	
 	dim p as uinteger = cuint(page) \ PAGE_SIZE
 	
@@ -74,5 +74,5 @@ sub pmm_free_dma24 (page as any ptr)
 	
 	bitmap(index) or= modifier
 	
-	spinlock_release(@pmm_dma24_lock)
+	pmm_dma24_lock.release()
 end sub

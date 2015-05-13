@@ -28,8 +28,6 @@
 dim shared free_mem as uinteger = 0
 dim shared total_mem as uinteger = 0
 
-dim shared pmm_lock as spinlock = 0
-
 function pmm_get_total () as uinteger
 	return total_mem
 end function
