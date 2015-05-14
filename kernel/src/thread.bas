@@ -26,8 +26,6 @@
 #include "video.bi"
 #include "modules.bi"
 
-'' TODO: using doubly-linked-lists instead would result in constant insertion/removal runtime
-
 '' linked list of running threads
 dim shared running_threads_list as list_head
 dim shared current_thread as thread_type ptr = nullptr
