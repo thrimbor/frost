@@ -89,11 +89,10 @@ sub irq_handler (irq_number as uinteger)
 			'' catch fake-shift
 			if ((scancode = &h2A) or (scancode = &h36)) then
 				e0_code = false
-				goto l   '' FIXME
+			else
+				keycode = scancode_to_keycode(1, scancode)
+				e0_code = false
 			end if
-			
-			keycode = scancode_to_keycode(1, scancode)
-			e0_code = false
 		elseif (e1_code = 2) then
 			'' second (and last) byte of an e1-code
 			e1_prev or= cushort(scancode) shl 8
@@ -122,8 +121,6 @@ sub irq_handler (irq_number as uinteger)
 			end if
 		end if
 	end if
-	
-	l:
 	
 	frost_syscall_irq_handler_exit(irq_number)
 end sub
