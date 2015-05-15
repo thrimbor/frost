@@ -36,7 +36,6 @@ type process_type
 	state as ubyte
 	
 	ipc_handler as any ptr
-	interrupt_handler as any ptr
 	
 	io_bitmap as uinteger ptr
 	

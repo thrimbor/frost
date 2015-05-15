@@ -51,8 +51,7 @@ sub main ()
 	frost_syscall_port_request(KBC_COMMAND)
 	frost_syscall_port_request(KBC_DATA)
 	
-	frost_syscall_irq_handler_set(@irq_handler)
-	frost_syscall_irq_handler_register(1)
+	frost_syscall_irq_handler_register(1, @irq_handler)
 	
 	'' clear the buffer
 	while ((inb(KBC_COMMAND) and &h01) <> 0)

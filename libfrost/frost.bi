@@ -13,8 +13,7 @@ declare function frost_syscall_memory_allocate_physical (bytes as uinteger, addr
 declare sub frost_syscall_port_request (port as uinteger)
 declare sub frost_syscall_port_release (port as uinteger)
 
-declare sub frost_syscall_irq_handler_set (function_pointer as any ptr)
-declare sub frost_syscall_irq_handler_register (irq as uinteger)
+declare sub frost_syscall_irq_handler_register (irq as uinteger, function_pointer as any ptr)
 declare sub frost_syscall_irq_handler_exit (irq as uinteger)
 
 declare sub frost_syscall_ipc_handler_call (pid as uinteger)

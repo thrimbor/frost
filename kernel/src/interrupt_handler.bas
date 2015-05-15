@@ -26,21 +26,46 @@
 #include "syscall.bi"
 #include "panic.bi"
 #include "pmm.bi"
+#include "kmm.bi"
 
-dim shared irq_handlers(0 to 15, 0 to 4) as process_type ptr
+type irq_handler_type
+	process as process_type ptr
+	handler as any ptr
+	
+	list as list_head
+	
+	declare operator new (size as uinteger) as any ptr
+	declare operator new[] (size as uinteger) as any ptr
+	declare operator delete (buffer as any ptr)
+	
+	declare constructor (process as process_type ptr, handler as any ptr)
+end type
 
-function register_irq_handler (process as process_type ptr, irq as integer) as boolean
+operator irq_handler_type.new (size as uinteger) as any ptr
+	return kmalloc(size)
+	'' constructor is called automatically
+end operator
+
+operator irq_handler_type.delete (buffer as any ptr)
+	kfree(buffer)
+	'' destructor is called automatically
+end operator
+
+constructor irq_handler_type (process as process_type ptr, handler as any ptr)
+	this.process = process
+	this.handler = handler
+end constructor
+
+dim shared irq_handlers(0 to 15) as list_head
+
+function register_irq_handler (process as process_type ptr, irq as integer, handler_address as any ptr) as boolean
 	if ((irq < lbound(irq_handlers,1)) or (irq > ubound(irq_handlers,1))) then return false
 	
-	for counter as integer = lbound(irq_handlers,2) to ubound(irq_handlers,2)
-		if (irq_handlers(irq, counter) = nullptr) then
-			irq_handlers(irq, counter) = process
-			pic_unmask(irq)
-			return true
-		end if
-	next
+	dim h as irq_handler_type ptr = new irq_handler_type(process, handler_address)
+	irq_handlers(irq).insert_after(@h->list)
 	
-	return false
+	pic_unmask(irq)
+	return true
 end function
 
 '' this is the common interrupt handler which gets called for every interrupt.
@@ -76,20 +101,16 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 			pic_mask(isf->int_nr - &h20)
 		
 			'' IRQ
-			for counter as integer = lbound(irq_handlers,2) to ubound(irq_handlers,2)
-				dim process as process_type ptr = irq_handlers(isf->int_nr-&h20, counter)
-				if (process <> nullptr) then
-					if (process->interrupt_handler <> nullptr) then
-						dim thread as thread_type ptr = spawn_popup_thread(process, process->interrupt_handler)
-						
-						dim x as uinteger ptr = vmm_kernel_automap(thread->userstack_p, PAGE_SIZE)
-						x[PAGE_SIZE\4-1] = isf->int_nr-&h20
-						x[PAGE_SIZE\4-2] = 0  '' return address, needed because of cdecl!
-						vmm_kernel_unmap(x, PAGE_SIZE)
-						thread->isf->esp -= 8
-					end if
-				end if
-			next
+			list_foreach(h, irq_handlers(isf->int_nr-&h20))
+				dim x as irq_handler_type ptr = LIST_GET_ENTRY(h, irq_handler_type, list)
+				dim thread as thread_type ptr = spawn_popup_thread(x->process, x->handler)
+				
+				dim m as uinteger ptr = vmm_kernel_automap(thread->userstack_p, PAGE_SIZE)
+				m[PAGE_SIZE\4-1] = isf->int_nr-&h20
+				m[PAGE_SIZE\4-2] = 0  '' return address, needed because of cdecl!
+				vmm_kernel_unmap(x, PAGE_SIZE)
+				thread->isf->esp -= 8
+			list_next(h)
 		
         case &h20                                           '' timer IRQ
 			reschedule = true
@@ -138,16 +159,4 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 	end if
     
     return new_isf
-end function
-
-function irq_is_handler (process as process_type ptr, irq as uinteger) as boolean
-	if ((irq < lbound(irq_handlers,1)) or (irq > ubound(irq_handlers,1))) then return false
-	
-	for counter as integer = lbound(irq_handlers,2) to ubound(irq_handlers,2)
-		if (irq_handlers(irq, counter) = process) then
-			return true
-		end if
-	next
-	
-	return false
 end function

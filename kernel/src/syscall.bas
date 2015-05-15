@@ -95,17 +95,11 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 			
 			return false
 		
-		case SYSCALL_IRQ_HANDLER_SET
-			cur_thread->parent_process->interrupt_handler = cast(any ptr, param1)
-		
 		case SYSCALL_IRQ_HANDLER_REGISTER
-			return register_irq_handler(cur_thread->parent_process, param1)
+			return register_irq_handler(cur_thread->parent_process, param1, cast(any ptr, param2))
 		
 		case SYSCALL_IRQ_HANDLER_EXIT
-			if (irq_is_handler(cur_thread->parent_process, param1)) then
-				pic_unmask(param1)
-			end if
-			
+			pic_unmask(param1)
 			cur_thread->destroy()
 		
 		case SYSCALL_IPC_HANDLER_CALL

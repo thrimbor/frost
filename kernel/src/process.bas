@@ -62,7 +62,6 @@ constructor process_type (parent as process_type ptr = 0)
 	this.parent = parent
 	
 	this.ipc_handler = nullptr
-	this.interrupt_handler = nullptr
 	this.io_bitmap = nullptr
 	this.popup_stack_mask = 0
 	
