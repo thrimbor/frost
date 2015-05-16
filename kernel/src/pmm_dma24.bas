@@ -22,20 +22,19 @@
 #include "mem.bi"
 #include "panic.bi"
 
-'' TODO: on x64, we can test a whole uinteger<64> at once - so make this dynamic!
-
 '' NOTE: As long as we just allocate with PAGE_SIZE-granularity, we
 ''       could use a 'start looking here' pointer to reduce allocation time
 
-const bitmap_size = 128
+const bits_per_word = sizeof(uinteger)*8
+const bitmap_size = 16*1024*1024\PAGE_SIZE\bits_per_word
 '' memory bitmap for 0-16MB. 0=used, 1=free
-dim shared bitmap (0 to bitmap_size-1) as uinteger<32>
+dim shared bitmap (0 to bitmap_size-1) as uinteger
 dim shared pmm_dma24_lock as spinlock
 
 
 sub pmm_init_dma24 ()
 	'' mark the whole memory as occupied
-	memset(@bitmap(0), 0, bitmap_size*4)
+	memset(@bitmap(0), 0, bitmap_size*sizeof(uinteger))
 end sub
 
 function pmm_alloc_dma24 () as any ptr
@@ -44,14 +43,14 @@ function pmm_alloc_dma24 () as any ptr
 	for counter as uinteger = lbound(bitmap) to ubound(bitmap)
 		if (bitmap(counter) = 0) then continue for
 		
-		for bitcounter as uinteger = 0 to 31
+		for bitcounter as uinteger = 0 to bits_per_word-1
 			if (bitmap(counter) and (1 shl bitcounter)) then
 				'' this page is free
 				'' mark used
 				bitmap(counter) and= (not(1 shl bitcounter))
 				'' return page address
 				pmm_dma24_lock.release()
-				return cast(any ptr, (counter*32 + bitcounter)*PAGE_SIZE)
+				return cast(any ptr, (counter*bits_per_word + bitcounter)*PAGE_SIZE)
 			end if
 		next
 	next
@@ -67,8 +66,8 @@ sub pmm_free_dma24 (page as any ptr)
 	
 	dim p as uinteger = cuint(page) \ PAGE_SIZE
 	
-	dim index as uinteger = p shr 5
-	dim modifier as uinteger<32> = (1 shl (p mod 32))
+	dim index as uinteger = p \ bits_per_word
+	dim modifier as uinteger = (1 shl (p mod bits_per_word))
 	
 	assert((bitmap(index) and modifier) = 0) '' make sure that the page really was occupied
 	
