@@ -69,6 +69,9 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		case SYSCALL_THREAD_SLEEP
 			'' TODO: implement
 		
+		case SYSCALL_THREAD_YIELD
+			cur_thread->flags or= THREAD_FLAG_RESCHEDULE
+		
 		case SYSCALL_THREAD_EXIT
 			cur_thread->destroy()
 		

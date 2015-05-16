@@ -6,6 +6,7 @@ declare function frost_syscall_get_parent_pid () as uinteger
 declare function frost_syscall_thread_get_tid () as uinteger
 declare function frost_syscall_thread_create (entry as any ptr, stackaddr as any ptr) as integer
 declare sub frost_syscall_thread_sleep (ms as uinteger)
+declare sub frost_syscall_thread_yield ()
 declare sub frost_syscall_thread_exit ()
 
 declare function frost_syscall_memory_allocate_physical (bytes as uinteger, addr as any ptr) as any ptr

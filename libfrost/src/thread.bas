@@ -13,6 +13,10 @@ sub frost_syscall_thread_sleep (ms as uinteger)
 	syscall_param1(SYSCALL_THREAD_SLEEP, ms)
 end sub
 
+sub frost_syscall_thread_yield ()
+	syscall_param0(SYSCALL_THREAD_YIELD)
+end sub
+
 sub frost_syscall_thread_exit ()
 	syscall_param0(SYSCALL_THREAD_EXIT)
 end sub

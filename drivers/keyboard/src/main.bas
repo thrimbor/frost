@@ -128,13 +128,13 @@ sub kbc_send_command (cmd as ubyte)
 	do
 		'' wait until the input buffer is empty
 		while ((inb(KBC_COMMAND) and &h02) <> 0)
-			'' TODO: yield
+			frost_syscall_thread_yield()
 		wend
 		
 		outb(KBC_DATA, cmd)
 		
 		while ((inb(KBC_COMMAND) and &h01) = 0)
-			'' TODO: yield
+			frost_syscall_thread_yield()
 		wend
 	loop while (inb(KBC_DATA) = &hFE)
 end sub
