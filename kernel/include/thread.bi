@@ -63,6 +63,7 @@ end type
 
 declare function spawn_popup_thread (process as process_type_ ptr, entrypoint as any ptr) as thread_type ptr
 declare function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
+declare sub thread_switch (isf as interrupt_stack_frame ptr)
 declare function get_current_thread () as thread_type ptr
 declare sub thread_create_idle_thread ()
 declare sub set_io_bitmap ()

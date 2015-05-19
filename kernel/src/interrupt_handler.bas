@@ -70,7 +70,6 @@ end function
 
 '' this is the common interrupt handler which gets called for every interrupt.
 function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
-    dim new_isf as interrupt_stack_frame ptr = isf
     dim reschedule as uinteger = false
     
     select case isf->int_nr
@@ -93,7 +92,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 				'' did it come from the slave PIC? then send eoi to the master
 				if (isf->int_nr = 15) then pic_send_eoi(&h01)
 				
-				return new_isf
+				return isf
 			end if
 			
 			'' mask the IRQ to prevent it from firing again (gets unmasked when the thread is done)
@@ -130,23 +129,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 	end if
 	
 	if (reschedule) then
-		dim old_process as process_type ptr = nullptr
-		if (get_current_thread() <> nullptr) then
-			old_process = get_current_thread()->parent_process
-		end if
-		
-		dim new_thread as thread_type ptr = schedule(isf)  '' select a new thread
-		
-		'' set his esp0 in the tss
-		tss_ptr->esp0 = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
-		
-		'' load the new pagedir
-		if (new_thread->parent_process <> old_process) then
-			vmm_activate_context(@new_thread->parent_process->context)
-		end if
-		
-		'' load the new stack frame
-		new_isf = new_thread->isf
+		thread_switch(isf)
 	end if
     
     '' important: if the int is an IRQ, send the EOI
@@ -158,5 +141,5 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 		end if
 	end if
     
-    return new_isf
+    return get_current_thread()->isf
 end function

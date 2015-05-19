@@ -192,6 +192,23 @@ function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 	return new_thread
 end function
 
+sub thread_switch (isf as interrupt_stack_frame ptr)
+	dim old_process as process_type ptr = nullptr
+	if (get_current_thread() <> nullptr) then
+		old_process = get_current_thread()->parent_process
+	end if
+	
+	dim new_thread as thread_type ptr = schedule(isf)  '' select a new thread
+	
+	'' set his esp0 in the tss
+	tss_ptr->esp0 = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
+	
+	'' load the new pagedir
+	if ((new_thread->parent_process <> old_process) and (new_thread <> idle_thread)) then
+		vmm_activate_context(@new_thread->parent_process->context)
+	end if
+end sub
+
 function get_current_thread () as thread_type ptr
 	return current_thread
 end function
@@ -203,7 +220,6 @@ sub thread_idle ()
 end sub
 
 sub thread_create_idle_thread ()
-	'' FIXME: the idle thread requires switching the page directory at the moment because it runs in the init-context
 	idle_thread = new thread_type(init_process, @thread_idle, 0)
 	idle_thread->isf->cs = &h08
 	idle_thread->isf->ss = &h10
