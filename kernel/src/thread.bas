@@ -41,7 +41,7 @@ operator thread_type.delete (buffer as any ptr)
 	'' destructor is called automatically
 end operator
 
-constructor thread_type (process as process_type ptr, entry as any ptr, v_userstack_bottom as any ptr, flags as ubyte = 0)
+constructor thread_type (process as process_type ptr, entry as any ptr, userstack_pages as uinteger, flags as ubyte = 0)
 	'' assign id
 	this.id = process->get_tid()
 	
@@ -57,7 +57,18 @@ constructor thread_type (process as process_type ptr, entry as any ptr, v_userst
 	'' insert it into the list of the process
 	process->thread_list.insert_before(@this.process_threads)
 	
-	'' reserve space for the stacks
+	'' reserve space for the user-stack
+	'' FIXME: this always only reserves one page!
+	this.userstack_p = pmm_alloc()
+	
+	'' allocate a memory area for the stack
+	this.stack_area = process->a_s.allocate_area(1)
+	this.userstack_bottom = stack_area->address
+	
+	'' map the area
+	vmm_map_page(@process->context, this.stack_area->address, this.userstack_p, VMM_FLAGS.USER_DATA)
+	
+	'' reserve space for the kernel-stack
 	this.kernelstack_p = pmm_alloc()
 	
 	'' map the kernel stack into the kernel's address space (unreachable from userspace)
@@ -73,7 +84,7 @@ constructor thread_type (process as process_type ptr, entry as any ptr, v_userst
 	'' initialize the isf
 	isf->eflags = &h0202
 	isf->eip = cuint(entry)
-	isf->esp = cuint(v_userstack_bottom) + PAGE_SIZE
+	isf->esp = cuint(this.userstack_bottom) + PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
 end constructor
@@ -97,16 +108,10 @@ sub thread_type.destroy ()
 	'' free kernelstack
 	pmm_free(this.kernelstack_p)
 	
-	if (this.flags and THREAD_FLAG_POPUP) then
-		'' popup-threads get an assigned usermode-stack, which we have to free
-		dim index as uinteger = (&hFFFFE000 - cuint(this.userstack_bottom)) \ &h1000
-		
-		this.parent_process->popup_stack_mask and= not(1 shl index)
-		
-		vmm_unmap_range(@this.parent_process->context, this.userstack_bottom, 1)
-		
-		pmm_free(this.userstack_p)
-	end if
+	vmm_unmap_range(@this.parent_process->context, this.stack_area->address, this.stack_area->pages)
+	'' FIXME: free all pages of the stack
+	pmm_free(this.userstack_p)
+	delete this.stack_area
 	
 	'' free thread structure
 	kfree(@this)
@@ -129,33 +134,6 @@ sub thread_type.deactivate ()
 	
 	this.active_threads.remove()
 end sub
-
-function spawn_popup_thread (process as process_type ptr, entrypoint as any ptr) as thread_type ptr
-	if (process->popup_stack_mask = &hFFFFFFFF) then return nullptr '' TODO: errorcode?
-	
-	dim stack_v as any ptr = nullptr
-	
-	for i as uinteger = 0 to 31
-		if ((process->popup_stack_mask and (1 shl i)) = 0) then
-			process->popup_stack_mask or= (1 shl i)
-			
-			'' TODO: don't hardcode page-size
-			stack_v = cast(any ptr, &hFFFFE000 - i*&h1000)
-			exit for
-		end if
-	next
-	
-	dim stack_p as any ptr = pmm_alloc()
-	
-	vmm_map_page(@process->context, stack_v, stack_p, VMM_FLAGS.USER_DATA)
-	
-	dim thread as thread_type ptr = new thread_type(process, entrypoint, stack_v, THREAD_FLAG_POPUP)
-	thread->userstack_p = stack_p
-	thread->userstack_bottom = stack_v
-	thread->activate()
-	
-	return thread
-end function
 
 function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 	dim new_thread as thread_type ptr = current_thread

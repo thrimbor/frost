@@ -18,43 +18,25 @@
 
 #pragma once
 
-#include "isf.bi"
-#include "vmm.bi"
-#include "elf32.bi"
-#include "multiboot.bi"
-#include "thread.bi"
-#include "spinlock.bi"
-#include "address_space.bi"
+#include "kernel.bi"
+#include "intrusive_list.bi"
 
-
-type process_type
-	id as uinteger
+type address_space_area
+	address as any ptr
+	pages as uinteger
+	flags as uinteger
+	description as zstring ptr
 	
-	parent as process_type ptr
+	list as list_head
 	
-	context as vmm_context
-	
-	a_s as address_space
-	
-	state as ubyte
-	
-	ipc_handler as any ptr
-	
-	io_bitmap as uinteger ptr
-	
-	thread_list as list_head
-	next_tid as uinteger
-	tid_lock as spinlock
-	
-	process_list as list_head
-	
+	declare constructor (address as any ptr, pages as uinteger, flags as uinteger = 0, description as zstring ptr = nullptr)
 	declare operator new (size as uinteger) as any ptr
-	declare operator new[] (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)
-	
-	declare constructor (parent as process_type ptr = 0)
-	declare function get_tid () as uinteger
 end type
 
-declare sub process_remove_thread (thread as thread_type ptr)
-declare sub process_destroy (process as process_type ptr)
+type address_space
+	areas as list_head
+	
+	declare function allocate_area (pages as uinteger, flags as uinteger = 0, description as zstring ptr = nullptr) as address_space_area ptr
+	declare sub insert_area (area as address_space_area ptr)
+end type

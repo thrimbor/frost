@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2015  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -102,13 +102,15 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 			'' IRQ
 			list_foreach(h, irq_handlers(isf->int_nr-&h20))
 				dim x as irq_handler_type ptr = LIST_GET_ENTRY(h, irq_handler_type, list)
-				dim thread as thread_type ptr = spawn_popup_thread(x->process, x->handler)
+				dim thread as thread_type ptr = new thread_type(x->process, x->handler, 1, THREAD_FLAG_POPUP)
 				
 				dim m as uinteger ptr = vmm_kernel_automap(thread->userstack_p, PAGE_SIZE)
 				m[PAGE_SIZE\4-1] = isf->int_nr-&h20
 				m[PAGE_SIZE\4-2] = 0  '' return address, needed because of cdecl!
 				vmm_kernel_unmap(x, PAGE_SIZE)
 				thread->isf->esp -= 8
+				
+				thread->activate()
 			list_next(h)
 		
         case &h20                                           '' timer IRQ

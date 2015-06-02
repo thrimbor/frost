@@ -63,7 +63,6 @@ constructor process_type (parent as process_type ptr = 0)
 	
 	this.ipc_handler = nullptr
 	this.io_bitmap = nullptr
-	this.popup_stack_mask = 0
 	
 	'' insert the process into the list
 	processlist.insert_before(@this.process_list)

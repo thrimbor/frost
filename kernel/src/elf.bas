@@ -48,13 +48,6 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 	if (size < sizeof(Elf32_Ehdr)) then return false
 	
 	if (elf_header_check(header) > 0) then return false
-	
-	'' the only module loaded by this code is init, so we reserve a stack here
-	'' every other program has to get it's stack from somewhere else
-	dim module_stack as any ptr = pmm_alloc()
-	vmm_map_page(@process->context, cast(any ptr, &hFFFFF000), module_stack, VMM_FLAGS.USER_DATA)
-	'' create the thread
-	dim t as thread_type ptr = new thread_type(process, cast(any ptr, header->e_entry), cast(any ptr, &hFFFFF000))
 
 	'' pointer to the first program header
 	dim program_header as Elf32_Phdr ptr = cast(Elf32_Phdr ptr, cuint(header) + header->e_phoff)
@@ -67,10 +60,15 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 		'' align the start on page-boundaries
 		dim start as uinteger = program_header[counter].p_vaddr and VMM_PAGE_MASK
 		dim real_size as uinteger = program_header[counter].p_filesz + (program_header[counter].p_vaddr - start)
+		dim real_mem_size as uinteger = program_header[counter].p_memsz + (program_header[counter].p_vaddr - start)
 		
 		'' start and end of the segment
 		dim addr as uinteger = start
 		dim end_addr as uinteger = start + real_size
+		
+		dim area as address_space_area ptr = new address_space_area(cast(any ptr, start), num_pages(real_mem_size))
+		process->a_s.insert_area(area)
+		
 		
 		while (addr < end_addr)
 			dim remaining as uinteger = end_addr - addr
@@ -90,6 +88,9 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 			addr += chunk_size
 		wend
 	next
+	
+	'' create the thread
+	dim t as thread_type ptr = new thread_type(process, cast(any ptr, header->e_entry), 1)
 	
 	return true
 end function

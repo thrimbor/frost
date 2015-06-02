@@ -54,11 +54,11 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		
 		case SYSCALL_THREAD_CREATE
 			'' param1 = entrypoint for the thread
-			'' param2 = usermode stack for the thread
+			'' param2 = usermode stack size for the thread in pages
 			'' FIXME: don't hardcode these values!
-			if ((param1 < &h40000000) or (param2 < &h40000000)) then return false
+			if ((param1 < &h40000000)) then return false
 			
-			dim thread as thread_type ptr = new thread_type(cur_thread->parent_process, cast(any ptr, param1), cast(any ptr, param2))
+			dim thread as thread_type ptr = new thread_type(cur_thread->parent_process, cast(any ptr, param1), param2)
 			if (thread <> nullptr) then
 				thread->activate()
 				return true

@@ -20,6 +20,7 @@
 
 #include "isf.bi"
 #include "intrusive_list.bi"
+#include "address_space.bi"
 
 const THREAD_STATE_DISABLED = 0
 const THREAD_STATE_RUNNING = 1
@@ -42,6 +43,7 @@ type thread_type
 	kernelstack_bottom as any ptr
 	userstack_p as any ptr
 	userstack_bottom as any ptr
+	stack_area as address_space_area ptr
 	isf as interrupt_stack_frame ptr
 
 	'' list of threads of a process
@@ -54,14 +56,13 @@ type thread_type
 	declare operator new[] (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)
 	
-	declare constructor (process as process_type_ ptr, entry as any ptr, v_userstack_bottom as any ptr, flags as ubyte=0)
+	declare constructor (process as process_type_ ptr, entry as any ptr, userstack_pages as uinteger, flags as ubyte = 0)
 	declare sub activate ()
 	declare sub deactivate ()
 	declare sub destroy ()
 	
 end type
 
-declare function spawn_popup_thread (process as process_type_ ptr, entrypoint as any ptr) as thread_type ptr
 declare function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 declare sub thread_switch (isf as interrupt_stack_frame ptr)
 declare function get_current_thread () as thread_type ptr
