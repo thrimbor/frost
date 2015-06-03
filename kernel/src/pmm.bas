@@ -102,7 +102,10 @@ sub pmm_init (mbinfo as multiboot_info ptr, zone as uinteger)
 						if (pmm_intersect(addr, module_ptr[counter-1].mod_start, module_ptr[counter-1].mod_end)) then
 							continue for, for
 						end if
-						'' FIXME: the modules cmdline needs to be reserved, too
+						
+						if (pmm_intersect(addr, module_ptr[counter-1].cmdline, module_ptr[counter-1].cmdline+PAGE_SIZE)) then
+							continue for, for
+						end if
 					next
 					
 					'' free one block at a time
