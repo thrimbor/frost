@@ -40,8 +40,6 @@ function elf_header_check (header as Elf32_Ehdr ptr) as integer
 end function
 
 
-'' FIXME:
-'' segments can be larger in memory than in the file. we need to memset these bytes!
 function elf_load_image (process as process_type ptr, image as uinteger, size as uinteger) as boolean
 	dim header as Elf32_Ehdr ptr = cast(Elf32_Ehdr ptr, image)
 	
@@ -65,27 +63,34 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 		'' start and end of the segment
 		dim addr as uinteger = start
 		dim end_addr as uinteger = start + real_size
+		dim end_addr_mem as uinteger = start + real_mem_size
 		
 		dim area as address_space_area ptr = new address_space_area(cast(any ptr, start), num_pages(real_mem_size))
 		process->a_s.insert_area(area)
 		
 		
-		while (addr < end_addr)
-			dim remaining as uinteger = end_addr - addr
-			dim chunk_size as uinteger = iif(remaining > PAGE_SIZE, PAGE_SIZE, remaining)
-			
+		while (addr < end_addr_mem)
 			dim phys_mem as any ptr = pmm_alloc()
 			dim mem as any ptr = vmm_kernel_automap(phys_mem, PAGE_SIZE)
-			
-			memcpy(mem,_
-				   cast(any ptr, image + program_header[counter].p_offset + (addr-start)), _
-				   chunk_size)
+		
+			if (addr < end_addr) then
+				dim remaining_copy as uinteger = end_addr - addr
+				dim chunk_size as uinteger = iif(remaining_copy > PAGE_SIZE, PAGE_SIZE, remaining_copy)
+				
+				memcpy(mem,_
+					   cast(any ptr, image + program_header[counter].p_offset + (addr-start)), _
+					   chunk_size)
+				
+				if (PAGE_SIZE - chunk_size > 0) then memset(mem+chunk_size, 0, PAGE_SIZE-chunk_size)
+			else
+				memset(mem, 0, PAGE_SIZE)
+			end if
 			
 			vmm_kernel_unmap(mem, PAGE_SIZE)
 			
 			vmm_map_page(@process->context, cast(any ptr, addr), cast(any ptr, phys_mem), VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.USERSPACE)
 			
-			addr += chunk_size
+			addr += PAGE_SIZE
 		wend
 	next
 	
