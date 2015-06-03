@@ -85,12 +85,13 @@ sub load_module (multiboot_module as multiboot_module_t ptr, process as process_
 		panic_error(!"Could not create init-process!\n")
 	end if
 	
-	if (not(elf_load_image(*process, v_image, size))) then
+	dim thread as thread_type ptr
+	
+	if (not(elf_load_image(*process, @thread, v_image, size))) then
 		panic_error(!"Could not load the init-module!")
 	end if
 
-	'' FIXME: this is shit. It works, but it's shit.
-	LIST_GET_ENTRY((*process)->thread_list.get_prev(), thread_type, process_threads)->activate()
+	thread->activate()
 	
 	'' unmap the image, we don't need it any longer
 	vmm_kernel_unmap(cast(any ptr, v_image), size)

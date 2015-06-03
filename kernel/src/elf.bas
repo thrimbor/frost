@@ -40,7 +40,7 @@ function elf_header_check (header as Elf32_Ehdr ptr) as integer
 end function
 
 
-function elf_load_image (process as process_type ptr, image as uinteger, size as uinteger) as boolean
+function elf_load_image (process as process_type ptr, thread as thread_type ptr ptr,  image as uinteger, size as uinteger) as boolean
 	dim header as Elf32_Ehdr ptr = cast(Elf32_Ehdr ptr, image)
 	
 	if (size < sizeof(Elf32_Ehdr)) then return false
@@ -95,7 +95,7 @@ function elf_load_image (process as process_type ptr, image as uinteger, size as
 	next
 	
 	'' create the thread
-	dim t as thread_type ptr = new thread_type(process, cast(any ptr, header->e_entry), 1)
+	*thread = new thread_type(process, cast(any ptr, header->e_entry), 1)
 	
 	return true
 end function

@@ -22,4 +22,4 @@
 #include "process.bi"
 
 declare function elf_header_check (header as Elf32_Ehdr ptr) as integer
-declare function elf_load_image (process as process_type ptr, image as uinteger, size as uinteger) as boolean
+declare function elf_load_image (process as process_type ptr, thread as thread_type ptr ptr,  image as uinteger, size as uinteger) as boolean
