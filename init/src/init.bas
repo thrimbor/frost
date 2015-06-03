@@ -16,80 +16,16 @@
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
 
-#include "../../kernel/include/syscall_defs.bi"
+#include "../libfrost/frost.bi"
 'asm
 '    .global fb_ctor__init
 'end asm
 
 
-sub handler (number as uinteger)
-	dim y as ubyte ptr = strptr("IRQ catched  ")
-	y[12] = number + &h30
-	asm
-		mov eax, 43
-		mov ebx, [y]
-		int &hFF
-		inb &h60
-		
-		mov eax, SYSCALL_IRQ_HANDLER_EXIT
-		mov ebx, [number]
-		int &hFF
-		
-		jmp $
-	end asm
-end sub
-
 sub main ()
-	#if 0
-	asm
-		mov eax, SYSCALL_PORT_REQUEST
-		mov ebx, &h60
-		int &hFF
-	end asm
-
-	''dim z as any ptr = @handler
-	asm
-		mov eax, SYSCALL_IRQ_HANDLER_SET
-		'mov ebx, [handler]
-		lea ebx, [handler]
-		int &hFF
-		
-		mov eax, SYSCALL_IRQ_HANDLER_REGISTER
-		mov ebx, 1
-		int &hFF
-	end asm
-	#endif
-
-	dim x as byte ptr = strptr("this is a test")
-	asm
-		mov eax, 43
-		mov ebx, [x]
-		int &hFF
-		jmp $
-	end asm
+	frost_syscall_43(strptr("this is a test"))
+	
+	do
+		frost_syscall_thread_yield()
+	loop
 end sub
-
-
-#if 0
-sub threadfunc ()
-	dim y as byte ptr = strptr("thread hello")
-	asm
-		mov eax, 43
-		mov ebx, [y]
-		int &hFF
-		mov eax, SYSCALL_THREAD_EXIT
-		int &hFF
-		jmp $ '' <- shouldn't be necessary, but the kernel doesn't reschedule atm
-	end asm
-end sub
-
-sub main ()
-	dim x as byte ptr = strptr("hello world")
-	asm
-		mov eax, 43
-		mov ebx, [x]
-		int &hFF
-		jmp $
-	end asm
-end sub
-#endif
