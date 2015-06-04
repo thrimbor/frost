@@ -104,10 +104,11 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 				dim x as irq_handler_type ptr = LIST_GET_ENTRY(h, irq_handler_type, list)
 				dim thread as thread_type ptr = new thread_type(x->process, x->handler, 1, THREAD_FLAG_POPUP)
 				
-				dim m as uinteger ptr = vmm_kernel_automap(thread->userstack_p, PAGE_SIZE)
+				dim stack_p as any ptr = vmm_resolve(@(thread->parent_process->context), thread->stack_area->address + (thread->stack_area->pages-1)*PAGE_SIZE)
+				dim m as uinteger ptr = vmm_kernel_automap(cast(any ptr, stack_p), PAGE_SIZE)
 				m[PAGE_SIZE\4-1] = isf->int_nr-&h20
 				m[PAGE_SIZE\4-2] = 0  '' return address, needed because of cdecl!
-				vmm_kernel_unmap(x, PAGE_SIZE)
+				vmm_kernel_unmap(m, PAGE_SIZE)
 				thread->isf->esp -= 8
 				
 				thread->activate()

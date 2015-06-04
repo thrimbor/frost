@@ -57,15 +57,16 @@ constructor thread_type (process as process_type ptr, entry as any ptr, userstac
 	'' insert it into the list of the process
 	process->thread_list.insert_before(@this.process_threads)
 	
-	'' reserve space for the user-stack
-	'' FIXME: this always only reserves one page!
-	this.userstack_p = pmm_alloc()
+	'' allocate a virtual memory area for the stack
+	this.stack_area = process->a_s.allocate_area(userstack_pages)
 	
-	'' allocate a memory area for the stack
-	this.stack_area = process->a_s.allocate_area(1)
-	
-	'' map the area
-	vmm_map_page(@process->context, this.stack_area->address, this.userstack_p, VMM_FLAGS.USER_DATA)
+	'' reserve physical memory and map the area
+	for pagecounter as uinteger = 1 to userstack_pages
+		dim p_addr as any ptr = pmm_alloc()
+		dim v_addr as uinteger = cuint(this.stack_area->address) + (pagecounter-1)*PAGE_SIZE
+		
+		vmm_map_page(@process->context, cast(any ptr, v_addr), p_addr, VMM_FLAGS.USER_DATA)
+	next
 	
 	'' reserve space for the kernel-stack
 	this.kernelstack_p = pmm_alloc()
@@ -107,9 +108,16 @@ sub thread_type.destroy ()
 	'' free kernelstack
 	pmm_free(this.kernelstack_p)
 	
+	'' free the physical memory of the userspace stack
+	for pagecounter as uinteger = 1 to this.stack_area->pages
+		dim p_stack as any ptr = vmm_resolve(@this.parent_process->context, this.stack_area->address + (pagecounter-1)*PAGE_SIZE)
+		pmm_free(p_stack)
+	next
+	
+	'' unmap the userspace stack
 	vmm_unmap_range(@this.parent_process->context, this.stack_area->address, this.stack_area->pages)
-	'' FIXME: free all pages of the stack
-	pmm_free(this.userstack_p)
+	
+	'' delete the address space area
 	delete this.stack_area
 	
 	'' free thread structure
