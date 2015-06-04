@@ -57,7 +57,7 @@ function pmm_alloc_dma24 () as any ptr
 	
 	'' no free page found?
 	pmm_dma24_lock.release()
-	panic_error("PMM_DMA24: Out of memory!\n")
+	panic_error(!"PMM_DMA24: Out of memory!\n")
 	return nullptr
 end function
 
