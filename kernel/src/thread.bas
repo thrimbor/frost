@@ -63,7 +63,6 @@ constructor thread_type (process as process_type ptr, entry as any ptr, userstac
 	
 	'' allocate a memory area for the stack
 	this.stack_area = process->a_s.allocate_area(1)
-	this.userstack_bottom = stack_area->address
 	
 	'' map the area
 	vmm_map_page(@process->context, this.stack_area->address, this.userstack_p, VMM_FLAGS.USER_DATA)
@@ -84,7 +83,7 @@ constructor thread_type (process as process_type ptr, entry as any ptr, userstac
 	'' initialize the isf
 	isf->eflags = &h0202
 	isf->eip = cuint(entry)
-	isf->esp = cuint(this.userstack_bottom) + PAGE_SIZE
+	isf->esp = cuint(this.stack_area->address) + this.stack_area->pages*PAGE_SIZE
 	isf->cs = &h18 or &h03
 	isf->ss = &h20 or &h03
 end constructor

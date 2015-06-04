@@ -42,7 +42,6 @@ type thread_type
 	kernelstack_p as any ptr
 	kernelstack_bottom as any ptr
 	userstack_p as any ptr
-	userstack_bottom as any ptr
 	stack_area as address_space_area ptr
 	isf as interrupt_stack_frame ptr
 
