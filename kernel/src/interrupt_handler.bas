@@ -96,7 +96,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 			end if
 			
 			'' mask the IRQ to prevent it from firing again (gets unmasked when the thread is done)
-			'' FIXME: maybe we should only mask when a thread could be created?
+			'' even when no popup-thread was created we mask to prevent IRQ-storms
 			pic_mask(isf->int_nr - &h20)
 		
 			'' IRQ
