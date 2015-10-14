@@ -24,6 +24,7 @@
 #include "panic.bi"
 #include "interrupt_handler.bi"
 #include "pic.bi"
+#include "vfs.bi"
 
 
 function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as uinteger, param3 as uinteger) as uinteger
@@ -117,6 +118,22 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 			'' IPC popup threads need to be cleaned up with this syscall
 			'' FIXME: what if this wasn't an IPC-thread?
 			cur_thread->destroy()
+			
+		case SYSCALL_VFS_OPEN
+			'' param1: path-string
+			'' param2: flags
+			'' result: filedescriptor
+			'' FIXME: check path-string pointer
+			dim fd as vfs_fd ptr = vfs_open(cur_thread, cast(zstring ptr, param1), param2)
+			return fd->id
+			
+		case SYSCALL_VFS_CLOSE
+			'' param1: filedescriptor
+			'' resuslt: errorcode
+		
+		case SYSCALL_VFS_READ
+		
+		case SYSCALL_VFS_WRITE
 		
 		case SYSCALL_FORTY_TWO
 			video_fout(!"The answer to life, the universe and everything is... 42\n")

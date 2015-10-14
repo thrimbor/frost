@@ -1,17 +1,17 @@
 /'
  ' FROST x86 microkernel
  ' Copyright (C) 2010-2015  Stefan Schmidt
- ' 
+ '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
  ' the Free Software Foundation, either version 3 of the License, or
  ' (at your option) any later version.
- ' 
+ '
  ' This program is distributed in the hope that it will be useful,
  ' but WITHOUT ANY WARRANTY; without even the implied warranty of
  ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  ' GNU General Public License for more details.
- ' 
+ '
  ' You should have received a copy of the GNU General Public License
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
@@ -35,6 +35,7 @@
 #include "cpu.bi"
 #include "smp.bi"
 #include "io_man.bi"
+#include "vfs.bi"
 
 sub parse_cmdline (cmd_string as zstring ptr)
 	if (zstring_instr(*cmd_string, "-verbose") > 0) then
@@ -42,13 +43,13 @@ sub parse_cmdline (cmd_string as zstring ptr)
 	else
 		debug_set_loglevel(2) '' show only critical messages
 	end if
-	
+
 	if (zstring_instr(*cmd_string, "-no-clear-on-panic") > 0) then
 		panic_set_clear_on_panic(false)
 	else
 		panic_set_clear_on_panic(true)
 	end if
-	
+
 	#if defined (FROST_DEBUG)
 		if (zstring_instr(*cmd_string, "-serial-debugging") > 0) then
 			debug_serial_init()
@@ -62,38 +63,38 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' we copy the mbinfo structure so it gets automatically mapped with the kernel
     dim mb_info as multiboot_info
     memcpy(@mb_info, t_mbinfo, sizeof(multiboot_info))
-    
+
     video_clean()
     video_hide_cursor()
-    
+
     if (mb_info.flags and MULTIBOOT_INFO_CMDLINE) then
         parse_cmdline(cast(zstring ptr, mb_info.cmdline))
     end if
-    
+
     video_set_color(9,0)
     debug_wlog(debug_INFO, !"FROST V2 alpha\n")
     video_set_color(7,0)
     debug_wlog(debug_INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
     debug_wlog(debug_INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
-    
+
     scope
 		dim zstr as zstring*13
 		cpu_get_vendor(@zstr)
 		debug_wlog(debug_INFO, !"CPU vendor: %z\n", @zstr)
 	end scope
-    
+
     gdt_prepare()
     gdt_load()
     idt_prepare()
     idt_load()
-    
+
     pic_init()
-    
+
     pit_set_frequency(100)
-    
+
     debug_wlog(debug_INFO, !"initializing SMP\n")
     smp_init()
-    
+
     '' two-step initialization of the PMM
     '' (the normal-allocator needs paging)
     pmm_init(@mb_info, PMM_ZONE_DMA24)
@@ -103,9 +104,9 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     debug_wlog(debug_INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     vmm_init_local()
     debug_wlog(debug_INFO, !"paging initialized\n")
-	
+
 	debug_wlog(debug_INFO, !"initializing kmm\n")
-    
+
     '' initialize the heap:
     '' starts at 256MB
     '' initial size 1MB
@@ -113,23 +114,26 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
     debug_wlog(debug_INFO, !"heap initialized\n")
-    
+
     ''if (cpu_has_local_apic()) then
 	''	debug_wlog(debug_INFO, !"CPU has local APIC\n")
 	''	lapic_init()
 	''	ioapic_init()
 	''end if
-    
+
+    debug_wlog(debug_INFO, !"initializing vfs...\n")
+    vfs_init()
+
     init_ports()
-    
+
     debug_wlog(debug_INFO, !"loading init module...")
     load_init_module(@mb_info)
     debug_wlog(debug_INFO, !"done.\n")
-    
+
     debug_wlog(debug_INFO, !"loading modules...")
     load_modules(@mb_info)
     debug_wlog(debug_INFO, !"done.\n")
-    
+
     thread_create_idle_thread()
 
     '' the scheduler takes over here
@@ -144,11 +148,11 @@ extern end_dtors alias "end_dtors" as byte
 
 sub kinit ()
 	dim ctor as uinteger ptr = cast(uinteger ptr, @start_ctors)
-	
+
 	while ctor < @end_ctors
 		dim ictor as sub () = cast(sub(), *ctor)
 		ictor()
-		
+
 		ctor += 1
 	wend
 end sub
