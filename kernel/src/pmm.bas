@@ -64,7 +64,7 @@ sub pmm_init (mbinfo as multiboot_info ptr, zone as uinteger)
 		panic_error(!"Memory map not available!\n")
 	end if
 
-	assert((vmm_is_paging_ready() and (zone = PMM_ZONE_NORMAL)) or ((not vmm_is_paging_ready()) and (zone = PMM_ZONE_DMA24)))
+	assert((vmm_is_paging_ready() and cbool(zone = PMM_ZONE_NORMAL)) or ((not vmm_is_paging_ready()) and cbool(zone = PMM_ZONE_DMA24)))
 
 	if (zone = PMM_ZONE_DMA24) then pmm_init_dma24()
 
