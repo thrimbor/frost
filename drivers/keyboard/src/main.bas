@@ -24,9 +24,6 @@
 const KBC_COMMAND as ubyte = &h64
 const KBC_DATA    as ubyte = &h60
 
-const true as integer = -1
-const false as integer = 0
-
 declare sub irq_handler (irq_number as uinteger)
 declare sub kbc_send_command (cmd as ubyte)
 
