@@ -6,7 +6,7 @@ FROST is a 32-bit operating system based on a microkernel. It is written
 entirely in FreeBASIC and Assembly.
 
 #### Dependencies ####
-- fbc, tested with 1.04.0 (the FreeBASIC compiler, available on freebasic.net)
+- fbc, tested with 1.05.0 (the FreeBASIC compiler, available on freebasic.net)
 - nasm, tested with 2.11.08 (the Netwide Assembler, available on nasm.us)
 - GNU make, GNU assembler and the GNU linker
 
