@@ -18,9 +18,15 @@
 
 #pragma once
 
-declare sub video_fout (fstr as zstring, ...)
-declare sub video_cout overload (number as uinteger, base as ubyte = 10, minchars as ubyte = 0)
-declare sub video_cout overload (number as integer, base as ubyte = 10, minchars as ubyte = 0)
+#define LOG_DEBUG !"\0022"
+#define LOG_INFO !"\0021"
+#define LOG_ERR !"\0020"
+
+#define LOGLEVEL_DEBUG 2
+#define LOGLEVEL_INFO 1
+#define LOGLEVEL_ERR 0
+
+declare sub printk (format_string as const zstring, ...)
 declare sub video_clean (b_color as ubyte = 0)
 declare sub video_set_color (fc as ubyte, bc as ubyte)
 declare sub video_hide_cursor ()

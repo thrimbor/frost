@@ -31,10 +31,10 @@ declare sub panic_hlt ()
 	asm cli
 	video_set_color(0,3)
 	if (panic_clear_on_panic) then video_clean(3)
-	video_fout(!"\nKERNEL PANIC\n")
-	video_fout(!"file: %z, function: %z, line: %I\n\n", @__FILE__, @__FUNCTION__, cuint(__LINE__))
-	video_fout(!"reason: ")
-	video_fout(msg, params)
+	printk(LOG_ERR !"\nKERNEL PANIC\n")
+	printk(LOG_ERR !"file: %s, function: %s, line: %u\n\n", @__FILE__, @__FUNCTION__, cuint(__LINE__))
+	printk(LOG_ERR !"reason: ")
+	printk(LOG_ERR msg, params)
 	
 	panic_hlt()
 #endmacro

@@ -21,13 +21,13 @@
 
 #if defined (FROST_DEBUG)
 	sub _fb_Assert alias "fb_Assert" (byval fname as zstring ptr, byval linenum as integer, byval funcname as zstring ptr, byval expression as zstring ptr)
-		video_fout(!"%z(%i): assertion failed at %z: %z\n", fname, linenum, funcname, expression)
+		printk(LOG_ERR !"%s(%i): assertion failed at %s: %s\n", fname, linenum, funcname, expression)
 		debug_stacktrace(10)
 		asm cli
 		asm hlt
 	end sub
 
 	sub _fb_AssertWarn alias "fb_AssertWarn" (byval fname as zstring ptr, byval linenum as integer, byval funcname as zstring ptr, byval expression as zstring ptr)
-		video_fout(!"%z(%i): assertion failed at %z: %z\n", fname, linenum, funcname, expression)
+		printk(LOG_ERR !"%s(%i): assertion failed at %s: %s\n", fname, linenum, funcname, expression)
 	end sub
 #endif

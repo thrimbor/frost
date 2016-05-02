@@ -78,14 +78,14 @@ sub lapic_init ()
 	dim lapic_base_phys as uinteger = cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK)
 	write_msr(LOCAL_APIC_BASE_MSR, read_msr(LOCAL_APIC_BASE_MSR))
 	
-	debug_wlog(debug_INFO, !"APIC base addr: %hI\n", cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK))
+	printk(LOG_DEBUG !"APIC base addr: %X\n", cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK))
 	
 	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE))
 		
 	'' set the APIC Software Enable/Disable flag in the Spurious-Interrupt Vector Register
 	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
 	
-	debug_wlog(debug_INFO, !"local APIC enabled\n")
+	printk(LOG_DEBUG !"local APIC enabled\n")
 	apic_enabled = true
 end sub
 
@@ -107,8 +107,8 @@ sub ioapic_init ()
 	'' TODO:
 	'' - configure I/O APIC
 	dim ioapic_base_v as uinteger = cuint(vmm_kernel_automap(cast(any ptr, ioapic_base), PAGE_SIZE))
-	debug_wlog(debug_INFO, !"I/O APIC id: %hI\n", ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICID))
-	debug_wlog(debug_INFO, !"I/O APIC version: %hI\n", lobyte(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER)))
-	debug_wlog(debug_INFO, !"I/O APIC max redirection entry: %I\n", lobyte(hiword(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER))))
+	printk(LOG_DEBUG !"I/O APIC id: %X\n", ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICID))
+	printk(LOG_DEBUG !"I/O APIC version: %X\n", lobyte(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER)))
+	printk(LOG_DEBUG !"I/O APIC max redirection entry: %X\n", lobyte(hiword(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER))))
 	
 end sub

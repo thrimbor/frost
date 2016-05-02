@@ -26,8 +26,11 @@ dim shared memory as ubyte ptr = cast(ubyte ptr, &hB8000)  '' pointer to video-m
 dim shared cursor_pos as addr_t = 0                        '' the position of the cursor
 dim shared cursor_hidden as boolean = false
 dim shared textColor as ubyte = 7                          '' the color of the text
+dim shared loglevel as ubyte = LOGLEVEL_DEBUG
 
 declare sub video_update_cursor ()
+declare sub put_uint (number as uinteger, numerical_base as const ubyte = 10, minchars as const ubyte = 1, fillchar as ubyte = 32, lowercase as const boolean = false)
+declare sub put_int (number as integer, numerical_base as const ubyte = 10, minchars as const ubyte = 1, fillchar as const ubyte = 32)
 
 
 '' scroll the screen down one row
@@ -39,7 +42,7 @@ sub video_scroll_screen ()
 end sub
 
 '' print one char
-sub video_putc (char as ubyte)
+sub putc (char as ubyte)
 	#if defined (FROST_DEBUG)
 		debug_serial_putc(char)
 	#endif
@@ -69,116 +72,89 @@ sub video_putc (char as ubyte)
 	end if
 end sub
 
-sub video_fout (fstr as zstring, ...)
-	dim zstr as ubyte ptr = cast(ubyte ptr, @fstr)
-	dim char_counter as uinteger = 0
-	dim digit_counter as uinteger = 0
-	dim numerical_base as uinteger = 0
-	dim arg as any ptr = va_first()
-	
-	while zstr[char_counter]
-		if (zstr[char_counter] = 37) then         '' do we have a percent-sign?
-			char_counter += 1                     '' go to the next char
-			
-			numerical_base = 10                   '' preset the base to 10
-			select case (zstr[char_counter])      '' check the char
-				case 104:                         '' a "h"?
-					numerical_base = 16           '' set to hexadecimal
-					char_counter += 1
-				case 110:                         '' a "n"?
-					numerical_base = 2            '' set to binary
-					char_counter += 1
-			end select
-			
-			digit_counter = 0                     ''\
-			while (zstr[char_counter] = 35)       '' \
-				digit_counter += 1                ''  > count all the "#"-chars, they are the minimum digits to print
-				char_counter += 1                 '' /  
-			wend                                  ''/
-			
-			select case (zstr[char_counter])
-				'' "I"
-				case 73:
-					video_cout(va_arg(arg, uinteger),numerical_base,digit_counter)
-					
-					arg = va_next(arg, uinteger)
-					char_counter += 1
-					continue while
-				'' "i"
-				case 105:
-					video_cout(va_arg(arg, integer),numerical_base,digit_counter)
-					
-					arg = va_next(arg, integer)
-					char_counter += 1
-					continue while
-				'' "S"
-				case 83:
-					video_cout(cuint(va_arg(arg, ushort)),numerical_base,digit_counter)
-					
-					arg = va_next(arg, ushort)
-					char_counter += 1
-					continue while
-				'' "s"
-				case 115:
-					video_cout(cint(va_arg(arg, short)),numerical_base,digit_counter)
-					
-					arg = va_next(arg, short)
-					char_counter += 1
-					continue while
-				'' "B"
-				case 66:
-					video_cout(cuint(va_arg(arg, ubyte)),numerical_base,digit_counter)
-					
-					arg = va_next(arg, ubyte)
-					char_counter += 1
-					continue while
-				'' "b"
-				case 98:
-					video_cout(cint(va_arg(arg, byte)),numerical_base,digit_counter)
-					
+sub printk (format_string as const zstring, ...)
+    dim fstr as const ubyte ptr = cast(const ubyte ptr, @format_string)
+    dim arg as any ptr = va_first()
+    dim c as uinteger = 0
+    dim is_format as boolean = false
+    var format_minchars = 1
+    var format_fillchar = asc(" ")
+    
+    if (fstr[0] = 2) then
+		if fstr[1] = 0 or fstr[1]-asc("0")>loglevel then exit sub
+		c+=2
+	end if
+
+    while (fstr[c] <> 0)
+        if (is_format) then
+            select case fstr[c]
+                case asc("%")
+                    putc(fstr[c])
+                    is_format = false
+                case asc("d"), asc("i")
+                    put_int(va_arg(arg, integer), 10, format_minchars, format_fillchar)
+                    arg = va_next(arg, integer)
+                    is_format = false
+                case asc("u")
+                    put_uint(va_arg(arg, uinteger), 10, format_minchars, format_fillchar)
+                    arg = va_next(arg, uinteger)
+                    is_format = false
+                case asc("x")
+                    put_uint(va_arg(arg, uinteger), 16, format_minchars, format_fillchar, true)
+                    arg = va_next(arg, uinteger)
+                    is_format = false
+                case asc("X")
+                    put_uint(va_arg(arg, uinteger), 16, format_minchars, format_fillchar)
+                    arg = va_next(arg, uinteger)
+                    is_format = false
+                case asc("c")
+					putc(va_arg(arg, byte))
 					arg = va_next(arg, byte)
-					char_counter += 1
-					continue while
-				'' "z"
-				case 122:
-					dim t_zstr as byte ptr
-					dim t_zcounter as addr_t = 0
-					
-					t_zstr = cast(byte ptr, va_arg(arg, addr_t))
-					arg = va_next(arg, addr_t)
-					
-					while (t_zstr[t_zcounter] <> 0)
-						video_putc(t_zstr[t_zcounter])
-						t_zcounter += 1
-					wend
-					
-					char_counter += 1
-					continue while
-				'' "%"
-				case &h25:
-					video_putc(&h25)
-					char_counter += 1
-				case else:
-					char_counter += 1
-					continue while
-			end select
-		end if
-		
-		video_putc(zstr[char_counter])
-		char_counter += 1
-	wend
-	
+					is_format = false
+                case asc("s")
+                    dim s_it as uinteger = 0
+                    dim s_str as byte ptr = va_arg(arg, byte ptr)
+                    arg = va_next(arg, byte ptr)
+
+                    while (s_str[s_it] <> 0)
+                        putc(s_str[s_it])
+                        s_it += 1
+                    wend
+                    
+                    is_format = false
+				case asc("0") to asc("9")
+					if (fstr[c] = asc("0") and (fstr[c-1] = asc("%"))) then
+						format_fillchar = asc("0")
+					else
+						format_minchars = format_minchars*10 + (fstr[c] - asc("0"))
+					end if
+            end select
+        else
+            select case fstr[c]
+                case asc("%")
+                    is_format = true
+                    format_minchars = 1
+                    format_fillchar = asc(" ")
+                case else
+                    putc(fstr[c])
+            end select
+        end if
+
+        c += 1
+    wend
+    
 	video_update_cursor()
 end sub
 
 '' print an uinteger with a given base and at least as many digits as given in minchars
-sub video_cout (number as uinteger, numerical_base as ubyte = 10, minchars as ubyte = 0)
+sub put_uint (number as uinteger, numerical_base as const ubyte = 10, minchars as const ubyte = 1, fillchar as ubyte = 32, lowercase as const boolean = false)
 	if ((numerical_base > 36) or (numerical_base < 2)) then return
+	if (minchars = 1) then fillchar = asc("0")
 	dim chars(1 to 10) as ubyte
 	dim num as ubyte
 	dim counter as uinteger = 10
 	dim rem_chars as integer = minchars
-	
+
 	do
 		chars(counter) = 48+(number mod numerical_base)
 		if (chars(counter)>57) then chars(counter) += 7
@@ -186,22 +162,27 @@ sub video_cout (number as uinteger, numerical_base as ubyte = 10, minchars as ub
 		number \= numerical_base
 		rem_chars -= 1
 	loop until ((number <= 0) and (rem_chars <= 0))
-	
+
 	for counter = 1 to 10
 		if ((chars(counter)=0) and (num = 0)) then continue for
-		video_putc(chars(counter))
-		num = 1
+		if ((chars(counter)=asc("0")) and (num=0)) then
+			putc(fillchar)
+		else
+			if (lowercase) and cast(boolean, (chars(counter) > 64)) then chars(counter) += 32
+			putc(chars(counter))
+			num = 1
+		end if
 	next
 end sub
 
 '' same game with integers. if the number is negative we just print a minus and then the number.
-sub video_cout (number as integer, numerical_base as ubyte = 10, minchars as ubyte = 0)
+sub put_int (number as integer, numerical_base as const ubyte = 10, minchars as const ubyte = 1, fillchar as const ubyte = 32)
 	if ((numerical_base > 36) or (numerical_base < 2)) then return
 	if (number<0) then
-		video_putc(45)
+		putc(45)
 		number = -number
 	end if
-	video_cout(cuint(number),numerical_base,minchars)
+	put_uint(cuint(number),numerical_base,minchars,fillchar)
 end sub
 
 '' clear the screen with a given color

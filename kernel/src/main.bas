@@ -72,15 +72,15 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     end if
 
     video_set_color(9,0)
-    debug_wlog(debug_INFO, !"FROST V2 alpha\n")
+    printk(LOG_INFO !"FROST V2 alpha\n")
     video_set_color(7,0)
-    debug_wlog(debug_INFO, !"bootloader name: %z\n", cast(zstring ptr, mb_info.boot_loader_name))
-    debug_wlog(debug_INFO, !"cmdline: %z\n", cast(zstring ptr, mb_info.cmdline))
+    printk(LOG_INFO !"bootloader name: %s\n", cast(zstring ptr, mb_info.boot_loader_name))
+    printk(LOG_INFO !"cmdline: %s\n", cast(zstring ptr, mb_info.cmdline))
 
     scope
 		dim zstr as zstring*13
 		cpu_get_vendor(@zstr)
-		debug_wlog(debug_INFO, !"CPU vendor: %z\n", @zstr)
+		printk(LOG_INFO !"CPU vendor: %s\n", @zstr)
 	end scope
 
     gdt_prepare()
@@ -92,20 +92,20 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 
     pit_set_frequency(100)
 
-    debug_wlog(debug_INFO, !"initializing SMP\n")
+    printk(LOG_INFO !"initializing SMP\n")
     smp_init()
 
     '' two-step initialization of the PMM
     '' (the normal-allocator needs paging)
     pmm_init(@mb_info, PMM_ZONE_DMA24)
-    debug_wlog(debug_INFO, !"DMA24-pmm initialized\n")
+    printk(LOG_INFO !"DMA24-pmm initialized\n")
     vmm_init()
     pmm_init(@mb_info, PMM_ZONE_NORMAL)
-    debug_wlog(debug_INFO, !"physical memory manager initialized\n  -> total RAM: %IMB\n  -> free RAM: %IMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
+    printk(LOG_INFO !"physical memory manager initialized\n  -> total RAM: %uMB\n  -> free RAM: %uMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     vmm_init_local()
-    debug_wlog(debug_INFO, !"paging initialized\n")
+    printk(LOG_INFO !"paging initialized\n")
 
-	debug_wlog(debug_INFO, !"initializing kmm\n")
+	printk(LOG_INFO !"initializing kmm\n")
 
     '' initialize the heap:
     '' starts at 256MB
@@ -113,26 +113,26 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' minimum size 1MB
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
-    debug_wlog(debug_INFO, !"heap initialized\n")
+    printk(LOG_INFO !"heap initialized\n")
 
     ''if (cpu_has_local_apic()) then
-	''	debug_wlog(debug_INFO, !"CPU has local APIC\n")
+	''	printk(LOG_INFO !"CPU has local APIC\n")
 	''	lapic_init()
 	''	ioapic_init()
 	''end if
 
-    debug_wlog(debug_INFO, !"initializing vfs...\n")
+    printk(LOG_INFO !"initializing vfs...\n")
     vfs_init()
 
     init_ports()
 
-    debug_wlog(debug_INFO, !"loading init module...")
+    printk(LOG_INFO !"loading init module...")
     load_init_module(@mb_info)
-    debug_wlog(debug_INFO, !"done.\n")
+    printk(LOG_INFO !"done.\n")
 
-    debug_wlog(debug_INFO, !"loading modules...")
+    printk(LOG_INFO !"loading modules...")
     load_modules(@mb_info)
-    debug_wlog(debug_INFO, !"done.\n")
+    printk(LOG_INFO !"done.\n")
 
     thread_create_idle_thread()
 

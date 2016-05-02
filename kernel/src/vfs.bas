@@ -35,7 +35,7 @@ sub vfs_init ()
 	var testnode = new vfs_node("testnode", two, VFS_FLAGS_KERNEL_NODE)
 	
 	var t = vfs_parse_path("/vfs_2/testnode")
-	video_fout(!"node name: %z\n", t->name)
+	printk(LOG_DEBUG !"node name: %s\n", t->name)
 end sub
 
 operator vfs_node.new (size as uinteger) as any ptr

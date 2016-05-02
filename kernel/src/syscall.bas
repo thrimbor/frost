@@ -136,10 +136,10 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 		case SYSCALL_VFS_WRITE
 		
 		case SYSCALL_FORTY_TWO
-			video_fout(!"The answer to life, the universe and everything is... 42\n")
+			printk(LOG_INFO !"The answer to life, the universe and everything is... 42\n")
 			
 		case 43
-			video_fout(!"%z\n", param1)
+			printk(LOG_INFO !"%s\n", param1)
 		
 		case else:
 			panic_error("Undefined syscall called!")

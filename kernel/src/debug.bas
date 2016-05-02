@@ -83,7 +83,7 @@ sub debug_stacktrace (maxFrames as uinteger)
 	
 	ebp = cast(uinteger ptr, ebp)
 	
-	video_fout(!"stacktrace\n")
+	printk(LOG_ERR !"stacktrace\n")
 	for frame as uinteger = 0 to maxFrames
 		dim eip as uinteger = ebp[1]
 		
@@ -92,6 +92,6 @@ sub debug_stacktrace (maxFrames as uinteger)
 		end if
 		
 		ebp = cast(uinteger ptr, ebp[0])
-		video_fout(!" 0x%h########I\n", eip)
+		printk(LOG_ERR !" 0x%08X\n", eip)
 	next
 end sub
