@@ -1,0 +1,31 @@
+megs: 128
+
+romimage: file="/usr/share/bochs/BIOS-bochs-latest"
+vgaromimage: file="/usr/share/bochs/VGABIOS-lgpl-latest"
+
+com1: enabled=1, mode=file, dev=/dev/stdout
+
+plugin_ctrl: unmapped=1, biosdev=1, speaker=0, extfpuirq=1, parallel=0, serial=1, iodebug=1
+config_interface: textconfig
+display_library: x
+debug: action=ignore
+info: action=report
+error: action=report
+panic: action=ask
+keyboard: type=mf, serial_delay=250, paste_delay=100000, user_shortcut=none
+mouse: type=ps2, enabled=0, toggle=ctrl+mbutton
+speaker: enabled=1, mode=system
+
+pci: enabled=1, chipset=i440fx
+vga: extension=vbe, update_freq=5, realtime=1
+
+cpu: count=1:1:1, ips=4000000, quantum=16, model=bx_generic, reset_on_triple_fault=1, cpuid_limit_winnt=0, ignore_bad_msrs=1, mwait_is_nop=0
+cpuid: level=6, stepping=3, model=3, family=6, vendor_string="AuthenticAMD", brand_string="AMD Athlon(tm) processor"
+cpuid: mmx=1, apic=xapic, simd=sse2, sse4a=0, misaligned_sse=0, sep=1, movbe=0, adx=0
+cpuid: aes=0, sha=0, xsave=0, xsaveopt=0, avx_f16c=0, avx_fma=0, bmi=0, xop=0, fma4=0
+cpuid: tbm=0, x86_64=1, 1g_pages=0, pcid=0, fsgsbase=0, smep=0, smap=0, mwait=1
+
+ata1-master: type=cdrom, path=frost.iso, status=inserted
+boot: cdrom
+
+
