@@ -139,7 +139,7 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 			printk(LOG_INFO !"The answer to life, the universe and everything is... 42\n")
 			
 		case 43
-			printk(LOG_INFO !"%s\n", param1)
+			printk(LOG_INFO !"%s", param1)
 		
 		case else:
 			panic_error("Undefined syscall called!")
