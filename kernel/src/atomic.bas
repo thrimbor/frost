@@ -18,17 +18,35 @@
 
 #include "atomic.bi"
 
-function AtomicInt.cmpxchg (oldval as integer, newval as integer) as integer
-	dim result as integer
-	
-	asm
-		mov rax, [oldval]
-		mov rbx, [newval]
-        mov rdx, [this+offsetof(AtomicInt, counter)]
-		
-		lock cmpxchg qword ptr [rdx], rbx
-		mov [result], rax
-	end asm
-	
-	return result
+sub AtomicInt.inc ()
+    this.add(1)
+end sub
+
+sub AtomicInt.dec ()
+    this.add(-1)
+end sub
+
+function AtomicInt.get () as integer
+    return this.counter
+end function
+
+function AtomicInt.add (value as integer) as integer
+    dim c as integer = this.counter
+    dim old as integer
+    
+    do
+        old = this.cmpxchg(c, c+value)
+        if (old = c) then exit do
+        c = old
+    loop
+    
+    return c+value
+end function
+
+function AtomicInt.subtract (value as integer) as integer
+    return this.add(-value)
+end function
+
+function AtomicInt.sub_and_test (value as integer) as boolean
+    return this.subtract(value) = 0
 end function
