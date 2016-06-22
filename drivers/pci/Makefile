@@ -11,7 +11,7 @@ AFLAGS = -f elf32
 LFLAGS = -melf_i386 -Tpci.ld
 
 pci.elf: $(OBJS)
-	$(LINKER) $(LFLAGS) -o $@ $^
+	$(LINKER) $(LFLAGS) -o $@ $^ ../../libfrost/libfrost.a
 
 obj/%.o: src/%.bas
 	$(COMPILER) $(CFLAGS) $^ -o $@
