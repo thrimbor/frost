@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -19,28 +19,49 @@
 #include "atomic.bi"
 
 sub AtomicInt.inc ()
-    asm
-        mov ebx, [this+offsetof(AtomicInt, counter)]
-        lock inc dword ptr [ebx]
-    end asm
+    this.add(1)
 end sub
 
 sub AtomicInt.dec ()
-    asm
-        mov ebx, [this+offsetof(AtomicInt, counter)]
-        lock dec dword ptr [ebx]
-    end asm
+    this.add(-1)
 end sub
-
-function AtomicInt.add (val as integer) as integer
-    asm
-        mov ebx, [val]
-        mov eax, [this+offsetof(AtomicInt, counter)]
-        lock xadd dword ptr [eax], ebx
-        mov [function], ebx
-    end asm
-end function
 
 function AtomicInt.get () as integer
     return this.counter
+end function
+
+function AtomicInt.cmpxchg (oldval as integer, newval as integer) as integer
+	dim result as integer
+	
+	asm
+		mov eax, [oldval]
+		mov ebx, [newval]
+        mov edx, [this+offsetof(AtomicInt, counter)]
+		
+		lock cmpxchg dword ptr [edx], ebx
+		mov [result], eax
+	end asm
+	
+	return result
+end function
+
+function AtomicInt.add (value as integer) as integer
+    dim c as integer = this.counter
+    dim old as integer
+    
+    do
+        old = this.cmpxchg(c, c+value)
+        if (old = c) then exit do
+        c = old
+    loop
+    
+    return c+value
+end function
+
+function AtomicInt.subtract (value as integer) as integer
+    return this.add(-value)
+end function
+
+function AtomicInt.sub_and_test (value as integer) as boolean
+    return this.subtract(value) = 0
 end function

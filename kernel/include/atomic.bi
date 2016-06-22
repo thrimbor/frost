@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -18,12 +18,16 @@
 
 #pragma once
 
+
 type AtomicInt
     public:
         declare sub inc ()
         declare sub dec ()
-        declare function add (val as integer) as integer
         declare function get () as integer
+        declare function cmpxchg (oldval as integer, newval as integer) as integer
+        declare function add (value as integer) as integer
+        declare function subtract (value as integer) as integer
+        declare function sub_and_test (value as integer) as boolean
     private:
         counter as integer
 end type

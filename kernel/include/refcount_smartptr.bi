@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -22,9 +22,6 @@
 
 type RefCounted
     dim refcount as AtomicInt
-
-    declare sub ref ()
-    declare sub deref ()
 end type
 
 
@@ -49,19 +46,19 @@ end type
 
 #macro DEFINE_REFCOUNTPTR(T_)
     constructor RefCountPtr(T_) (reference as T_ ptr)
-        reference->ref()
+        reference->refcount.inc()
         this.ref = reference
     end constructor
 
     constructor RefCountPtr(T_) (reference as RefCountPtr(T_))
-        reference.ref->ref()
+        reference->refcount.inc()
         this.ref = reference.ref
     end constructor
 
     destructor RefCountPtr(T_) ()
-        this.ref->deref()
-
-        if (this.ref->refcount.get() = 0) then
+		dim destroy as boolean = this.ref->refcount.sub_and_test(1)
+        
+        if (destroy) then
             delete this.ref
         end if
     end destructor
