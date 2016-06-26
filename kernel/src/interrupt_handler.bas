@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -28,11 +28,14 @@
 #include "pmm.bi"
 #include "kmm.bi"
 
+DECLARE_LIST(irq_handler_type)
+DEFINE_LIST(irq_handler_type)
+
 type irq_handler_type
 	process as process_type ptr
 	handler as any ptr
 	
-	list as list_head
+	list as Listtype(irq_handler_type) = Listtype(irq_handler_type)(offsetof(irq_handler_type, list))
 	
 	declare operator new (size as uinteger) as any ptr
 	declare operator new[] (size as uinteger) as any ptr
@@ -56,7 +59,7 @@ constructor irq_handler_type (process as process_type ptr, handler as any ptr)
 	this.handler = handler
 end constructor
 
-dim shared irq_handlers(0 to 15) as list_head
+dim shared irq_handlers(0 to 15) as Listtype(irq_handler_type)
 
 function register_irq_handler (process as process_type ptr, irq as integer, handler_address as any ptr) as boolean
 	if ((irq < lbound(irq_handlers,1)) or (irq > ubound(irq_handlers,1))) then return false
@@ -101,7 +104,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 		
 			'' IRQ
 			list_foreach(h, irq_handlers(isf->int_nr-&h20))
-				dim x as irq_handler_type ptr = LIST_GET_ENTRY(h, irq_handler_type, list)
+				dim x as irq_handler_type ptr = h->get_owner()
 				dim thread as thread_type ptr = new thread_type(x->process, x->handler, 1, THREAD_FLAG_POPUP)
 				
 				dim stack_p as any ptr = vmm_resolve(@(thread->parent_process->context), thread->stack_area->address + (thread->stack_area->pages-1)*PAGE_SIZE)

@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -22,15 +22,17 @@
 #include "zstring.bi"
 #include "video.bi"
 
-'' FIXME: We absolutely NEED refcounted pointers for the nodes! Otherwise we'll get serious memory corruption!
+DEFINE_LIST(vfs_node)
+DEFINE_REFCOUNTPTR(vfs_node)
 
+dim shared vfs_root as RefCountPtr(vfs_node)
 
 sub vfs_init ()
 	vfs_root = new vfs_node("vfs_root", nullptr, VFS_FLAGS_KERNEL_NODE)
 	
-	var one = new vfs_node("vfs_1", vfs_root, VFS_FLAGS_KERNEL_NODE)
-	var two = new vfs_node("vfs_2", vfs_root, VFS_FLAGS_KERNEL_NODE)
-	var three = new vfs_node("vfs_3", vfs_root, VFS_FLAGS_KERNEL_NODE)
+	var one = new vfs_node("vfs_1", vfs_root.ref, VFS_FLAGS_KERNEL_NODE)
+	var two = new vfs_node("vfs_2", vfs_root.ref, VFS_FLAGS_KERNEL_NODE)
+	var three = new vfs_node("vfs_3", vfs_root.ref, VFS_FLAGS_KERNEL_NODE)
 	
 	var testnode = new vfs_node("testnode", two, VFS_FLAGS_KERNEL_NODE)
 	
@@ -66,26 +68,26 @@ operator vfs_fd.delete (buffer as any ptr)
 	kfree(buffer)
 end operator
 
-constructor vfs_fd (process as process_type ptr, node as vfs_node ptr)
+constructor vfs_fd (process as process_type ptr, node as RefCountPtr(vfs_node))
 	'' TODO: - generate an id
 	''		 - add ourself to a list of descriptors for this process
 end constructor
 
-function vfs_parse_path (path as zstring) as vfs_node ptr
+function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)
 	'' TODO: what's with relative paths?
 	'' TODO: can we break up that function into multiple smaller ones? (e.g. findChildByName)
 	
 	if (path[0] = asc("/")) then
-		dim cur_node as vfs_node ptr = vfs_root
+		dim cur_node as RefCountPtr(vfs_node) = vfs_root
 		dim st as StringTokenizer = StringTokenizer(@path)
 		do
 			dim x as zstring ptr = st.getToken(strptr("/"))
 			if (x = 0) then exit do
 			
-			dim old_node as vfs_node ptr = cur_node
+			dim old_node as RefCountPtr(vfs_node) = cur_node
 			'' loop through all child nodes, search for the one with the right name
 			list_foreach (child, cur_node->child_list)
-				dim child_node as vfs_node ptr = LIST_GET_ENTRY(child, vfs_node, node_list)
+				dim child_node as RefCountPtr(vfs_node) = child->get_owner()
 				
 				if (zstring_cmp(*x, *child_node->name) = 0) then
 					cur_node = child_node
@@ -105,8 +107,8 @@ function vfs_open (thread as thread_type ptr, path as zstring ptr, flags as uint
 	'' TODO: what about permissions?
 	
 	'' parse the path and get the node
-	dim node as vfs_node ptr = vfs_parse_path(*path)
-	if (node = nullptr) then return nullptr
+	dim node as RefCountPtr(vfs_node) = vfs_parse_path(*path)
+	if (node.get_count()) then return nullptr
 	
 	'' create a new file-descriptor
 	dim fd as vfs_fd ptr = new vfs_fd(thread->parent_process, node)

@@ -26,6 +26,7 @@
 #include "spinlock.bi"
 #include "address_space.bi"
 
+DECLARE_LIST(process_type)
 
 type process_type
 	id as uinteger
@@ -42,11 +43,11 @@ type process_type
 	
 	io_bitmap as uinteger ptr
 	
-	thread_list as list_head
+	thread_list as Listtype(thread_type)
 	next_tid as uinteger
 	tid_lock as spinlock
 	
-	process_list as list_head
+	process_list as Listtype(process_type) = Listtype(process_type)(offsetof(process_type, process_list))
 	
 	declare operator new (size as uinteger) as any ptr
 	declare operator new[] (size as uinteger) as any ptr

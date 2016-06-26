@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -24,7 +24,12 @@
 
 const VFS_FLAGS_KERNEL_NODE as integer = &h1
 
-type vfs_node extends RefCounted
+type vfs_node as vfs_node_
+
+DECLARE_REFCOUNTPTR(vfs_node)
+DECLARE_LIST(vfs_node)
+
+type vfs_node_ extends RefCounted
 	name as zstring ptr
 
 	flags as integer
@@ -40,8 +45,8 @@ type vfs_node extends RefCounted
 	end union
 
 	parent as vfs_node ptr
-	child_list as list_head
-	node_list as list_head
+	child_list as Listtype(vfs_node)
+	node_list as Listtype(vfs_node) = Listtype(vfs_node)(offsetof(vfs_node_, node_list))
 
 	declare operator new (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)
@@ -55,11 +60,9 @@ type vfs_fd
 
 	declare operator new (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)
-	declare constructor (process as process_type ptr, node as vfs_node ptr)
+	declare constructor (process as process_type ptr, node as RefCountPtr(vfs_node))
 end type
 
-common shared vfs_root as vfs_node ptr
-
 declare sub vfs_init ()
-declare function vfs_parse_path (path as zstring) as vfs_node ptr
+declare function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)
 declare function vfs_open (thread as thread_type ptr, path as zstring ptr, flags as uinteger) as vfs_fd ptr

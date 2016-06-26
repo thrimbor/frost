@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -21,13 +21,15 @@
 #include "kernel.bi"
 #include "intrusive_list.bi"
 
+DECLARE_LIST(address_space_area)
+
 type address_space_area
 	address as any ptr
 	pages as uinteger
 	flags as uinteger
 	description as zstring ptr
 	
-	list as list_head
+	list as Listtype(address_space_area) = Listtype(address_space_area)(offsetof(address_space_area, list))
 	
 	declare constructor (address as any ptr, pages as uinteger, flags as uinteger = 0, description as zstring ptr = nullptr)
 	declare operator new (size as uinteger) as any ptr
@@ -35,7 +37,7 @@ type address_space_area
 end type
 
 type address_space
-	areas as list_head
+	areas as Listtype(address_space_area)
 	
 	declare function allocate_area (pages as uinteger, flags as uinteger = 0, description as zstring ptr = nullptr) as address_space_area ptr
 	declare sub insert_area (area as address_space_area ptr)

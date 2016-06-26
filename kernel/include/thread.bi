@@ -30,6 +30,8 @@ const THREAD_STATE_KILL_ON_SCHEDULE = 3
 const THREAD_FLAG_POPUP = 1
 const THREAD_FLAG_RESCHEDULE = 2
 
+DECLARE_LIST(thread_type)
+
 type process_type_ as process_type
 
 type thread_type
@@ -45,10 +47,10 @@ type thread_type
 	isf as interrupt_stack_frame ptr
 
 	'' list of threads of a process
-	process_threads as list_head
+	process_threads as Listtype(thread_type) = Listtype(thread_type)(offsetof(thread_type, process_threads))
 	
 	'' list of active threads
-	active_threads as list_head
+	active_threads as Listtype(thread_type) = Listtype(thread_type)(offsetof(thread_type, active_threads))
 	
 	declare operator new (size as uinteger) as any ptr
 	declare operator new[] (size as uinteger) as any ptr

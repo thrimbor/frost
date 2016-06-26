@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #include "pmm.bi"
 #include "kmm.bi"
 #include "video.bi"
+
+DEFINE_LIST(address_space_area)
 
 constructor address_space_area (address as any ptr, pages as uinteger, flags as uinteger = 0, description as zstring ptr = nullptr)
 	this.address = address
@@ -42,10 +44,10 @@ function address_space.allocate_area (pages as uinteger, flags as uinteger = 0, 
 	''  3. return the address of the area
 	
 	dim min_addr as uinteger = &h40000000
-	dim insert_after as list_head ptr = @this.areas
+	dim insert_after as Listtype(address_space_area) ptr = @this.areas
 	
 	list_foreach(h, this.areas)
-		dim x as address_space_area ptr = LIST_GET_ENTRY(h, address_space_area, list)
+		dim x as address_space_area ptr = h->get_owner()
 		
 		insert_after = h
 		
@@ -61,7 +63,7 @@ function address_space.allocate_area (pages as uinteger, flags as uinteger = 0, 
 	'' Did we walk through the list and didn't find a hole yet?
 	if ((min_addr <> &h40000000) and (insert_after <> @this.areas)) then
 		'' check if there's space at the end
-		dim x as address_space_area ptr = LIST_GET_ENTRY(this.areas.get_prev(), address_space_area, list)
+		dim x as address_space_area ptr = this.areas.get_prev()->get_owner()
 		if (x->address + x->pages*PAGE_SIZE < &hFFFFFFFF - pages) then
 			min_addr = cuint(x->address) + x->pages*PAGE_SIZE
 			insert_after = this.areas.get_prev()
@@ -83,10 +85,10 @@ end function
 
 sub address_space.insert_area (area as address_space_area ptr)
 	assert(area->pages <> 0)
-	dim insert_after as list_head ptr = @this.areas
+	dim insert_after as Listtype(address_space_area) ptr = @this.areas
 	
 	list_foreach(h, this.areas)
-		dim x as address_space_area ptr = LIST_GET_ENTRY(h, address_space_area, list)
+		dim x as address_space_area ptr = h->get_owner()
 		
 		if (x->address > area->address) then
 			'' check for overlaps

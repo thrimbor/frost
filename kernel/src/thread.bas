@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -26,8 +26,10 @@
 #include "video.bi"
 #include "modules.bi"
 
+DEFINE_LIST(thread_type)
+
 '' linked list of running threads
-dim shared running_threads_list as list_head
+dim shared running_threads_list as Listtype(thread_type)
 dim shared current_thread as thread_type ptr = nullptr
 dim shared idle_thread as thread_type ptr
 
@@ -145,12 +147,12 @@ end sub
 function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 	dim new_thread as thread_type ptr = current_thread
 	
-	dim it as list_head ptr = iif(current_thread, @current_thread->active_threads, @running_threads_list)
+	dim it as Listtype(thread_type) ptr = iif(current_thread, @current_thread->active_threads, @running_threads_list)
 	while (not running_threads_list.is_empty())
 		it = it->get_next()
 		if (it = @running_threads_list) then continue while
 		
-		dim t as thread_type ptr = LIST_GET_ENTRY(it, thread_type, active_threads)
+		dim t as thread_type ptr = it->get_owner()
 		
 		if (t->state = THREAD_STATE_KILL_ON_SCHEDULE) then
 			t->destroy()

@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
 #include "spinlock.bi"
 #include "panic.bi"
 
+DEFINE_LIST(process_type)
+
 function generate_pid () as uinteger
     static next_pid as uinteger = 0  '' next process id to assign
     static pid_lock as spinlock		 '' spinlock to protect concurrent access
@@ -42,7 +44,7 @@ function generate_pid () as uinteger
     return pid                       '' return generated pid
 end function
 
-dim shared processlist as list_head
+dim shared processlist as Listtype(process_type)
 
 operator process_type.new (size as uinteger) as any ptr
 	return kmalloc(size)
