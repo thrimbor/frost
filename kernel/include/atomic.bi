@@ -28,6 +28,9 @@ type AtomicInt
         declare function add (value as integer) as integer
         declare function subtract (value as integer) as integer
         declare function sub_and_test (value as integer) as boolean
+        
+        declare constructor ()
+        declare constructor (i as integer)
     private:
         counter as integer
 end type

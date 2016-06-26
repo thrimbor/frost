@@ -50,3 +50,11 @@ end function
 function AtomicInt.sub_and_test (value as integer) as boolean
     return this.subtract(value) = 0
 end function
+
+constructor AtomicInt ()
+	this.counter = 0
+end constructor
+
+constructor AtomicInt (i as integer)
+	this.counter = i
+end constructor
