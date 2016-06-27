@@ -51,6 +51,8 @@ type vfs_node_ extends RefCounted
 	declare operator new (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)
 	declare constructor (name as zstring ptr, parent as vfs_node ptr, flags as integer)
+	
+	declare function getChildByName (name as zstring) as RefCountPtr(vfs_node)
 end type
 
 type vfs_fd

@@ -60,6 +60,19 @@ constructor vfs_node (name as zstring ptr, parent as vfs_node ptr, flags as inte
 	end if
 end constructor
 
+function vfs_node.getChildByName (name as zstring) as RefCountPtr(vfs_node)
+	'' loop through all child nodes, search for the one with the right name
+	list_foreach(child, this.child_list)
+		dim child_node as RefCountPtr(vfs_node) = child->get_owner()
+		
+		if (zstring_cmp(name, *child_node->name) = 0) then
+			return child_node
+		end if
+	list_next(child)
+	
+	return nullptr
+end function
+
 operator vfs_fd.new (size as uinteger) as any ptr
 	return kmalloc(size)
 end operator
@@ -75,7 +88,6 @@ end constructor
 
 function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)
 	'' TODO: what's with relative paths?
-	'' TODO: can we break up that function into multiple smaller ones? (e.g. findChildByName)
 	
 	if (path[0] = asc("/")) then
 		dim cur_node as RefCountPtr(vfs_node) = vfs_root
@@ -84,19 +96,9 @@ function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)
 			dim x as zstring ptr = st.getToken(strptr("/"))
 			if (x = 0) then exit do
 			
-			dim old_node as RefCountPtr(vfs_node) = cur_node
-			'' loop through all child nodes, search for the one with the right name
-			list_foreach (child, cur_node->child_list)
-				dim child_node as RefCountPtr(vfs_node) = child->get_owner()
-				
-				if (zstring_cmp(*x, *child_node->name) = 0) then
-					cur_node = child_node
-					list_foreach_exit
-				end if
-			list_next (child)
+			cur_node = cur_node->getChildByName(*x)
 			
-			'' no fitting child found
-			if (old_node = cur_node) then return nullptr
+			if (cur_node.ref = nullptr) then exit do
 		loop
 		
 		return cur_node
