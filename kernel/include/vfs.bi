@@ -58,7 +58,7 @@ end type
 type vfs_fd
 	id as integer
 	seekptr as uinteger<64>
-	node as vfs_node ptr
+	node as RefCountPtr(vfs_node)
 
 	declare operator new (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)

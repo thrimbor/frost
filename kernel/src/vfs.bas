@@ -84,6 +84,7 @@ end operator
 constructor vfs_fd (process as process_type ptr, node as RefCountPtr(vfs_node))
 	'' TODO: - generate an id
 	''		 - add ourself to a list of descriptors for this process
+	this.node = node
 end constructor
 
 function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)
