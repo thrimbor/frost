@@ -21,6 +21,7 @@
 #include "string_tokenizer.bi"
 #include "zstring.bi"
 #include "video.bi"
+#include "process.bi"
 
 DEFINE_LIST(vfs_node)
 DEFINE_REFCOUNTPTR(vfs_node)
@@ -73,6 +74,8 @@ function vfs_node.getChildByName (name as zstring) as RefCountPtr(vfs_node)
 	return nullptr
 end function
 
+DEFINE_LIST(vfs_fd)
+
 operator vfs_fd.new (size as uinteger) as any ptr
 	return kmalloc(size)
 end operator
@@ -83,8 +86,10 @@ end operator
 
 constructor vfs_fd (process as process_type ptr, node as RefCountPtr(vfs_node))
 	'' TODO: - generate an id
-	''		 - add ourself to a list of descriptors for this process
 	this.node = node
+	
+	'' add ourself to a list of descriptors for this process
+	process->file_descriptors.insert_after(@this.fd_list)
 end constructor
 
 function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)

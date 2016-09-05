@@ -25,6 +25,7 @@
 #include "thread.bi"
 #include "spinlock.bi"
 #include "address_space.bi"
+#include "vfs.bi"
 
 DECLARE_LIST(process_type)
 
@@ -48,6 +49,8 @@ type process_type
 	tid_lock as spinlock
 	
 	process_list as Listtype(process_type) = Listtype(process_type)(offsetof(process_type, process_list))
+	
+	file_descriptors as Listtype(vfs_fd)
 	
 	declare operator new (size as uinteger) as any ptr
 	declare operator new[] (size as uinteger) as any ptr
