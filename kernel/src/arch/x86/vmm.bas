@@ -52,10 +52,10 @@ sub vmm_init ()
 	kernel_context.p_pagedir[VMM_PAGETABLES_VIRT_START shr 22] = cuint(kernel_context.p_pagedir) or VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE
 	
 	'' map the kernel 1:1
-	vmm_map_range(@kernel_context, kernel_start, kernel_start, kernel_end, (VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE))
+	vmm_map_range(@kernel_context, kernel_start, kernel_start, kernel_end, (VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.GLOBAL))
 	
 	'' map the video memory 1:1
-	vmm_map_page(@kernel_context, cast(any ptr, &hB8000), cast(any ptr, &hB8000), (VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE))
+	vmm_map_page(@kernel_context, cast(any ptr, &hB8000), cast(any ptr, &hB8000), (VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.GLOBAL))
 	
 	'' set the virtual address
 	kernel_context.v_pagedir = cast(uinteger ptr, (VMM_PAGETABLES_VIRT_START shr 22)*4096*1024 + (VMM_PAGETABLES_VIRT_START shr 22)*4096)
@@ -70,12 +70,19 @@ end sub
 sub vmm_init_local ()
 	dim pagedir as uinteger ptr = kernel_context.p_pagedir
 	asm
+		'' load the page directory address
 		mov ebx, [pagedir]
 		mov cr3, ebx
 		
+		'' set the paging bit
 		mov ebx, cr0
 		or ebx, &h80000000
 		mov cr0, ebx
+		
+		'' set the PGE (page global enable) bit
+		mov ebx, cr4
+		or ebx, 128
+		mov cr4, ebx
 	end asm
 	
 	paging_activated = true
@@ -90,7 +97,7 @@ function vmm_alloc (v_addr as any ptr) as boolean
 	if (page = nullptr) then return false
 	
 	'' try to map it where we need it
-	if (not(vmm_map_page(current_context, v_addr, page, (VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE)))) then
+	if (not(vmm_map_page(current_context, v_addr, page, VMM_FLAGS.KERNEL_DATA))) then
 		pmm_free(page)
 		return false
 	end if

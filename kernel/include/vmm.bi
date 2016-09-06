@@ -50,7 +50,7 @@ end enum
 
 enum VMM_FLAGS explicit
 	USER_DATA     = VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.USERSPACE
-	KERNEL_DATA   = VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE
+	KERNEL_DATA   = VMM_PTE_FLAGS.PRESENT or VMM_PTE_FLAGS.WRITABLE or VMM_PTE_FLAGS.GLOBAL
 end enum
 
 '' the kernels address space is from 0-1 gb, so we put the kernels pagetables at 1gb-4mb
