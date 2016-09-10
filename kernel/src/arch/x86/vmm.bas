@@ -22,6 +22,7 @@
 #include "mem.bi"
 #include "kernel.bi"
 #include "panic.bi"
+#include "cpu.bi"
 
 #define GET_PAGEDIR_INDEX(x) ((cuint(x) shr 22) and &h3FF)
 #define GET_PAGETABLE_INDEX(x) ((cuint(x) shr 12) and &h3FF)
@@ -39,6 +40,11 @@ dim shared latest_context as vmm_context ptr = nullptr
 
 '' sets up the required structures and activates paging
 sub vmm_init ()
+	'' check prerequisites
+	if (not(cpu_supports_PGE())) then
+		panic_error("CPU doesn't support the Page-Global-Bit.")
+	end if
+
 	'' initialize the kernel context (only used before the first task is started)
 	'' the pagedir is also automatically mapped
 	kernel_context.p_pagedir = pmm_alloc()

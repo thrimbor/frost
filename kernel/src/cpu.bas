@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -40,6 +40,17 @@ function cpu_has_local_apic () as boolean
 	end asm
 	
 	return iif((t_edx and (1 shl 9)), true, false)
+end function
+
+function cpu_supports_PGE () as boolean
+	dim t_edx as uinteger
+	asm
+		mov eax, 1
+		cpuid
+		mov dword ptr [t_edx], edx
+	end asm
+	
+	return iif((t_edx and (1 shl 13)), true, false)
 end function
 
 function read_msr (msr as uinteger) as ulongint

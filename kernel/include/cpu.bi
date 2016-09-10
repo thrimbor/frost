@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2016  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -21,5 +21,6 @@
 
 declare sub cpu_get_vendor (zstr as zstring ptr)
 declare function cpu_has_local_apic () as boolean
+declare function cpu_supports_PGE () as boolean
 declare function read_msr (msr as uinteger) as ulongint
 declare sub write_msr (msr as uinteger, value as ulongint)
