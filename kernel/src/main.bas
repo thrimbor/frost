@@ -19,6 +19,7 @@
 #include "multiboot.bi"
 #include "gdt.bi"
 #include "idt.bi"
+#include "acpi.bi"
 #include "apic.bi"
 #include "pic.bi"
 #include "pit.bi"
@@ -94,6 +95,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 
     printk(LOG_INFO !"initializing SMP\n")
     smp_init()
+    
+    'acpi_init()
 
     '' two-step initialization of the PMM
     '' (the normal-allocator needs paging)

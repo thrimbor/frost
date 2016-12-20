@@ -18,23 +18,33 @@
 
 #pragma once
 
-type rsdp_descriptor_1 field=1
+type rsdp_descriptor field=1
 	signature as zstring*8
 	checksum as ubyte
 	oemid as zstring*6
 	revision as ubyte
-	rsdt_address as uinteger
+	rsdt_address as uinteger<32>
 end type
 
-type rsdp_descriptor_2 field=1
-	signature as zstring*8
-	checksum as ubyte
-	oemid as zstring*6
-	revision as ubyte
-	rsdt_address as uinteger
+type rsdp_descriptor_20 field=1
+	firstPart as rsdp_descriptor
 	
-	length as uinteger
-	xsdt_address as ulongint
+	length as uinteger<32>
+	xsdt_address as uinteger<64>
 	extended_checksum as ubyte
 	reserved as zstring*3
 end type
+
+type sdt_header field=1
+	signature as zstring*4
+	length as uinteger<32>
+	revision as ubyte
+	checksum as ubyte
+	oemid as zstring*6
+	oemtableid as zstring*8
+	oemrevision as uinteger<32>
+	creatorid as uinteger<32>
+	creatorrevision as uinteger<32>
+end type
+
+declare sub acpi_init ()
