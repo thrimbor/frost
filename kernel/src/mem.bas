@@ -37,3 +37,20 @@ sub memset (destination as any ptr, value as ubyte, size as uinteger)
         rep stosb
     end asm
 end sub
+
+function memcmp (s1 as any ptr, s2 as any ptr, size as uinteger) as integer
+	dim p1 as ubyte ptr = s1
+	dim p2 as ubyte ptr = s2
+	
+	while (size > 0)
+		if (*p1 <> *p2) then
+			return *p1 - *p2
+		end if
+		
+		p1 += 1
+		p2 += 1
+		size -= 1
+	wend
+	
+	return 0
+end function
