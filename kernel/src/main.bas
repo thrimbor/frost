@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2017  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -95,8 +95,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 
     printk(LOG_INFO !"initializing SMP\n")
     smp_init()
-    
-    'acpi_init()
+
+    acpi_init()
 
     '' two-step initialization of the PMM
     '' (the normal-allocator needs paging)

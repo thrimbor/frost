@@ -78,7 +78,10 @@ sub parse_madt (p as any ptr)
 		dim record_length as ubyte = *cast(ubyte ptr, records+1)
 
 		if (entry_type = 0) then
-			printk(LOG_INFO !"Processor found!\n")
+            dim flags as uinteger = *cast(uinteger ptr, records+4)
+            if (flags = 1) then
+			     printk(LOG_INFO !"Processor found!\n")
+            end if
 		elseif (entry_type = 1) then
 			printk(LOG_INFO !"I/O APIC found!\n")
 		end if
