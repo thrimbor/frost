@@ -20,3 +20,4 @@
 
 declare sub memcpy (destination as any ptr, source as any ptr, size as uinteger)
 declare sub memset (destination as any ptr, value as ubyte, size as uinteger)
+declare function memcmp (s1 as any ptr, s2 as any ptr, size as uinteger) as integer
