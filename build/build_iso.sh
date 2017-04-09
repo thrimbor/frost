@@ -2,90 +2,73 @@
 # first clean up
 rm -f frost.iso
 
-# then prepare the directories
-mkdir iso_tmp
-mkdir iso_tmp/grub
-mkdir iso_tmp/system
-
 # now build the kernel
-cd ..
-cd kernel
+pushd ../kernel
 make clean
 make
-cd ..
+popd
 
 # build libfrost
-cd libfrost
+pushd ../libfrost
 make clean
 make
-cd ..
+popd
 
 # build the init-process
-cd init
+pushd ../init
 make clean
 make
-cd ..
+popd
 
-cd drivers
-cd pci
+pushd ../drivers/pci
 make clean
 make
-cd ..
-cd ..
+popd
 
-cd drivers
-cd vgaconsole
+pushd ../drivers/vgaconsole
 make clean
 make
-cd ..
-cd ..
+popd
 
-cd drivers
-cd keyboard
+pushd ../drivers/keyboard
 make clean
 make
-cd ..
-cd ..
+popd
 
-cd drivers
-cd bochsvga
+pushd ../drivers/bochsvga
 make clean
 make
-cd ..
-cd ..
+popd
 
-
-cd build
+mkdir /tmp/frost_iso
+mkdir /tmp/frost_iso/system
+mkdir /tmp/frost_iso/grub
 
 # now copy the kernel
-cp ../kernel/frost.krn iso_tmp/system/
+cp ../kernel/frost.krn /tmp/frost_iso/system/
 
 # copy the init-process
-cp ../init/init.elf iso_tmp/system/
+cp ../init/init.elf /tmp/frost_iso/system/
 
-cp ../drivers/pci/pci.elf iso_tmp/system/
-cp ../drivers/vgaconsole/vgaconsole.elf iso_tmp/system/
-cp ../drivers/keyboard/keyboard.elf iso_tmp/system/
-cp ../drivers/bochsvga/bochsvga.elf iso_tmp/system/
+cp ../drivers/pci/pci.elf /tmp/frost_iso/system/
+cp ../drivers/vgaconsole/vgaconsole.elf /tmp/frost_iso/system/
+cp ../drivers/keyboard/keyboard.elf /tmp/frost_iso/system/
+cp ../drivers/bochsvga/bochsvga.elf /tmp/frost_iso/system/
 
 # now prepare grub 2
-cd iso_tmp
-cd grub
-
+pushd /tmp/frost_iso/grub
 grub-mkimage -p /grub -o core.img -O i386-pc biosdisk iso9660 multiboot configfile
 cat /usr/lib/grub/i386-pc/cdboot.img core.img >boot.img
 rm core.img
-
-cd ..
-cd ..
+popd
 
 # now copy over grub.cfg
-cp grub.cfg iso_tmp/grub/
+cp grub.cfg /tmp/frost_iso/grub/
 
 # and now finally build the iso
-mkisofs -R -b grub/boot.img -no-emul-boot -boot-load-size 4 -boot-info-table -o frost.iso iso_tmp
+mkisofs -R -b grub/boot.img -no-emul-boot -boot-load-size 4 -boot-info-table -o frost.iso /tmp/frost_iso
 
 # clean up
-rm -f -r iso_tmp
+rm -R /tmp/frost_iso
 
 # finished!
