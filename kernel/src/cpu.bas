@@ -1,17 +1,17 @@
 /'
  ' FROST x86 microkernel
  ' Copyright (C) 2010-2016  Stefan Schmidt
- ' 
+ '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
  ' the Free Software Foundation, either version 3 of the License, or
  ' (at your option) any later version.
- ' 
+ '
  ' This program is distributed in the hope that it will be useful,
  ' but WITHOUT ANY WARRANTY; without even the implied warranty of
  ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  ' GNU General Public License for more details.
- ' 
+ '
  ' You should have received a copy of the GNU General Public License
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
@@ -38,7 +38,7 @@ function cpu_has_local_apic () as boolean
 		cpuid
 		mov dword ptr [t_edx], edx
 	end asm
-	
+
 	return iif((t_edx and (1 shl 9)), true, false)
 end function
 
@@ -49,35 +49,48 @@ function cpu_supports_PGE () as boolean
 		cpuid
 		mov dword ptr [t_edx], edx
 	end asm
-	
+
 	return iif((t_edx and (1 shl 13)), true, false)
 end function
 
 function read_msr (msr as uinteger) as ulongint
 	dim a as uinteger
 	dim d as uinteger
-	
+
 	asm
 		mov ecx, [msr]
-		
+
 		rdmsr
-		
+
 		mov [a], eax
 		mov [d], edx
 	end asm
-	
+
 	return (cast(ulongint, d) shl 32) or a
 end function
 
 sub write_msr (msr as uinteger, value as ulongint)
 	dim a as uinteger = cuint(value)
 	dim d as uinteger = cuint(value shr 32)
-	
+
 	asm
 		mov ecx, [msr]
 		mov eax, [a]
 		mov edx, [d]
-		
+
 		wrmsr
 	end asm
+end sub
+
+sub cpu_halt ()
+	asm
+		cli
+		hlt_hlt:
+		hlt
+		jmp hlt_hlt
+	end asm
+end sub
+
+sub cpu_disable_interrupts ()
+	asm cli
 end sub

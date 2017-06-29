@@ -6,7 +6,9 @@ COMPILER = fbc
 ASSEMBLER = nasm
 LINKER = ld
 
-CFLAGS = -c -nodeflibs -lang fb -arch 486 -i ./include/ -g -d FROST_DEBUG
+GIT_VERSION := $(shell git describe --dirty --always --tags)
+
+CFLAGS = -c -nodeflibs -lang fb -arch 486 -i ./include/ -g -d FROST_DEBUG -d FROST_VERSION=\"$(GIT_VERSION)\"
 AFLAGS = -f elf32
 LFLAGS = -melf_i386 -Tkernel.ld
 

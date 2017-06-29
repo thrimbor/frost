@@ -80,10 +80,10 @@ sub parse_madt (p as any ptr)
 		if (entry_type = 0) then
             dim flags as uinteger = *cast(uinteger ptr, records+4)
             if (flags = 1) then
-			     printk(LOG_INFO !"Processor found!\n")
+			     printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"Processor found!\n")
             end if
 		elseif (entry_type = 1) then
-			printk(LOG_INFO !"I/O APIC found!\n")
+			printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"I/O APIC found!\n")
 		end if
 
 		records += record_length
@@ -96,8 +96,9 @@ sub acpi_init ()
 
 	if (rsdp = nullptr) then return
 
-	printk(LOG_INFO !"found ACPI RSDP descriptor at %X\n", cuint(rsdp))
-	printk(LOG_INFO !"ACPI OEMID: %c%c%c%c%c%c\n", rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5])
+	printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"found ACPI RSDP descriptor at %X\n", cuint(rsdp))
+	printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"revision is %u\n", cuint(rsdp->revision))
+	printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"ACPI OEMID: %c%c%c%c%c%c\n", rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5])
 
 	dim rsdt as sdt_header ptr = cast(sdt_header ptr, rsdp->rsdt_address)
 	'' TODO: check RSDT checksum
@@ -108,7 +109,7 @@ sub acpi_init ()
 	for i as uinteger = 0 to num_entries-1
 		dim table_ptr as sdt_header ptr = cast(sdt_header ptr, entries_ptr[i])
 
-		printk(LOG_INFO !"Table type: %c%c%c%c\n", table_ptr->signature[0], table_ptr->signature[1], table_ptr->signature[2], table_ptr->signature[3])
+		printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"Table type: %c%c%c%c\n", table_ptr->signature[0], table_ptr->signature[1], table_ptr->signature[2], table_ptr->signature[3])
 
 		if (table_ptr->signature[0] = asc("A") and _
 				table_ptr->signature[1] = asc("P") and _

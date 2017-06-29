@@ -54,6 +54,10 @@ sub parse_cmdline (cmd_string as zstring ptr)
 	#if defined (FROST_DEBUG)
 		if (zstring_instr(*cmd_string, "-serial-debugging") > 0) then
 			debug_serial_init()
+
+			if (zstring_instr(*cmd_string, "-serial-colorized") > 0) then
+				video_serial_set_colorized(true)
+			end if
 		end if
 	#endif
 end sub
@@ -72,11 +76,9 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
         parse_cmdline(cast(zstring ptr, mb_info.cmdline))
     end if
 
-    video_set_color(9,0)
-    printk(LOG_INFO !"FROST V2 alpha\n")
-    video_set_color(7,0)
-    printk(LOG_INFO !"bootloader name: %s\n", cast(zstring ptr, mb_info.boot_loader_name))
-    printk(LOG_INFO !"cmdline: %s\n", cast(zstring ptr, mb_info.cmdline))
+    printk(LOG_INFO COLOR_BLUE !"FROST (%s)\n" COLOR_RESET, FROST_VERSION)
+    printk(LOG_INFO COLOR_GREEN "bootloader: " COLOR_RESET !"%s\n", cast(zstring ptr, mb_info.boot_loader_name))
+    printk(LOG_INFO COLOR_GREEN "cmdline: " COLOR_RESET !"%s\n", cast(zstring ptr, mb_info.cmdline))
 
     scope
 		dim zstr as zstring*13
@@ -93,7 +95,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 
     pit_set_frequency(100)
 
-    printk(LOG_INFO !"initializing SMP\n")
+    printk(LOG_INFO COLOR_GREEN "SMP: " COLOR_RESET !"initializing\n")
     smp_init()
 
     acpi_init()
@@ -101,14 +103,15 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' two-step initialization of the PMM
     '' (the normal-allocator needs paging)
     pmm_init(@mb_info, PMM_ZONE_DMA24)
-    printk(LOG_INFO !"DMA24-pmm initialized\n")
+    printk(LOG_INFO COLOR_GREEN "PMM: " COLOR_RESET !"DMA24 zone initialized\n")
     vmm_init()
     pmm_init(@mb_info, PMM_ZONE_NORMAL)
-    printk(LOG_INFO !"physical memory manager initialized\n  -> total RAM: %uMB\n  -> free RAM: %uMB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
+    printk(LOG_INFO COLOR_GREEN "PMM: " COLOR_RESET !"normal zone initialized\n")
+	printk(LOG_INFO COLOR_GREEN "PMM: " COLOR_RESET !"total RAM: %uMiB, free RAM: %uMiB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     vmm_init_local()
-    printk(LOG_INFO !"paging initialized\n")
+    printk(LOG_INFO COLOR_GREEN "VMM: " COLOR_RESET !"paging initialized\n")
 
-	printk(LOG_INFO !"initializing kmm\n")
+	printk(LOG_INFO COLOR_GREEN "KMM: " COLOR_RESET !"initializing heap\n")
 
     '' initialize the heap:
     '' starts at 256MB
@@ -116,7 +119,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     '' minimum size 1MB
     '' maximum size 256MB
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
-    printk(LOG_INFO !"heap initialized\n")
+    printk(LOG_INFO COLOR_GREEN "KMM: " COLOR_RESET !"heap initialized\n")
 
     ''if (cpu_has_local_apic()) then
 	''	printk(LOG_INFO !"CPU has local APIC\n")
@@ -124,7 +127,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 	''	ioapic_init()
 	''end if
 
-    printk(LOG_INFO !"initializing vfs...\n")
+    printk(LOG_INFO COLOR_GREEN "VFS: " COLOR_RESET !"initializing...\n")
     vfs_init()
 
     init_ports()

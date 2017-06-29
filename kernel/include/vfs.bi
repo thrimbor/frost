@@ -18,9 +18,11 @@
 
 #pragma once
 
+#include "kernel.bi"
 #include "intrusive_list.bi"
 #include "kmm.bi"
 #include "refcount_smartptr.bi"
+#include "uid128.bi"
 
 const VFS_FLAGS_KERNEL_NODE as integer = &h1
 
@@ -41,7 +43,11 @@ type vfs_node_ extends RefCounted
 	gid as integer
 
 	union
-		owner as __process_type ptr
+        type
+            owner as __process_type ptr
+            handler as any ptr
+            node_uid as uinteger
+        end type
 
 		mem as any ptr
 	end union
@@ -52,17 +58,17 @@ type vfs_node_ extends RefCounted
 
 	declare operator new (size as uinteger) as any ptr
 	declare operator delete (buffer as any ptr)
-	declare constructor (name as zstring ptr, parent as vfs_node ptr, flags as integer)
-	
+	declare constructor (name as zstring ptr, parent as vfs_node ptr, flags as integer, owner as __process_type ptr = nullptr)
+
 	declare function getChildByName (name as zstring) as RefCountPtr(vfs_node)
 end type
 
 DECLARE_LIST(vfs_fd)
 type vfs_fd
-	id as integer
+	id as uid128
 	seekptr as uinteger<64>
 	node as RefCountPtr(vfs_node)
-	
+
 	fd_list as Listtype(vfs_fd) = Listtype(vfs_fd)(offsetof(vfs_fd, fd_list))
 
 	declare operator new (size as uinteger) as any ptr
@@ -71,5 +77,8 @@ type vfs_fd
 end type
 
 declare sub vfs_init ()
+declare function vfs_get_root as RefCountPtr(vfs_node)
 declare function vfs_parse_path (path as zstring) as RefCountPtr(vfs_node)
+declare function vfs_parse_path_afap (path as zstring) as RefCountPtr(vfs_node)
+declare function vfs_create (path as zstring ptr, name_ as zstring ptr, owner as __process_type ptr) as RefCountPtr(vfs_node)
 declare function vfs_open (thread as __thread_type ptr, path as zstring ptr, flags as uinteger) as vfs_fd ptr
