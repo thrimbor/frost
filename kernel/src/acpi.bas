@@ -21,7 +21,37 @@
 #include "kernel.bi"
 #include "video.bi"
 
-'' TODO: validate checksum of 2.0 struct
+function validate_rsdp (addr as rsdp_descriptor ptr) as boolean
+    dim rsdp_b as ubyte ptr = cast(ubyte ptr, addr)
+    dim checksum as ubyte = 0
+    for i as uinteger = 0 to sizeof(rsdp_descriptor)-1
+        checksum += rsdp_b[i]
+    next
+
+    if (checksum <> 0) then
+        printk(LOG_ERR COLOR_GREEN "ACPI: " COLOR_RED !"checksum mismatch in RSDP descriptor\n" COLOR_RESET)
+        return false
+    end if
+
+    if (addr->revision = 0) then
+        printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"RSDP descriptor found\n")
+        return true
+    end if
+
+    checksum = 0
+    for i as uinteger = sizeof(rsdp_descriptor) to sizeof(rsdp_descriptor_20)-1
+        checksum += rsdp_b[i]
+    next
+
+    if (checksum <> 0) then
+        printk(LOG_ERR COLOR_GREEN "ACPI: " COLOR_RED !"checksum mismatch in extended RSDP descriptor\n" COLOR_RESET)
+        return false
+    end if
+
+    printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"extended RSDP descriptor found\n")
+    return true
+end function
+
 function find_rsdp_in_area (start as uinteger, size as uinteger) as rsdp_descriptor ptr
 	dim rsdp as rsdp_descriptor ptr = cast(rsdp_descriptor ptr, start)
 
@@ -29,14 +59,7 @@ function find_rsdp_in_area (start as uinteger, size as uinteger) as rsdp_descrip
 		'' signature found
 		if (memcmp(rsdp, strptr("RSD PTR "), 8) = 0) then
 			'' check checksum, sum of all bytes must be zero
-			dim rsdp_b as ubyte ptr = cast(ubyte ptr, rsdp)
-			dim checksum as ubyte = 0
-
-			for i as uinteger = 0 to sizeof(rsdp_descriptor)-1
-				checksum += rsdp_b[i]
-			next
-
-			if (checksum = 0) then
+            if (validate_rsdp(rsdp)) then
 				'' structure seems valid, return it
 				return rsdp
 			end if
