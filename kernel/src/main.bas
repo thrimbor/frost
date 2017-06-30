@@ -121,11 +121,11 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     kmm_init(&h10000000, &h10100000, &h100000, &h10000000)
     printk(LOG_INFO COLOR_GREEN "KMM: " COLOR_RESET !"heap initialized\n")
 
-    ''if (cpu_has_local_apic()) then
-	''	printk(LOG_INFO !"CPU has local APIC\n")
-	''	lapic_init()
+    if (cpu_has_local_apic()) then
+		printk(LOG_INFO COLOR_GREEN "LAPIC: " COLOR_RESET !"CPU has local APIC\n")
+		lapic_init()
 	''	ioapic_init()
-	''end if
+	end if
 
     printk(LOG_INFO COLOR_GREEN "VFS: " COLOR_RESET !"initializing...\n")
     vfs_init()
