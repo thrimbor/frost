@@ -1,17 +1,17 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
- ' 
+ ' Copyright (C) 2010-2017  Stefan Schmidt
+ '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
  ' the Free Software Foundation, either version 3 of the License, or
  ' (at your option) any later version.
- ' 
+ '
  ' This program is distributed in the hope that it will be useful,
  ' but WITHOUT ANY WARRANTY; without even the implied warranty of
  ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  ' GNU General Public License for more details.
- ' 
+ '
  ' You should have received a copy of the GNU General Public License
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
@@ -72,7 +72,7 @@ declare sub vmm_unmap_page (cntxt as vmm_context ptr, v_addr as any ptr)
 declare function vmm_map_range (cntxt as vmm_context ptr, v_addr as any ptr, p_start as any ptr, p_end as any ptr, flags as uinteger) as boolean
 declare sub vmm_unmap_range (cntxt as vmm_context ptr, v_addr as any ptr, pages as uinteger)
 declare function vmm_automap (context as vmm_context ptr, p_start as any ptr, size as uinteger, lowerLimit as uinteger, upperLimit as uinteger, flags as uinteger) as any ptr
-declare function vmm_kernel_automap (p_start as any ptr, size as uinteger) as any ptr
+declare function vmm_kernel_automap (p_start as any ptr, size as uinteger, flags as uinteger = VMM_FLAGS.KERNEL_DATA) as any ptr
 declare sub vmm_kernel_unmap (v_start as any ptr, size as uinteger)
 declare function vmm_resolve (cntxt as vmm_context ptr, vaddr as any ptr) as any ptr
 declare sub vmm_activate_context (cntxt as vmm_context ptr)
