@@ -95,9 +95,6 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 
     pit_set_frequency(100)
 
-    printk(LOG_INFO COLOR_GREEN "SMP: " COLOR_RESET !"initializing\n")
-    smp_init()
-
     acpi_init()
 
     '' two-step initialization of the PMM
@@ -126,6 +123,9 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 		lapic_init()
 	''	ioapic_init()
 	end if
+
+    printk(LOG_INFO COLOR_GREEN "SMP: " COLOR_RESET !"initializing\n")
+    smp_init()
 
     printk(LOG_INFO COLOR_GREEN "VFS: " COLOR_RESET !"initializing...\n")
     vfs_init()

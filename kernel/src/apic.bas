@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2013  Stefan Schmidt
+ ' Copyright (C) 2010-2017  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -93,12 +93,11 @@ sub lapic_init ()
 
 	printk(LOG_DEBUG COLOR_GREEN "LAPIC: " COLOR_RESET !"base addr: %X\n", cuint(read_msr(LOCAL_APIC_BASE_MSR) and LOCAL_APIC_BASE_ADDR_MASK))
 
-	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE))
+	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE, VMM_FLAGS.KERNEL_DATA or VMM_PTE_FLAGS.NOT_CACHEABLE))
 
 	'' set the APIC Software Enable/Disable flag in the Spurious-Interrupt Vector Register
 	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
 
-	printk(LOG_DEBUG COLOR_GREEN "LAPIC: " COLOR_RESET !"local APIC enabled\n")
 	apic_enabled = true
 end sub
 
@@ -109,11 +108,21 @@ sub lapic_eoi ()
 	lapic_write_register(LOCAL_APIC_REG_EOI, 0)
 end sub
 
+'' FIXME: magic values are bad.
+'' FIXME: this currently always start the CPU with the local-APIC-ID 1, and
+''        the delay-loop is lousy.
 sub lapic_startup_ipi (trampoline_addr as any ptr)
 	assert(apic_enabled = true)
 
-	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 0)
-	lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (((cuint(trampoline_addr) \ &h1000) and &hFF) or &hC4600))
+    lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 1 shl 24)
+    lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (5 shl 8) or (1 shl 14))
+
+    for i as integer = 0 to &h0FFFFF
+
+    next
+
+	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 1 shl 24)
+    lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (((cuint(trampoline_addr) \ &h1000) and &hFF) or (6 shl 8) or (1 shl 14)))
 end sub
 
 sub ioapic_init ()

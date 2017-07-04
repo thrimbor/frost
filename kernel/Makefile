@@ -1,6 +1,7 @@
 SRCS = $(shell find src -name *.bas)
 SRCS += $(shell find src -name *.asm)
 OBJS = $(addprefix obj/, $(addsuffix .o,$(basename $(notdir $(SRCS)))))
+OBJS += obj/trampoline.o
 
 COMPILER = fbc
 ASSEMBLER = nasm
@@ -26,6 +27,12 @@ obj/%.o: src/%.asm
 
 obj/%.o: src/arch/x86/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
+
+obj/%.bin: src/arch/x86/%.asm.embedd
+	$(ASSEMBLER) -f bin $^ -o $@
+
+obj/%.o: obj/%.bin
+	$(LINKER) -melf_i386 -r -b binary $^ -o $@
 
 clean:
 	rm $(OBJS) frost.krn

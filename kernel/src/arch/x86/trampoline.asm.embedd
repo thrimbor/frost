@@ -1,0 +1,90 @@
+; FROST x86 microkernel
+; Copyright (C) 2010-2017  Stefan Schmidt
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+; Code is copied to the first usable page (according to the osdev.org memory map)
+org 0x1000
+
+; APs start in Real Mode, so 16bit code here
+BITS 16
+
+trampoline_entry:
+    ; disable interrupts (just to be safe)
+    cli
+
+    ; load very basic GDT (replaced with a proper one later)
+    lgdt [simplifiedGDTref]
+
+    ; set Protected Mode bit
+    mov eax, cr0
+    or al, 1
+    mov cr0, eax
+
+    ; jump into Protected Mode
+    jmp 08h:protectedMode
+
+simplifiedGDT:
+    ; null-descriptor
+    dw 0x0000
+    dw 0x0000
+    dw 0x0000
+    dw 0x0000
+
+    ; code-descriptor
+    dw 0xFFFF
+    dw 0x0000
+    dw 0x9800
+    dw 0x00CF
+
+    ; data-descriptor
+    dw 0xFFFF
+    dw 0x0000
+    dw 0x9200
+    dw 0x00CF
+
+simplifiedGDTref:
+    dw simplifiedGDTref-simplifiedGDT-1 ; size
+    dd simplifiedGDT                    ; start address of the GDT
+
+
+; Protected Mode code from this point on
+BITS 32
+
+protectedMode:
+    ; cs is already set by the far jump, set remaining segment registers
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
+    ; we're free to do whatever we want from here
+
+    ; for now, we print a plus on the serial port
+    ; doesn't work properly on bochs though, because we don't check if the
+    ; controller is ready, and boch doesn't like that
+    mov al, 0x2b
+    mov dx, 0x03F8
+    out dx, al
+
+    ; switch on paging here, or in kernel?
+    ; where do we get a stack from?
+    ; how do we signal we're ready?
+
+    cli
+halt:
+    hlt
+    jmp halt

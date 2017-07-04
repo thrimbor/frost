@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2015  Stefan Schmidt
+ ' Copyright (C) 2010-2017  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -79,7 +79,6 @@ sub pmm_init (mbinfo as multiboot_info ptr, zone as uinteger)
 			if (cuint((mmap->addr shr 32) and &hFFFFFFFF) = 0) then
 				'' free each block of the region
 				for addr as addr_t = mmap->addr to (mmap->addr+mmap->len-1) step PAGE_SIZE
-
 					if (zone = PMM_ZONE_DMA24) and (addr >= 16*1024*1024) then exit for
 
 					if (zone = PMM_ZONE_NORMAL) and (addr < 16*1024*1024) then continue for
@@ -107,6 +106,9 @@ sub pmm_init (mbinfo as multiboot_info ptr, zone as uinteger)
 							continue for, for
 						end if
 					next
+
+                    '' &h1000 is reserved for the SMP trampoline-code
+                    if (addr = &h1000) then continue for
 
 					'' free one block at a time
 					if (zone = PMM_ZONE_NORMAL) then
