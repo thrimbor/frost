@@ -96,6 +96,7 @@ sub lapic_init ()
 	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE, VMM_FLAGS.KERNEL_DATA or VMM_PTE_FLAGS.NOT_CACHEABLE))
 
 	'' set the APIC Software Enable/Disable flag in the Spurious-Interrupt Vector Register
+    '' FIXME: properly initialize the SPI vector. See manual 10.9, and http://forum.osdev.org/viewtopic.php?p=83547&sid=eb062848679db0c0532f4b97b949d104#p83547
 	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
 
 	apic_enabled = true
