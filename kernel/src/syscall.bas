@@ -23,7 +23,7 @@
 #include "io_man.bi"
 #include "panic.bi"
 #include "interrupt_handler.bi"
-#include "pic.bi"
+#include "interrupt.bi"
 #include "vfs.bi"
 
 
@@ -116,7 +116,9 @@ function syscall_handler (funcNumber as uinteger, param1 as uinteger, param2 as 
 			return register_irq_handler(cur_thread->parent_process, param1, cast(any ptr, param2))
 
 		case SYSCALL_IRQ_HANDLER_EXIT
-			pic_unmask(param1)
+            '' FIXME: check if the process is actually allowed to do that
+            '' FIXME: hardcoding the x86 IRQ-offset here is not a good idea
+            interrupt_unmask(param1 + &h20)
 			cur_thread->destroy()
 
 		case SYSCALL_IPC_HANDLER_CALL

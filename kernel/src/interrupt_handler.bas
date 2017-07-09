@@ -20,7 +20,7 @@
 #include "interrupt_handler.bi"
 #include "isf.bi"
 #include "thread.bi"
-#include "pic.bi"
+#include "interrupt.bi"
 #include "apic.bi"
 #include "process.bi"
 #include "syscall.bi"
@@ -67,7 +67,8 @@ function register_irq_handler (process as process_type ptr, irq as integer, hand
 	dim h as irq_handler_type ptr = new irq_handler_type(process, handler_address)
 	irq_handlers(irq).insert_after(@h->list)
 
-	pic_unmask(irq)
+    '' FIXME: hardcoding the x86 IRQ-offset? naaaaaaah....
+	interrupt_unmask(irq+&h20)
 	return true
 end function
 
@@ -93,16 +94,15 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 
 		case &h21 to &h2F
 			'' spurious IRQ?
-			if (pic_is_spurious(isf->int_nr)) then
-				'' did it come from the slave PIC? then send eoi to the master
-				if (isf->int_nr = 15) then pic_send_eoi(&h01)
-
+			if (interrupt_is_spurious(isf->int_nr)) then
+                '' takes care of spurious interrupts and sends EOI if needed
+                interrupt_eoi(isf->int_nr)
 				return isf
 			end if
 
 			'' mask the IRQ to prevent it from firing again (gets unmasked when the thread is done)
 			'' even when no popup-thread was created we mask to prevent IRQ-storms
-			pic_mask(isf->int_nr - &h20)
+			interrupt_mask(isf->int_nr)
 
 			'' IRQ
 			list_foreach(h, irq_handlers(isf->int_nr-&h20))
@@ -140,14 +140,8 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 		thread_switch(isf)
 	end if
 
-    '' important: if the int is an IRQ, send the EOI
-    if (apic_enabled) then
-		lapic_eoi()
-	else
-		if ((isf->int_nr > &h1F) and (isf->int_nr < &h30)) then
-			pic_send_eoi(isf->int_nr - &h20)
-		end if
-	end if
+    '' important: send EOI if necessary
+    interrupt_eoi(isf->int_nr)
 
     return get_current_thread()->isf
 end function

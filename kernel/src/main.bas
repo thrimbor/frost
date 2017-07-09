@@ -21,7 +21,7 @@
 #include "idt.bi"
 #include "acpi.bi"
 #include "apic.bi"
-#include "pic.bi"
+#include "interrupt.bi"
 #include "pit.bi"
 #include "pmm.bi"
 #include "vmm.bi"
@@ -91,7 +91,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     idt_prepare()
     idt_load()
 
-    pic_init()
+    interrupt_init()
 
     pit_set_frequency(100)
 
@@ -120,12 +120,12 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 
     if (cpu_has_local_apic()) then
 		printk(LOG_INFO COLOR_GREEN "LAPIC: " COLOR_RESET !"CPU has local APIC\n")
-		lapic_init()
+		'lapic_init()
 	''	ioapic_init()
 	end if
 
     printk(LOG_INFO COLOR_GREEN "SMP: " COLOR_RESET !"initializing\n")
-    smp_init()
+    'smp_init()
 
     printk(LOG_INFO COLOR_GREEN "VFS: " COLOR_RESET !"initializing...\n")
     vfs_init()
