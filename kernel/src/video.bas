@@ -57,10 +57,12 @@ function parse_color (colorstring as const ubyte ptr) as integer
 
 	if (colorstring[1] = asc("0") and colorstring[2] = asc("m")) then
 		'' reset colors
-		debug_serial_putc(&h1b)
-		debug_serial_putc(asc("["))
-		debug_serial_putc(asc("0"))
-		debug_serial_putc(asc("m"))
+        if (serial_colorized) then
+    		debug_serial_putc(&h1b)
+    		debug_serial_putc(asc("["))
+    		debug_serial_putc(asc("0"))
+    		debug_serial_putc(asc("m"))
+        end if
 		video_set_color(7, 0)
 		return 3
 	end if
