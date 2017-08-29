@@ -35,6 +35,6 @@ obj/%.o: obj/%.bin
 	$(LINKER) -melf_i386 -r -b binary $^ -o $@
 
 clean:
-	rm $(OBJS) frost.krn
+	rm -f $(OBJS) frost.krn
 
 .PHONY: clean
