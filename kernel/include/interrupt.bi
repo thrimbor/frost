@@ -18,15 +18,10 @@
 
 #pragma once
 
-#include "kernel.bi"
+extern interrupt_legacy_free as boolean
 
-extern apic_enabled as boolean
-
-declare sub set_interrupt_override (irq as uinteger, gsi as uinteger, active_high as boolean, edge_triggered as boolean)
-declare sub lapic_init ()
-declare sub lapic_eoi ()
-declare sub ioapic_init ()
-declare sub lapic_startup_ipi (trampoline_addr as any ptr)
-declare sub ioapic_unmask_irq (irq as uinteger)
-declare sub ioapic_mask_irq (irq as uinteger)
-declare sub ioapic_register (base_p as uinteger, global_system_interrupt_base as uinteger)
+declare sub interrupt_init ()
+declare sub interrupt_mask (interrupt as integer)
+declare sub interrupt_unmask (interrupt as integer)
+declare function interrupt_is_spurious (interrupt as integer) as boolean
+declare sub interrupt_eoi (interrupt as integer)

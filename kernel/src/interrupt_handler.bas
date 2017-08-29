@@ -76,8 +76,6 @@ end function
 function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_stack_frame ptr
     dim reschedule as uinteger = false
 
-    printk(LOG_DEBUG COLOR_RED "interrupt %x occured\n", isf->int_nr)
-
     select case isf->int_nr
         case 0 to &h0C                                      '' exception
 			panic_exception(isf)                      '' show panic screen

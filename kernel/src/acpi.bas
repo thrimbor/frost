@@ -20,6 +20,8 @@
 #include "mem.bi"
 #include "kernel.bi"
 #include "video.bi"
+#include "apic.bi"
+#include "interrupt.bi"
 
 function validate_rsdp (addr as rsdp_descriptor ptr) as boolean
     dim rsdp_b as ubyte ptr = cast(ubyte ptr, addr)
@@ -92,13 +94,41 @@ function find_rsdp as rsdp_descriptor ptr
 	return rsdp
 end function
 
-sub parse_madt (p as any ptr)
-	dim length as uinteger = (*cast(uinteger ptr, p+&h04)) - sizeof(sdt_header) - 8
-	dim records as any ptr = p+&h2C
+function validate_table (table as sdt_header ptr) as boolean
+    dim table_b as ubyte ptr = table
 
-	while (records <= p+length)
+    dim checksum as ubyte = 0
+    for i as uinteger = 0 to table->length-1
+        checksum += table_b[i]
+    next
+
+    if (checksum <> 0) then
+        dim tablename (0 to 4) as ubyte
+        tablename(0) = table->signature[0]
+        tablename(1) = table->signature[1]
+        tablename(2) = table->signature[2]
+        tablename(3) = table->signature[3]
+        tablename(4) = 0
+        printk(LOG_ERR COLOR_GREEN "ACPI: " COLOR_RED !"checksum mismatch in table with ID: %s\n" COLOR_RESET, @tablename(0))
+        return false
+    end if
+
+    return true
+end function
+
+sub parse_madt (p as ubyte ptr)
+	dim madt_flags as uinteger = *cast(uinteger ptr, p+&h28)
+	if ((madt_flags and 1) = 0) then interrupt_legacy_free = true
+	dim length as uinteger = *cast(uinteger ptr, p+&h04)''(*cast(uinteger ptr, p+&h04)) - sizeof(sdt_header) - 8
+	dim records as ubyte ptr = p+&h2C
+
+    printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"MADT length: %d\n", length)
+
+	while (records < p+length)
 		dim entry_type as ubyte = *cast(ubyte ptr, records)
 		dim record_length as ubyte = *cast(ubyte ptr, records+1)
+
+        printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"entry_type: %d\n", entry_type)
 
 		if (entry_type = 0) then
             dim flags as uinteger = *cast(uinteger ptr, records+4)
@@ -107,6 +137,36 @@ sub parse_madt (p as any ptr)
             end if
 		elseif (entry_type = 1) then
 			printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"I/O APIC found!\n")
+            dim base_address as uinteger = *cast(uinteger ptr, records+4)
+            dim global_system_interrupt_base as uinteger = *cast(uinteger ptr, records+8)
+            printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"I/O APIC base: %x, GSIB: %d\n", base_address, global_system_interrupt_base)
+            ioapic_register(base_address, global_system_interrupt_base)
+        elseif (entry_type = 2) then
+            dim bus_source as ubyte = *cast(ubyte ptr, records+2)
+            dim irq_source as ubyte = *cast(ubyte ptr, records+3)
+            dim gsi as uinteger = *cast(uinteger ptr, records+4)
+            dim iflags as ushort = *cast(ushort ptr, records+8)
+
+            if (bus_source = 0) then
+                printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"Interrupt Source Override: Bus: %d, IRQ: %d, GSI: %d, ", bus_source, irq_source, gsi)
+                if (iflags and 2) then
+                    printk(LOG_INFO "active low, ")
+                else
+                    printk(LOG_INFO "active high, ")
+                end if
+
+                if (iflags and 8) then
+                    printk(LOG_INFO !"level-triggered\n")
+                else
+                    printk(LOG_INFO !"edge-triggered\n")
+                end if
+
+                set_interrupt_override(irq_source, gsi, iif((iflags and 2), false, true), iif((iflags and 8), false, true))
+            else
+                printk(LOG_ERR COLOR_GREEN "ACPI: " COLOR_RESET !"Unknown bus-ID (%d) in Interrupt Source Override, ignoring entry\n", bus_source)
+            end if
+        else
+            printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"Unkown MADT-entry: %d\n", entry_type)
 		end if
 
 		records += record_length
@@ -124,7 +184,7 @@ sub acpi_init ()
 	printk(LOG_INFO COLOR_GREEN "ACPI: " COLOR_RESET !"ACPI OEMID: %c%c%c%c%c%c\n", rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2], rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5])
 
 	dim rsdt as sdt_header ptr = cast(sdt_header ptr, rsdp->rsdt_address)
-	'' TODO: check RSDT checksum
+    if (not(validate_table(rsdt))) then return
 
 	dim num_entries as uinteger = (rsdt->length - sizeof(sdt_header)) \ 4
 	dim entries_ptr as uinteger ptr = cast(any ptr, rsdt) + sizeof(sdt_header)
@@ -138,6 +198,7 @@ sub acpi_init ()
 				table_ptr->signature[1] = asc("P") and _
 				table_ptr->signature[2] = asc("I") and _
 				table_ptr->signature[3] = asc("C")) then
+            validate_table(table_ptr)
 			parse_madt(table_ptr)
 		end if
 	next

@@ -91,8 +91,6 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     idt_prepare()
     idt_load()
 
-    interrupt_init()
-
     pit_set_frequency(100)
 
     acpi_init()
@@ -107,6 +105,8 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
 	printk(LOG_INFO COLOR_GREEN "PMM: " COLOR_RESET !"total RAM: %uMiB, free RAM: %uMiB\n", cuint(pmm_get_total()\1048576), cuint(pmm_get_free()\1048576))
     vmm_init_local()
     printk(LOG_INFO COLOR_GREEN "VMM: " COLOR_RESET !"paging initialized\n")
+
+    interrupt_init()
 
 	printk(LOG_INFO COLOR_GREEN "KMM: " COLOR_RESET !"initializing heap\n")
 
@@ -141,6 +141,7 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     printk(LOG_INFO !"done.\n")
 
     thread_create_idle_thread()
+    interrupt_unmask(&h20)
 
     '' the scheduler takes over here
     asm sti

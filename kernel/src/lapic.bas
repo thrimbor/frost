@@ -22,16 +22,9 @@
 #include "vmm.bi"
 #include "pmm.bi"
 #include "pic.bi"
+#include "panic.bi"
 
 dim apic_enabled as boolean = false
-
-const IO_APIC_MMREG_IOREGSEL = &h00
-const IO_APIC_MMREG_IOREGWIN = &h10
-
-const IO_APIC_REG_IOAPICID  = &h00
-const IO_APIC_REG_IOAPICVER = &h01
-const IO_APIC_REG_IOAPICARB = &h02
-const IO_APIC_REG_IOREDTBL  = &h10
 
 const LOCAL_APIC_BASE_MSR = &h1B
 const LOCAL_APIC_BASE_ADDR_MASK = &hFFFFFF000
@@ -63,17 +56,6 @@ const LOCAL_APIC_REG_TIMER_DIV     = &h03E0 '' (RW)
 const LOCAL_APIC_SPIV_SOFT_ENABLE = &h100
 
 dim shared lapic_base_virt as uinteger = 0
-
-
-sub ioapic_write_register (apic_base as uinteger, register_offset as uinteger, value as uinteger)
-	*(cast(uinteger ptr, apic_base+IO_APIC_MMREG_IOREGSEL)) = register_offset
-	*(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOREGWIN))) = value
-end sub
-
-function ioapic_read_register (apic_base as uinteger, register_offset as uinteger) as uinteger
-	*(cast(uinteger ptr, apic_base+IO_APIC_MMREG_IOREGSEL)) = register_offset
-	return *(cast(uinteger ptr, (apic_base+IO_APIC_MMREG_IOREGWIN)))
-end function
 
 sub lapic_write_register (register_offset as uinteger, value as uinteger)
 	*(cast(uinteger ptr, lapic_base_virt+register_offset)) = value
@@ -124,14 +106,4 @@ sub lapic_startup_ipi (trampoline_addr as any ptr)
 
 	lapic_write_register(LOCAL_APIC_REG_ICR_HIGH, 1 shl 24)
     lapic_write_register(LOCAL_APIC_REG_ICR_LOW, (((cuint(trampoline_addr) \ &h1000) and &hFF) or (6 shl 8) or (1 shl 14)))
-end sub
-
-sub ioapic_init ()
-	'' TODO:
-	'' - configure I/O APIC
-	dim ioapic_base_v as uinteger = cuint(vmm_kernel_automap(cast(any ptr, ioapic_base), PAGE_SIZE))
-	printk(LOG_DEBUG COLOR_GREEN "LAPIC: " COLOR_RESET !"I/O APIC id: %X\n", ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICID))
-	printk(LOG_DEBUG COLOR_GREEN "LAPIC: " COLOR_RESET COLOR_GREEN "LAPIC: " COLOR_RESET !"I/O APIC version: %X\n", lobyte(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER)))
-	printk(LOG_DEBUG COLOR_GREEN "LAPIC: " COLOR_RESET !"I/O APIC max redirection entry: %X\n", lobyte(hiword(ioapic_read_register(ioapic_base_v, IO_APIC_REG_IOAPICVER))))
-
 end sub

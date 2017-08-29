@@ -16,21 +16,31 @@
  ' along with this program.  If not, see <http://www.gnu.org/licenses/>.
  '/
 
+#include "apic.bi"
 #include "pic.bi"
 #include "cpu.bi"
+#include "interrupt.bi"
 
 dim shared legacy_mode as boolean = true
+dim shared interrupt_legacy_free as boolean = false
 
 sub interrupt_init ()
     if (cpu_has_local_apic()) then
         legacy_mode = false
 
-        '' FIXME: if the ACPI-revision is > 0, we have to check the BootArchitectureFlags from FADT to see if there's a legacy PIC
-        pic_init()
-        pic_mask_all()
+        '' the ACPI-code sets this variable when the 8259-PIC-flag in the MADT is not set
+	if (not interrupt_legacy_free) then
+            pic_init()
+            pic_mask_all()
+	end if
+
+        lapic_init()
+        ioapic_init()
+        return
     end if
 
     pic_init()
+    pic_mask_all()
 end sub
 
 sub interrupt_mask (interrupt as integer)
@@ -39,9 +49,11 @@ sub interrupt_mask (interrupt as integer)
         if ((interrupt < &h20) or (interrupt > &h2F)) then return
 
         pic_mask(interrupt - &h20)
+        return
     end if
 
-    '' FIXME: non-legacy case
+    if (interrupt < &h20) then return
+    ioapic_mask_irq(interrupt-&h20)
 end sub
 
 sub interrupt_unmask (interrupt as integer)
@@ -50,9 +62,11 @@ sub interrupt_unmask (interrupt as integer)
         if ((interrupt < &h20) or (interrupt > &h2F)) then return
 
         pic_unmask(interrupt - &h20)
+        return
     end if
 
-    '' FIXME: non-legacy case
+    if (interrupt < &h20) then return
+    ioapic_unmask_irq(interrupt-&h20)
 end sub
 
 function interrupt_is_spurious (interrupt as integer) as boolean
@@ -63,8 +77,12 @@ function interrupt_is_spurious (interrupt as integer) as boolean
         return pic_is_spurious(interrupt - &h20)
     end if
 
-    '' FIXME: non-legacy case
+    '' is it a spurios I/O APIC interrupt?
     if (interrupt = &h2F) then return true
+
+    '' could still be a spurious PIC-interrupt
+    if (not interrupt_legacy_free) then return pic_is_spurious(interrupt - &h20)
+
     return false
 end function
 
@@ -83,6 +101,9 @@ sub interrupt_eoi (interrupt as integer)
         return
     end if
 
-    '' FIXME: how are EOIs for spurious ints handled?
-    ''        what if we get a spurious PIC-interrupt in APIC mode?
+    '' Volume 3A Chapter 10.9 says we shouldn't send the LAPIC an EOI when receiving a spurious interrupt
+    '' also, since we don't need the PIC to get IRQs, we just ignore its spurious interrupts and send no EOI to it ever
+    if (not(interrupt_is_spurious(interrupt))) then
+        lapic_eoi()
+    end if
 end sub
