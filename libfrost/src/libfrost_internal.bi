@@ -19,7 +19,7 @@
 	asm
 		mov eax, syscall_nr
 		mov ebx, [a]
-		mov ecx, [b]
+		mov esi, [b]
 		int &hFF
 	end asm
 #endmacro
@@ -28,8 +28,8 @@
 	asm
 		mov eax, syscall_nr
 		mov ebx, [a]
-		mov ecx, [b]
-		mov edx, [c]
+		mov esi, [b]
+		mov edi, [c]
 		int &hFF
 	end asm
 #endmacro
@@ -55,7 +55,7 @@
 	asm
 		mov eax, syscall_nr
 		mov ebx, [a]
-		mov ecx, [b]
+		mov esi, [b]
 		int &hFF
 		mov [ret], eax
 	end asm
@@ -65,8 +65,8 @@
 	asm
 		mov eax, syscall_nr
 		mov ebx, [a]
-		mov ecx, [b]
-		mov edx, [c]
+		mov esi, [b]
+		mov edi, [c]
 		int &hFF
 		mov [ret], eax
 	end asm

@@ -121,7 +121,7 @@ function handle_interrupt cdecl (isf as interrupt_stack_frame ptr) as interrupt_
 			reschedule = true
 
         case &hFF                                          '' syscall interrupt
-            isf->eax = syscall_handler(isf->eax, isf->ebx, isf->ecx, isf->edx)
+            isf->eax = syscall_handler(isf->eax, isf->ebx, isf->esi, isf->edi)
 
         case else
 
