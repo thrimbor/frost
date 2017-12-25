@@ -14,6 +14,6 @@ obj/%.o: src/%.bas
 	$(COMPILER) $(CFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJS) libfrost.a
+	rm -f $(OBJS) libfrost.a
 
 .PHONY: clean
