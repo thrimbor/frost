@@ -62,6 +62,9 @@ sub parse_cmdline (cmd_string as zstring ptr)
 	#endif
 end sub
 
+'' TODO: move this to some better place
+declare sub sysenter_entry ()
+
 '' this sub really is the main function of the kernel.
 '' it is called by start.asm after setting up the stack.
 sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
@@ -139,6 +142,10 @@ sub main (magicnumber as multiboot_uint32_t, t_mbinfo as multiboot_info ptr)
     printk(LOG_INFO !"loading modules...")
     load_modules(@mb_info)
     printk(LOG_INFO !"done.\n")
+
+    '' TODO: We should only set up SYSENTER if the CPU supports it
+    write_msr(MSR_IA32_SYSENTER_CS, &h0008)
+    write_msr(MSR_IA32_SYSENTER_EIP, cuint(@sysenter_entry))
 
     thread_create_idle_thread()
     interrupt_unmask(&h20)

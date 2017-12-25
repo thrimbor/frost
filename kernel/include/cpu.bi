@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2016  Stefan Schmidt
+ ' Copyright (C) 2010-2017  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -26,3 +26,7 @@ declare function read_msr (msr as uinteger) as ulongint
 declare sub write_msr (msr as uinteger, value as ulongint)
 declare sub cpu_halt ()
 declare sub cpu_disable_interrupts ()
+
+const MSR_IA32_SYSENTER_CS as uinteger = &h0174
+const MSR_IA32_SYSENTER_ESP as uinteger = &h0175
+const MSR_IA32_SYSENTER_EIP as uinteger = &h0176

@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2016  Stefan Schmidt
+ ' Copyright (C) 2010-2017  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -189,6 +189,8 @@ sub thread_switch (isf as interrupt_stack_frame ptr)
 
 	'' set his esp0 in the tss
 	tss_ptr->esp0 = cuint(new_thread->isf) + sizeof(interrupt_stack_frame)
+    '' set the esp0 for fast syscalls
+    write_msr(MSR_IA32_SYSENTER_ESP, cuint(new_thread->isf) + sizeof(interrupt_stack_frame))
 
 	'' load the new pagedir
 	if ((new_thread->parent_process <> old_process) and (new_thread <> idle_thread)) then
