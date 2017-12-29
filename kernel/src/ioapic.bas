@@ -136,7 +136,7 @@ sub ioapic_init ()
 	'' TODO:
 	'' - configure I/O APIC
     for i as uinteger = 0 to io_apic_count-1
-        io_apics(i).base_virt = cuint(vmm_kernel_automap(cast(any ptr, io_apics(i).base_phys), PAGE_SIZE))
+        io_apics(i).base_virt = cuint(vmm_kernel_automap(cast(any ptr, io_apics(i).base_phys), PAGE_SIZE, VMM_FLAGS.KERNEL_DATA or VMM_PTE_FLAGS.NOT_CACHEABLE))
 
         printk(LOG_DEBUG COLOR_GREEN "I/O APIC: " COLOR_RESET !"id: %X\n", io_apics(i).read(IO_APIC_REG_IOAPICID))
     	printk(LOG_DEBUG COLOR_GREEN "I/O APIC: " COLOR_RESET !"version: %X\n", lobyte(io_apics(i).read(IO_APIC_REG_IOAPICVER)))
