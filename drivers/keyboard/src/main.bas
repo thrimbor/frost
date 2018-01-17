@@ -1,6 +1,6 @@
 /'
  ' FROST
- ' Copyright (C) 2010-2014  Stefan Schmidt
+ ' Copyright (C) 2010-2018  Stefan Schmidt
  ' 
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -68,55 +68,57 @@ sub main ()
 end sub
 
 sub irq_handler (irq_number as uinteger)
-	if (irq_number = &h01) then
-		dim is_break_code as integer = false
-		dim keycode as ubyte
-		static e0_code as integer = false
-		static e1_code as integer = 0
-		static e1_prev as ushort = 0
-		dim scancode as ubyte = inb(KBC_DATA)
-		
-		if (bit(scancode, 7) and (e1_code or (scancode <> &hE1)) and (e0_code or (scancode <> &hE0))) then
-			is_break_code = true
-			scancode = bitreset(scancode, 7)
-		end if
-		
-		if (e0_code) then
-			'' catch fake-shift
-			if ((scancode = &h2A) or (scancode = &h36)) then
-				e0_code = false
-			else
-				keycode = scancode_to_keycode(1, scancode)
-				e0_code = false
+	while ((inb(KBC_COMMAND) and &h01) <> 0)
+		if (irq_number = &h01) then
+			dim is_break_code as integer = false
+			dim keycode as ubyte
+			static e0_code as integer = false
+			static e1_code as integer = 0
+			static e1_prev as ushort = 0
+			dim scancode as ubyte = inb(KBC_DATA)
+			
+			if (bit(scancode, 7) and (e1_code or (scancode <> &hE1)) and (e0_code or (scancode <> &hE0))) then
+				is_break_code = true
+				scancode = bitreset(scancode, 7)
 			end if
-		elseif (e1_code = 2) then
-			'' second (and last) byte of an e1-code
-			e1_prev or= cushort(scancode) shl 8
-			keycode = scancode_to_keycode(2, e1_prev)
-			e1_code = 0
-		elseif (e1_code = 1) then
-			'' first byte of an e1-code
-			e1_prev = scancode
-			e1_code += 1
-		elseif (scancode = &hE0) then
-			'' beginning of an e0-code
-			e0_code = true
-		elseif (scancode = &hE1) then
-			'' beginning of an e1-code
-			e1_code = 1
-		else
-			'' normal scancode
-			keycode = scancode_to_keycode(0, scancode)
-		end if
-		
-		if (keycode <> 0) then
-			if (is_break_code) then
-				frost_syscall_43(strptr("Key released"))
+			
+			if (e0_code) then
+				'' catch fake-shift
+				if ((scancode = &h2A) or (scancode = &h36)) then
+					e0_code = false
+				else
+					keycode = scancode_to_keycode(1, scancode)
+					e0_code = false
+				end if
+			elseif (e1_code = 2) then
+				'' second (and last) byte of an e1-code
+				e1_prev or= cushort(scancode) shl 8
+				keycode = scancode_to_keycode(2, e1_prev)
+				e1_code = 0
+			elseif (e1_code = 1) then
+				'' first byte of an e1-code
+				e1_prev = scancode
+				e1_code += 1
+			elseif (scancode = &hE0) then
+				'' beginning of an e0-code
+				e0_code = true
+			elseif (scancode = &hE1) then
+				'' beginning of an e1-code
+				e1_code = 1
 			else
-				frost_syscall_43(strptr("Key pressed"))
+				'' normal scancode
+				keycode = scancode_to_keycode(0, scancode)
+			end if
+			
+			if (keycode <> 0) then
+				if (is_break_code) then
+					frost_syscall_43(strptr("Key released"))
+				else
+					frost_syscall_43(strptr("Key pressed"))
+				end if
 			end if
 		end if
-	end if
+	wend
 	
 	frost_syscall_irq_handler_exit(irq_number)
 end sub
