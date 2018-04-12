@@ -20,6 +20,6 @@ obj/%.o: src/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJS) vgaconsole.elf
+	rm -f $(OBJS) vgaconsole.elf
 
 .PHONY: clean

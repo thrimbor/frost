@@ -20,6 +20,6 @@ obj/%.o: src/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJS) keyboard.elf
+	rm -f $(OBJS) keyboard.elf
 
 .PHONY: clean

@@ -20,6 +20,6 @@ obj/%.o: src/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJS) pci.elf
+	rm -f $(OBJS) pci.elf
 
 .PHONY: clean

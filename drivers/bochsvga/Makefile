@@ -20,6 +20,6 @@ obj/%.o: src/%.asm
 	$(ASSEMBLER) $(AFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJS) bochsvga.elf
+	rm -f $(OBJS) bochsvga.elf
 
 .PHONY: clean
