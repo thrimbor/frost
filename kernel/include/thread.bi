@@ -70,6 +70,7 @@ type thread_type
 	declare constructor (process as process_type_ ptr, entry as any ptr, userstack_pages as uinteger, flags as ubyte = 0)
 	declare sub activate ()
 	declare sub deactivate ()
+    declare sub push_mem (mem as any ptr, length as uinteger)
 	declare sub destroy ()
 
     callback_info as callback_info_t

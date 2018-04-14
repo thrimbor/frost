@@ -144,6 +144,15 @@ sub thread_type.deactivate ()
 	this.active_threads.remove()
 end sub
 
+sub thread_type.push_mem (mem as any ptr, length as uinteger)
+    dim stack_p as any ptr = vmm_resolve(@(this.parent_process->context), this.stack_area->address + (this.stack_area->pages-1)*PAGE_SIZE)
+    dim m as ubyte ptr = vmm_kernel_automap(cast(any ptr, stack_p), PAGE_SIZE)
+
+    memcpy(m+PAGE_SIZE-length, mem, length)
+    vmm_kernel_unmap(m, PAGE_SIZE)
+    this.isf->esp -= length
+end sub
+
 function schedule (isf as interrupt_stack_frame ptr) as thread_type ptr
 	dim new_thread as thread_type ptr = current_thread
 
