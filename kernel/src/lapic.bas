@@ -1,6 +1,6 @@
 /'
  ' FROST x86 microkernel
- ' Copyright (C) 2010-2017  Stefan Schmidt
+ ' Copyright (C) 2010-2019  Stefan Schmidt
  '
  ' This program is free software: you can redistribute it and/or modify
  ' it under the terms of the GNU General Public License as published by
@@ -77,9 +77,12 @@ sub lapic_init ()
 
 	lapic_base_virt = cuint(vmm_kernel_automap(cast(any ptr, lapic_base_phys), PAGE_SIZE, VMM_FLAGS.KERNEL_DATA or VMM_PTE_FLAGS.NOT_CACHEABLE))
 
-	'' set the APIC Software Enable/Disable flag in the Spurious-Interrupt Vector Register
-    '' FIXME: properly initialize the SPI vector. See manual 10.9, and http://forum.osdev.org/viewtopic.php?p=83547&sid=eb062848679db0c0532f4b97b949d104#p83547
-	lapic_write_register(LOCAL_APIC_REG_SPIV, lapic_read_register(LOCAL_APIC_REG_SPIV) or LOCAL_APIC_SPIV_SOFT_ENABLE)
+    '' initialize the SPI vector to 0x2F and enable the lapic.
+    '' see Intel manuals Vol. 3 chapter 10.9, and http://forum.osdev.org/viewtopic.php?p=83547&sid=eb062848679db0c0532f4b97b949d104#p83547
+    lapic_write_register(LOCAL_APIC_REG_SPIV, &h2F or LOCAL_APIC_SPIV_SOFT_ENABLE)
+
+    '' clear the task priority bits to make sure no interrupts get blocked (Vol. 3 chapter 10.8.3.1)
+    lapic_write_register(LOCAL_APIC_REG_TASK_PRIO, lapic_read_register(LOCAL_APIC_REG_TASK_PRIO) and &hFFFFFF00)
 
 	apic_enabled = true
 end sub
